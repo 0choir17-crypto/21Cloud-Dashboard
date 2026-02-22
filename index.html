@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Market Dashboard</title>
+    <meta name="description" content="日本株式市場ダッシュボード - 市場概況、セクター分析、銘柄スクリーニング">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="sidebar-collapsed">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar collapsed" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">☁</span>
+            <span class="sidebar-title">Market DB</span>
+            <button class="sidebar-toggle" id="sidebarToggle" title="サイドバー折り畳み">‹</button>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item active" data-view="market">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">市場概況</span>
+            </li>
+            <li class="nav-item" data-view="sector">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">セクター</span>
+            </li>
+            <li class="nav-item" data-view="screener">
+                <span class="nav-icon">👀</span>
+                <span class="nav-label">個別銘柄</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="refresh-btn" id="refreshBtn" title="データ更新">
+                <span class="refresh-icon">🔄</span>
+                <span class="nav-label">更新</span>
+            </button>
+            <div class="date-picker-wrap">
+                <select class="date-select" id="dateSelect">
+                    <option value="today">Today</option>
+                </select>
+            </div>
+            <div class="last-updated" id="lastUpdated">--</div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header" id="mobileHeader">
+        <button class="hamburger" id="hamburger">☰</button>
+        <span class="mobile-title">Market Dashboard</span>
+        <button class="mobile-refresh" id="mobileRefresh">🔄</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">データ読み込み中...</p>
+        </div>
+
+        <!-- Market View -->
+        <section class="view active" id="view-market">
+            <h1 class="view-title">市場概況 <span class="view-date" id="viewDate"></span></h1>
+            <div class="index-cards" id="indexCards"></div>
+            <div class="exposure-container" id="exposureContainer"></div>
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3 class="chart-title">騰落レシオ (25日)</h3>
+                    <div class="chart-container">
+                        <canvas id="breadthChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">新高値 − 新安値</h3>
+                    <div class="chart-container">
+                        <canvas id="nhNlChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sector View -->
+        <section class="view" id="view-sector">
+            <h1 class="view-title">セクター分析</h1>
+            <div class="sector-heatmap" id="sectorHeatmap"></div>
+        </section>
+
+        <!-- Screener View -->
+        <section class="view" id="view-screener">
+            <h1 class="view-title">個別銘柄スクリーニング</h1>
+            <div class="screen-tabs" id="screenTabs"></div>
+            <div class="sector-filter" id="sectorFilter"></div>
+            <div class="screen-summary" id="screenSummary"></div>
+            <div class="data-table-container">
+                <div class="table-controls">
+                    <input type="text" class="search-input" id="screenerSearch" placeholder="銘柄コード / 名前 / セクター で検索...">
+                    <select class="sort-select" id="screenerSort">
+                        <option value="default">デフォルト順</option>
+                        <option value="rs21-desc">RS21 ↓</option>
+                        <option value="rs21-asc">RS21 ↑</option>
+                        <option value="change-desc">前日比 ↓</option>
+                        <option value="change-asc">前日比 ↑</option>
+                    </select>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table" id="screenerTable">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
