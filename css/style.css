@@ -2300,10 +2300,18 @@ body.sidebar-collapsed .loading-overlay {
         padding: 12px;
     }
 
+    .pf-entry-table {
+        min-width: 700px;
+    }
+
     .pf-entry-table th,
     .pf-entry-table td {
         padding: 6px 8px;
         font-size: 11px;
+    }
+
+    .pf-history-table {
+        min-width: 600px;
     }
 
     .pf-history-table th,
