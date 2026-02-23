@@ -2306,10 +2306,22 @@ body.sidebar-collapsed .loading-overlay {
         -webkit-overflow-scrolling: touch;
     }
 
-    .pf-entry-table,
+    .pf-entry-table {
+        width: auto !important;
+        min-width: 1100px;
+    }
+
     .pf-history-table {
-        width: max-content;
-        min-width: 700px;
+        width: auto !important;
+        min-width: 800px;
+    }
+
+    /* Disable sticky ticker in portfolio tables (conflicts on mobile) */
+    .pf-entry-table th.col-ticker,
+    .pf-entry-table td.col-ticker,
+    .pf-history-table th.col-ticker,
+    .pf-history-table td.col-ticker {
+        position: static;
     }
 
     .pf-entry-table th,
