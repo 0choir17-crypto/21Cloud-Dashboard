@@ -382,7 +382,7 @@ function renderPositions(rows, summary, container) {
             <div class="pf-position-card">
                 <div class="pf-pos-header">
                     <a href="https://jp.tradingview.com/chart/?symbol=TSE:${ticker}" target="_blank" rel="noopener" class="pf-pos-ticker">${ticker}</a>
-                    <a href="https://kabutan.jp/stock/?code=${ticker}" target="_blank" rel="noopener" class="pf-pos-name">${escapeHtml(name)}</a>
+                    <a href="https://shikiho.toyokeizai.net/stocks/${ticker}" target="_blank" rel="noopener" class="pf-pos-name">${escapeHtml(name)}</a>
                     <span class="pf-pos-sector">${escapeHtml(sector)}</span>
                 </div>
                 <div class="pf-pos-prices">
@@ -486,7 +486,7 @@ function renderEntryPlans(rows, container) {
             if (c === 'Ticker') {
                 html += `<td class="col-ticker"><a href="https://jp.tradingview.com/chart/?symbol=TSE:${ticker}" target="_blank" rel="noopener">${ticker || '--'}</a></td>`;
             } else if (c === '銘柄名') {
-                html += `<td class="col-name"><a href="https://kabutan.jp/stock/?code=${ticker}" target="_blank" rel="noopener">${escapeHtml(v || '')}</a></td>`;
+                html += `<td class="col-name"><a href="https://shikiho.toyokeizai.net/stocks/${ticker}" target="_blank" rel="noopener">${escapeHtml(v || '')}</a></td>`;
             } else if (c === 'セクター') {
                 html += `<td class="col-sector">${escapeHtml(v || '')}</td>`;
             } else if (c === 'StopDist%') {
