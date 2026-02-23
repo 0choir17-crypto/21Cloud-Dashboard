@@ -2300,24 +2300,25 @@ body.sidebar-collapsed .loading-overlay {
         padding: 12px;
     }
 
-    .pf-entry-table {
+    .pf-entry-section .data-table-container,
+    .pf-history-section .data-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .pf-entry-table,
+    .pf-history-table {
+        width: max-content;
         min-width: 700px;
     }
 
     .pf-entry-table th,
-    .pf-entry-table td {
-        padding: 6px 8px;
-        font-size: 11px;
-    }
-
-    .pf-history-table {
-        min-width: 600px;
-    }
-
+    .pf-entry-table td,
     .pf-history-table th,
     .pf-history-table td {
         padding: 6px 8px;
         font-size: 11px;
+        white-space: nowrap;
     }
 }
 
