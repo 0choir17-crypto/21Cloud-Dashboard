@@ -3,6 +3,7 @@
 // ============================================================
 
 import { derivePhase, phaseLabel, phaseColor } from './exposure.js';
+import { escapeHtml } from './utils.js';
 
 let activeSector = null;
 let currentSortKey = 'rank';
@@ -328,7 +329,7 @@ export function renderSectorHeatmap(sectors, container, historyData) {
             </div>
             <div class="sta-header">
                 <div class="sta-name-group">
-                    <span class="sta-name">${name}</span>
+                    <span class="sta-name">${escapeHtml(name)}</span>
                     <span class="sta-rank">#${idx + 1}</span>
                 </div>
             </div>
@@ -416,7 +417,7 @@ function showDetailPanel(sector, tile, grid) {
         <div class="detail-panel-inner">
             <div class="detail-header">
                 <div class="detail-header-left">
-                    <span class="detail-title">${name}</span>
+                    <span class="detail-title">${escapeHtml(name)}</span>
                     <span class="detail-phase" style="background:${phaseColor(phase)}18;color:${phaseColor(phase)}">${phaseLabel(phase)}</span>
                 </div>
                 <button class="detail-close" id="detailClose">✕ 閉じる</button>
@@ -490,7 +491,9 @@ function showDetailPanel(sector, tile, grid) {
                 </div>
             </div>
 
-            <div class="detail-hint">🔗 個別銘柄タブでこのセクターの銘柄を検索できます</div>
+            <div class="detail-hint">
+                <button class="sector-to-screener-btn" data-sector="${escapeHtml(name)}">→ ${escapeHtml(name)}の銘柄をScreenerで表示</button>
+            </div>
         </div>`;
 
     // Insert after the tile's row in the grid
@@ -515,6 +518,14 @@ function showDetailPanel(sector, tile, grid) {
         activeSector = null;
         removeDetailPanel();
         grid.querySelectorAll('.sector-tile-apple').forEach(t => t.classList.remove('active'));
+    });
+
+    // Sector→Screener navigation
+    panel.querySelector('.sector-to-screener-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const sector = e.target.dataset.sector;
+        document.querySelector('[data-view="screener"]')?.click();
+        window.dispatchEvent(new CustomEvent('sector-filter', { detail: { sector } }));
     });
 
     // Attach MiniBar tooltip events

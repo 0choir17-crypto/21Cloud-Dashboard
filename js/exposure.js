@@ -1,67 +1,87 @@
 // ============================================================
-// exposure.js — Exposure Score Calculation + SVG Gauge
-// Ported from 21cloud_dashboard_v2_1.html
+// exposure.js v1.2 — Exposure Score Calculation + SVG Gauge
 // ============================================================
+
+import { EXPOSURE, PHASE } from './config.js';
 
 /**
  * Calculate Exposure Score (100 points max, 6 factors).
+ * Weights and thresholds are defined in config.js (EXPOSURE).
  * @param {Array} indices - Index data with Dist_21EMA%, Dist_50MA%
  * @param {Object} breadth - { toraku25, newHigh, newLow, advPct }
  * @param {Array} sectors - Sector data with phase, b80pct
  * @returns {{ score, label, components, killSwitch }}
  */
 export function calcExposure(indices, breadth, sectors) {
+    const W = EXPOSURE.weights;
     const components = [];
 
-    // Derive emaPos from Dist_21EMA%
+    // Derive emaPos from Dist_21EMA% (inside band: ±insideBand%)
+    const band = EXPOSURE.insideBand;
     const enriched = indices.map(idx => {
         const d21 = parseFloat(idx['Dist_21EMA%']) || 0;
         const d50 = parseFloat(idx['Dist_50MA%']) || 0;
         return {
             ...idx,
-            emaPos: d21 > 0.5 ? 'above' : d21 > -0.5 ? 'inside' : 'below',
+            emaPos: d21 > band ? 'above' : d21 > -band ? 'inside' : 'below',
             abv50: d50 > 0,
         };
     });
 
-    // ① Index × 21EMA (40pts)
+    // ① Index × 21EMA
+    const perIdx1 = Math.round(W.ema21 / 3 * 100) / 100;   // per-index above
+    const halfIdx1 = Math.round(W.ema21 / 6 * 100) / 100;   // per-index inside
     let s1 = 0;
     enriched.forEach(idx => {
-        if (idx.emaPos === 'above') s1 += 13.33;
-        else if (idx.emaPos === 'inside') s1 += 6.67;
+        if (idx.emaPos === 'above') s1 += perIdx1;
+        else if (idx.emaPos === 'inside') s1 += halfIdx1;
     });
     s1 = Math.round(s1 * 10) / 10;
     const killSwitch = s1 === 0;
-    components.push({ name: 'Index×21EMA', pts: s1, max: 40 });
+    components.push({ name: 'Index×21EMA', pts: s1, max: W.ema21 });
 
-    // ② Index × 50SMA (10pts)
+    // ② Index × 50SMA
+    const perIdx2 = Math.round(W.sma50 / 3 * 100) / 100;
     let s2 = 0;
-    enriched.forEach(idx => { if (idx.abv50) s2 += 3.33; });
+    enriched.forEach(idx => { if (idx.abv50) s2 += perIdx2; });
     s2 = Math.round(s2 * 10) / 10;
-    components.push({ name: 'Index×50SMA', pts: s2, max: 10 });
+    components.push({ name: 'Index×50SMA', pts: s2, max: W.sma50 });
 
-    // ③ 騰落レシオ25 (15pts)
+    // ③ 騰落レシオ25 — トレンドフォロー目線
+    const TR = EXPOSURE.toraku;
     const t = breadth.toraku25 || 0;
     let s3 = 0;
-    if (t >= 90 && t <= 110) s3 = 15;
-    else if ((t >= 80 && t < 90) || (t > 110 && t <= 120)) s3 = 10;
-    else if ((t >= 70 && t < 80) || (t > 120 && t <= 130)) s3 = 5;
-    components.push({ name: '騰落レシオ(25)', pts: s3, max: 15 });
+    if (t > TR.overheatDanger) s3 = TR.steps.extreme;
+    else if (t > TR.overheatWarn) s3 = TR.steps.overheat;
+    else if (t >= TR.optimalLow) s3 = TR.steps.optimal;
+    else if (t >= TR.warmLow) s3 = TR.steps.warm;
+    else if (t >= TR.coolLow) s3 = TR.steps.cool;
+    else s3 = TR.steps.cold;
+    components.push({
+        name: '騰落レシオ(25)',
+        pts: s3,
+        max: W.toraku,
+        warningLabel: t > TR.overheatWarn ? (t > TR.overheatDanger ? '危険過熱' : '過熱警戒') : null,
+    });
 
-    // ④ NH/NL比率 (10pts)
+    // ④ NH/NL比率 — 比率 + 絶対数ボーナス
     const nh = breadth.newHigh || 0, nl = breadth.newLow || 0;
-    const s4 = (nh + nl) > 0 ? Math.round(nh / (nh + nl) * 10 * 10) / 10 : 0;
-    components.push({ name: 'NH/NL比率', pts: s4, max: 10 });
+    const nhBase = W.nhNl - EXPOSURE.nhBonus.threshold100;
+    let s4 = (nh + nl) > 0 ? Math.round(nh / (nh + nl) * nhBase * 10) / 10 : 0;
+    if (nh >= 100) s4 += EXPOSURE.nhBonus.threshold100;
+    else if (nh >= 50) s4 += EXPOSURE.nhBonus.threshold50;
+    s4 = Math.min(W.nhNl, Math.round(s4 * 10) / 10);
+    components.push({ name: 'NH/NL比率', pts: s4, max: W.nhNl });
 
-    // ⑤ 値上がり率 (10pts)
+    // ⑤ 値上がり率
     const ap = breadth.advPct || 0;
     let s5 = 0;
-    if (ap >= 55) s5 = 10;
-    else if (ap >= 45) s5 = 7;
-    else if (ap >= 35) s5 = 4;
-    components.push({ name: '値上がり率', pts: s5, max: 10 });
+    for (const step of EXPOSURE.advPctSteps) {
+        if (ap >= step.min) { s5 = step.pts; break; }
+    }
+    components.push({ name: '値上がり率', pts: s5, max: W.advPct });
 
-    // ⑥ Sector Breadth (15pts)
+    // ⑥ Sector Breadth
     let phase4Count = 0;
     let b80Sum = 0;
     const validSectors = sectors.filter(s => s.Sector);
@@ -72,10 +92,11 @@ export function calcExposure(indices, breadth, sectors) {
     });
     const phase4Ratio = validSectors.length > 0 ? phase4Count / validSectors.length : 0;
     const b80Avg = validSectors.length > 0 ? b80Sum / validSectors.length : 0;
-    let s6 = Math.round(phase4Ratio * 10 * 10) / 10;
-    if (b80Avg >= 20) s6 += 5;
-    s6 = Math.min(15, s6);
-    components.push({ name: 'Sector Breadth', pts: s6, max: 15 });
+    const sbBase = W.sectorBreadth - EXPOSURE.sectorB80Bonus;
+    let s6 = Math.round(phase4Ratio * sbBase * 10) / 10;
+    if (b80Avg >= EXPOSURE.sectorB80Threshold) s6 += EXPOSURE.sectorB80Bonus;
+    s6 = Math.min(W.sectorBreadth, s6);
+    components.push({ name: 'Sector Breadth', pts: s6, max: W.sectorBreadth });
 
     const raw = components.reduce((sum, c) => sum + c.pts, 0);
     const score = killSwitch ? 0 : Math.round(Math.min(100, raw) * 10) / 10;
@@ -101,12 +122,11 @@ export function calcExposure(indices, breadth, sectors) {
 export function derivePhase(sector) {
     const rs21 = parseFloat(sector.RS_21) || 50;
     const er1w = parseFloat(sector.ER_1W) || 0;
-    const rsDay = parseFloat(sector['RS_Day%']) || 0;
 
-    if (rs21 >= 50 && er1w > 0) return 4;       // 強↑
-    if (er1w > 0 && rs21 >= 30) return 3;        // 改善
-    if (er1w <= 0 && rs21 >= 30) return 2;       // 失速
-    return 1;                                     // 弱↓
+    if (rs21 >= PHASE.strong.rs21Min && er1w > 0) return 4;       // 強↑
+    if (er1w > 0 && rs21 >= PHASE.improving.rs21Min) return 3;    // 改善
+    if (er1w <= 0 && rs21 >= PHASE.stalling.rs21Min) return 2;    // 失速
+    return 1;                                                      // 弱↓
 }
 
 export function phaseLabel(phase) {
@@ -145,8 +165,10 @@ export function renderExposureGauge(exposure, container) {
         'DEFENSIVE': '#FF9F0A', 'RISK OFF': '#FF453A',
     }[label] || '#48484A';
 
+    const cardClass = killSwitch ? 'exposure-card killswitch' : 'exposure-card';
+
     container.innerHTML = `
-        <div class="exposure-card">
+        <div class="${cardClass}">
             <svg width="${size}" height="${size / 2 + 16}" viewBox="0 0 ${size} ${size / 2 + 16}">
                 <path d="M 8,${size / 2 + 6} A ${r},${r} 0 0 1 ${size - 8},${size / 2 + 6}"
                       fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6" stroke-linecap="round"/>
@@ -160,11 +182,17 @@ export function renderExposureGauge(exposure, container) {
                       style="font-size:9px;font-weight:600;fill:${labelColor};letter-spacing:0.06em">${label}</text>
             </svg>
             <div class="exposure-label">Exposure Score</div>
-            <div class="exposure-breakdown">
+            <div class="exposure-breakdown-bars">
                 ${components.map(c => {
-        const pct = c.max > 0 ? c.pts / c.max : 0;
-        const cls = pct >= 0.7 ? 'positive' : pct >= 0.4 ? 'warning' : 'negative';
-        return `<span class="exposure-factor ${cls}">${c.name.slice(0, 8)}:${c.pts.toFixed(0)}/${c.max}</span>`;
+        const pct = c.max > 0 ? (c.pts / c.max * 100) : 0;
+        const barColor = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+        const labelCls = c.warningLabel ? 'bar-label warning-label' : 'bar-label';
+        const displayName = c.warningLabel ? `\u{1F525}${c.warningLabel}` : c.name.slice(0, 8);
+        return `<div class="exposure-factor-bar">
+                    <span class="${labelCls}">${displayName}</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+                    <span class="bar-score">${c.pts.toFixed(0)}/${c.max}</span>
+                </div>`;
     }).join('')}
             </div>
             ${killSwitch ? '<div class="killswitch-badge">⚠ KillSwitch: 全指数21EMA下</div>' : ''}

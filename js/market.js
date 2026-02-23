@@ -2,6 +2,12 @@
 // market.js — Market Overview View
 // ============================================================
 
+import { escapeHtml } from './utils.js';
+
+// Chart.js instance refs (prevent memory leak on refresh)
+let breadthChartInstance = null;
+let nhNlChartInstance = null;
+
 /**
  * Render index cards (Nikkei 225, TOPIX, Growth 250).
  */
@@ -30,7 +36,7 @@ export function renderIndexCards(indices, container) {
         const card = document.createElement('div');
         card.className = 'index-card';
         card.innerHTML = `
-            <div class="card-name">${name}</div>
+            <div class="card-name">${escapeHtml(name)}</div>
             <div class="card-price">${formatNum(price, 2)}</div>
             <div class="card-metrics">
                 ${metricHtml('1W', chg1w)}
@@ -53,6 +59,12 @@ export function renderIndexCards(indices, container) {
  * Render breadth charts (AD Ratio + NH-NL).
  */
 export function renderBreadthCharts(breadthData, breadthCanvas, nhNlCanvas) {
+    // Destroy previous instances to prevent memory leak
+    breadthChartInstance?.destroy();
+    nhNlChartInstance?.destroy();
+    breadthChartInstance = null;
+    nhNlChartInstance = null;
+
     if (!breadthData || breadthData.length === 0) return;
 
     // Filter breadth data (rows from column L onward in Indices sheet)
@@ -67,7 +79,7 @@ export function renderBreadthCharts(breadthData, breadthCanvas, nhNlCanvas) {
     // AD Ratio Chart
     if (breadthCanvas && adRatio25.length > 0) {
         const ctx = breadthCanvas.getContext('2d');
-        new Chart(ctx, {
+        breadthChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels,
@@ -95,7 +107,7 @@ export function renderBreadthCharts(breadthData, breadthCanvas, nhNlCanvas) {
     // NH-NL Chart — Show NH and NL separately for clear situation reading
     if (nhNlCanvas && nh.length > 0) {
         const ctx = nhNlCanvas.getContext('2d');
-        new Chart(ctx, {
+        nhNlChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels,
@@ -197,7 +209,7 @@ function metricHtml(label, value) {
     return `
         <div class="metric">
             <span class="metric-label">${label}</span>
-            <span class="metric-value ${cls}" style="font-size:14px">${display}</span>
+            <span class="metric-value ${cls}">${display}</span>
         </div>`;
 }
 

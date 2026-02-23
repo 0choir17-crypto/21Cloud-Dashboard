@@ -2,11 +2,12 @@
 // app.js — Dashboard App Entry Point
 // ============================================================
 
-import { fetchSheets } from './sheets.js';
+import { fetchSheets, fetchSheetRaw } from './sheets.js';
 import { renderIndexCards, renderBreadthCharts } from './market.js';
 import { renderSectorHeatmap } from './sector.js';
 import { initScreener } from './screener.js';
 import { calcExposure, renderExposureGauge, extractBreadth } from './exposure.js';
+import { renderPortfolio } from './portfolio.js';
 
 // ── State ──
 let isLoading = false;
@@ -74,7 +75,17 @@ mobileRefresh?.addEventListener('click', loadData);
 const dateSelect = document.getElementById('dateSelect');
 dateSelect?.addEventListener('change', () => {
     const val = dateSelect.value;
+    const isHistory = val !== 'today';
     const summaryEl = document.getElementById('screenSummary');
+
+    // History mode visual feedback
+    const badge = document.getElementById('historyBadge');
+    if (badge) {
+        badge.textContent = isHistory ? `\u{1F4C5} ${val}` : '';
+        badge.style.display = isHistory ? 'inline-flex' : 'none';
+    }
+    document.getElementById('mainContent')?.classList.toggle('history-mode', isHistory);
+
     let data;
     if (val === 'today') {
         data = liveScreenData;
@@ -124,6 +135,14 @@ async function loadData() {
             'St_SectorAlpha', 'St_Earnings',
             'St_History',
         ]);
+
+        // Portfolio uses raw CSV — fetch after main sheets to avoid rate limit
+        let portfolioCsv = '';
+        try {
+            portfolioCsv = await fetchSheetRaw('Portfolio');
+        } catch (e) {
+            console.error('Portfolio fetch error:', e);
+        }
 
         // ── Indices sheet has two data sections ──
         const indicesRaw = data.Indices || [];
@@ -216,6 +235,13 @@ async function loadData() {
             );
         } catch (e) {
             console.error('Screener view error:', e);
+        }
+
+        // ── Portfolio View ──
+        try {
+            renderPortfolio(portfolioCsv, document.getElementById('portfolioContent'));
+        } catch (e) {
+            console.error('Portfolio view error:', e);
         }
 
         // Update timestamp

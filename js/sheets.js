@@ -2,24 +2,9 @@
 // sheets.js — Google Sheets CSV Fetcher & Parser
 // ============================================================
 
-const SPREADSHEET_ID = '1AMkEdiX0FOh-wWy3a2kdS-cLk4YClChepyAeGCUfWEY';
+import { SHEET_GIDS } from './config.js';
 
-const SHEET_GIDS = {
-    Portfolio: 988929103,
-    Indices: 593468503,
-    Sectors: 1299334424,
-    St_Momentum: 361464786,
-    St_21EMA: 901482065,
-    St_Movers: 2084933405,
-    St_Pivot: 478643393,
-    St_Surprise: 1651981051,
-    St_EREvent: 1724174728,
-    St_Quiet: 1809768446,
-    St_SectorAlpha: 1512618812,
-    St_Earnings: 1901445788,
-    St_History: 1745377223,
-    SectorHistory: 519198713,
-};
+const SPREADSHEET_ID = '1AMkEdiX0FOh-wWy3a2kdS-cLk4YClChepyAeGCUfWEY';
 
 function buildCsvUrl(sheetName) {
     const gid = SHEET_GIDS[sheetName];
@@ -32,6 +17,9 @@ function buildCsvUrl(sheetName) {
  * Handles quoted fields with commas and newlines.
  */
 function parseCsv(text) {
+    // Strip BOM if present
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
     const lines = [];
     let current = '';
     let inQuotes = false;
@@ -108,6 +96,9 @@ function parseCsv(text) {
             } else if (/^\d{4}-\d{1,2}-\d{1,2}/.test(trimmed) || /^\d{1,2}\/\d{1,2}\/\d{4}/.test(trimmed)) {
                 // Preserve date-like strings (YYYY-MM-DD or M/D/YYYY)
                 obj[h.trim()] = trimmed;
+            } else if (/^\d{5}$/.test(trimmed) && /date/i.test(h)) {
+                // Preserve 5-digit date serial numbers in Date columns as strings
+                obj[h.trim()] = trimmed;
             } else {
                 const num = parseFloat(trimmed);
                 obj[h.trim()] = !isNaN(num) ? num : trimmed;
@@ -127,6 +118,15 @@ export async function fetchSheet(sheetName) {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Failed to fetch ${sheetName}: ${resp.status}`);
     const text = await resp.text();
+
+    // HTML が返った場合（認証切れ・非公開シート）
+    if (text.trimStart().startsWith('<')) {
+        throw new Error(`${sheetName}: CSVではなくHTMLが返されました。シートの共有設定を確認してください`);
+    }
+    if (text.trim().length === 0) {
+        console.warn(`${sheetName}: 空のレスポンス`);
+        return [];
+    }
     return parseCsv(text);
 }
 
@@ -145,6 +145,22 @@ export async function fetchSheets(sheetNames) {
     });
     await Promise.all(promises);
     return results;
+}
+
+/**
+ * Fetch raw CSV text (no parsing). For sheets with non-standard structure.
+ */
+export async function fetchSheetRaw(sheetName) {
+    const url = buildCsvUrl(sheetName);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Failed to fetch ${sheetName}: ${resp.status}`);
+    let text = await resp.text();
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+    if (text.trimStart().startsWith('<')) {
+        throw new Error(`${sheetName}: CSVではなくHTMLが返されました。シートの共有設定を確認してください`);
+    }
+    return text;
 }
 
 export { SHEET_GIDS };

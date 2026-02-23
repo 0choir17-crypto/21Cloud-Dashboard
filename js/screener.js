@@ -3,41 +3,19 @@
 // Cross-Screen Overlap + Entry基準
 // ============================================================
 
-const SCREEN_CONFIG = [
-    { key: 'St_Momentum', label: 'Momentum', abbr: 'MOM', color: '#f472b6' },
-    { key: 'St_21EMA', label: '21EMA', abbr: 'EMA', color: '#a78bfa' },
-    { key: 'St_Movers', label: 'Movers', abbr: 'MOV', color: '#30D158' },
-    { key: 'St_Pivot', label: 'Pivot', abbr: 'PVT', color: '#2dd4bf' },
-    { key: 'St_Surprise', label: 'Surprise', abbr: 'SUR', color: '#22d3ee' },
-    { key: 'St_EREvent', label: 'ER Event', abbr: 'ERE', color: '#FFD60A' },
-    { key: 'St_Quiet', label: 'Quiet', abbr: 'QUI', color: '#0A84FF' },
-    { key: 'St_SectorAlpha', label: 'Sec Alpha', abbr: 'SEC', color: '#FF453A' },
-    { key: 'St_Earnings', label: 'Earnings', abbr: 'EAR', color: '#FFD60A' },
-];
+import { escapeHtml } from './utils.js';
+import { SCREENS, SCREEN_COLS, ENTRY } from './config.js';
 
 // Columns to display
 const BASE_COLS = ['Ticker', 'Name', 'Sector', 'DAY%', 'RS21'];
 const POST_RS_COLS = ['ER_1W(vsSec)'];  // after RS21, before screen-specific
 const TAIL_COL = 'ER_Days';  // right end before entry基準
 
-// Per-screen specific columns (inserted between RV(20D) and ER_Days)
-const SCREEN_COLS = {
-    St_Momentum:   ['RS_ROC(21D)'],
-    St_21EMA:      ['RS21_Peak', 'Pullback'],
-    St_Movers:     ['RV(20D)', 'Accel_Score'],
-    St_Pivot:      ['SP_Break', 'SP_Dist%', 'SP_Cnt', 'SP_Age'],
-    St_Surprise:   ['EPS_Surp%', 'Days_Since_ER', 'EPS_G%'],
-    St_EREvent:    ['EPS_G%', 'OP_Mgn%'],
-    St_Quiet:      ['RV(20D)', 'Range%(30D)', 'VCS'],
-    St_SectorAlpha:['Match', 'Range%(30D)'],
-    St_Earnings:   ['EPS_G%', 'Fcst_EPS_G%', 'OP_Mgn%', 'EPS_Surp%'],
-};
-
-// Entry基準 thresholds (from v2.1)
-const adr_ok = v => v >= 2.5 && v <= 7;
-const r21_ok = v => v >= -0.3 && v <= 0.8;
-const e21_ok = v => v <= 4;
-const r50_ok = v => v <= 2.5;
+// Entry基準 thresholds (from config)
+const adr_ok = v => v >= ENTRY.adr.min && v <= ENTRY.adr.max;
+const r21_ok = v => v >= ENTRY.atr21ema.min && v <= ENTRY.atr21ema.max;
+const e21_ok = v => v <= ENTRY.dist21ema.max;
+const r50_ok = v => v <= ENTRY.atr50sma.max;
 
 function getEntry(row) {
     return {
@@ -114,6 +92,7 @@ export function initScreener(data, tabContainer, summaryEl, tableEl, searchInput
     // Build tabs (with ALL tab)
     renderTabs(tabContainer, () => {
         headerSort = { col: null, dir: null };
+        if (_sortSelect) _sortSelect.value = 'default';
         rerender();
     });
 
@@ -122,9 +101,19 @@ export function initScreener(data, tabContainer, summaryEl, tableEl, searchInput
 
     // Event listeners — only once
     if (!_initialized) {
-        searchInput.addEventListener('input', () => rerender());
+        let searchTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => rerender(), 150);
+        });
         sortSelect.addEventListener('change', () => {
             headerSort = { col: null, dir: null };
+            rerender();
+        });
+        // Sector→Screener context handoff
+        window.addEventListener('sector-filter', (e) => {
+            currentSector = e.detail.sector;
+            renderSectorFilter();
             rerender();
         });
         _initialized = true;
@@ -154,12 +143,14 @@ function renderTabs(container, onChange) {
     });
     container.appendChild(allBtn);
 
-    SCREEN_CONFIG.forEach(cfg => {
+    SCREENS.forEach(cfg => {
         const btn = document.createElement('button');
-        btn.className = 'screen-tab' + (cfg.key === currentScreen ? ' active' : '');
+        btn.className = 'screen-tab' + (cfg.key === currentScreen ? ' active' : '') + (cfg.primary ? ' primary' : '');
         const count = (screenData[cfg.key] || []).length;
         if (cfg.key === currentScreen) {
             btn.style.cssText = `background:${cfg.color}18;color:${cfg.color};border-color:${cfg.color}`;
+        } else if (cfg.primary) {
+            btn.style.cssText = `color:${cfg.color};border-color:${cfg.color}40`;
         }
         btn.innerHTML = `${cfg.label} <span class="tab-count">${count}</span>`;
         btn.addEventListener('click', () => {
@@ -180,7 +171,7 @@ function renderScreenContent(summaryEl, tableEl, searchText, sortKey) {
             summaryEl.innerHTML += ` · <span style="color:#FFD60A;font-weight:600">${dupCount}銘柄が2+スクリーン重複</span>`;
         }
     } else {
-        const cfg = SCREEN_CONFIG.find(c => c.key === currentScreen);
+        const cfg = SCREENS.find(c => c.key === currentScreen);
         const data = screenData[currentScreen] || [];
         summaryEl.textContent = `${cfg?.label || currentScreen}: ${data.length}銘柄`;
     }
@@ -208,11 +199,11 @@ function renderOverlapAndTable(tableEl, searchText, sortKey) {
                 <div class="overlap-badges">
                     ${dupStocks.map(([ticker, info]) => `
                         <div class="overlap-badge">
-                            <a href="https://shikiho.toyokeizai.net/stocks/${ticker}" target="_blank" class="ob-name">${info.name || ticker}</a>
+                            <a href="https://shikiho.toyokeizai.net/stocks/${ticker}" target="_blank" class="ob-name">${escapeHtml(info.name || ticker)}</a>
                             <a href="https://jp.tradingview.com/symbols/TSE-${ticker}/" target="_blank" class="ob-ticker">${ticker}</a>
                             <span class="ob-count">×${info.count}</span>
                             <span class="ob-screens">${info.screens.map(s => {
-                const cfg = SCREEN_CONFIG.find(c => c.key === s);
+                const cfg = SCREENS.find(c => c.key === s);
                 return cfg ? `<span class="scr-icon" style="background:${cfg.color}18;color:${cfg.color}">${cfg.abbr}</span>` : '';
             }).join('')}</span>
                         </div>`).join('')}
@@ -328,8 +319,8 @@ function renderScreenTable(tableEl, searchText, sortKey) {
 
     const allCols = [...cols];
 
-    // SCREEN column for all tabs (after Ticker)
-    allCols.splice(1, 0, 'Screens');
+    // SCREEN column for all tabs (after Name)
+    allCols.splice(2, 0, 'Screens');
 
     const thead = tableEl.querySelector('thead');
     thead.innerHTML = '<tr>' + allCols.map(h => {
@@ -340,7 +331,8 @@ function renderScreenTable(tableEl, searchText, sortKey) {
         const cls = isActive ? ' sort-active' : '';
         const color = isEntry ? '#FFD60A' : isActive ? 'var(--accent)' : '';
         const style = color ? ` style="color:${color}"` : '';
-        return `<th class="sortable-th${cls}" data-col="${h}"${style}>${label}${arrow}</th>`;
+        const colCls = h === 'Ticker' ? ' col-ticker' : '';
+        return `<th class="sortable-th${cls}${colCls}" data-col="${h}"${style}>${label}${arrow}</th>`;
     }).join('') + '</tr>';
 
     // Attach click-to-sort on each <th>
@@ -384,14 +376,14 @@ function renderScreenTable(tableEl, searchText, sortKey) {
             if (h === 'Name') {
                 const name = stripFormula(v);
                 return `<td class="col-name">
-                    <a href="https://shikiho.toyokeizai.net/stocks/${ticker}" target="_blank" title="${name}">${name}</a>
+                    <a href="https://shikiho.toyokeizai.net/stocks/${ticker}" target="_blank" title="${escapeHtml(name)}">${escapeHtml(name)}</a>
                 </td>`;
             }
-            if (h === 'Sector') return `<td class="col-sector">${v || ''}</td>`;
+            if (h === 'Sector') return `<td class="col-sector">${escapeHtml(v || '')}</td>`;
             if (h === 'Screens') {
                 const screens = info?.screens || [];
                 return `<td class="col-screens">${screens.map(s => {
-                    const cfg = SCREEN_CONFIG.find(c => c.key === s);
+                    const cfg = SCREENS.find(c => c.key === s);
                     return cfg ? `<span class="scr-icon" style="background:${cfg.color}18;color:${cfg.color}" title="${cfg.label}">${cfg.abbr}</span>` : '';
                 }).join('')}</td>`;
             }
@@ -475,7 +467,7 @@ function renderSectorFilter() {
         const btn = document.createElement('button');
         btn.className = 'sector-chip' + (currentSector === name ? ' active' : '');
         const rsColor = avgRS >= 60 ? 'var(--green)' : avgRS >= 40 ? 'var(--text-secondary)' : 'var(--red)';
-        btn.innerHTML = `${name} <span class="sector-rs" style="color:${rsColor}">${avgRS.toFixed(0)}</span>`;
+        btn.innerHTML = `${escapeHtml(name)} <span class="sector-rs" style="color:${rsColor}">${avgRS.toFixed(0)}</span>`;
         btn.addEventListener('click', () => {
             currentSector = name;
             renderSectorFilter();
