@@ -25,7 +25,7 @@ export const SCREEN_COLS = Object.fromEntries(SCREENS.map(s => [s.key, s.columns
 export const SHEET_GIDS = {
     Portfolio: 726693304,
     Indices: 593468503,
-    Sectors: 593468503,
+    Sectors: 1899936803,
     St_History: 1745377223,
     SectorHistory: 519198713,
     // Screen GIDs merged in
@@ -68,7 +68,7 @@ export const PHASE = {
 // ── Entry Score Thresholds ──
 export const ENTRY = {
     adr: { min: 2.5, max: 7 },
-    atr21ema: { min: -0.3, max: 0.8 },
-    dist21ema: { max: 4 },
+    atr21ema: { min: -0.3, max: 1.5 },
+    dist21ema: { max: 8 },
     atr50sma: { max: 2.5 },
 };
