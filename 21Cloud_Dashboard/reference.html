@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>☁ 21 Cloud Dashboard v2.1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-base:#080b12;--bg-card:#0d1117;--bg-elevated:#131920;--bg-hover:#1a2233;
+  --border:#1b2536;--border-light:#243044;
+  --text-primary:#e6edf3;--text-secondary:#9BA4AE;--text-muted:#6e7681;
+  --green:#22c55e;--green-bg:#0a2618;
+  --red:#ef4444;--red-bg:#2a0e0e;
+  --blue:#3b82f6;--blue-bg:#0c1a33;
+  --amber:#f59e0b;--amber-bg:#2a1f08;
+  --purple:#a78bfa;--cyan:#22d3ee;--pink:#f472b6;--teal:#2dd4bf;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+html{background:var(--bg-base);color:var(--text-primary);font-family:var(--font-body);font-size:14px;-webkit-font-smoothing:antialiased}
+body{min-height:100vh}
+#root{max-width:1400px;margin:0 auto;padding:0 18px 40px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#243044;border-radius:3px}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--font-body)}
+input[type="date"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer}
+.sector-tile{transition:border-color 0.15s,transform 0.1s}
+.sector-tile:hover{border-color:var(--border-light);transform:translateY(-1px)}
+.stock-row{transition:background 0.1s}
+.stock-row:hover{background:var(--bg-hover) !important}
+.detail-panel{animation:slideDown 0.2s ease-out}
+@keyframes slideDown{from{opacity:0;max-height:0}to{opacity:1;max-height:300px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useMemo,useCallback,useEffect,useRef} = React;
+
+// ============================================================
+// API CONFIGURATION
+// ============================================================
+const API_URL = "https://script.google.com/macros/s/AKfycbxNpCNzlR7LWCUdvGx6SHOjrnajHWLWH0oVY91ENhHWB4CD9qXl09-VAVjqqVkVblM/exec";
+const API_TIMEOUT = 8000;
+
+let DATA_MODE = "LOADING";
+let MARKET_DATE = "2026-02-18";
+
+let INDICES = [
+  {name:"日経225",val:39500,chg1w:1.2,chg1m:2.5,chgYtd:5.0,chg1y:12.0,pct52wh:-3.5,dist10:0.8,dist21:1.5,dist50:4.2,abv10:true,abv21:true,abv50:true,emaPos:"above"},
+  {name:"TOPIX",val:2750,chg1w:0.9,chg1m:2.1,chgYtd:4.5,chg1y:10.0,pct52wh:-2.8,dist10:0.5,dist21:1.2,dist50:3.8,abv10:true,abv21:true,abv50:true,emaPos:"above"},
+  {name:"グロース250",val:665,chg1w:-0.3,chg1m:0.8,chgYtd:2.0,chg1y:-5.0,pct52wh:-12.0,dist10:-0.5,dist21:0.3,dist50:1.5,abv10:false,abv21:true,abv50:true,emaPos:"inside"},
+];
+
+let BREADTH = {
+  advPct:50,advances:2000,declines:2000,toraku25:100,toraku10:100,newHigh:200,newLow:50,
+  hist:[
+    {d:"02/03",adv:55,t25:105,nh:180,nl:40},{d:"02/04",adv:48,t25:102,nh:195,nl:45},
+    {d:"02/05",adv:52,t25:108,nh:210,nl:38},{d:"02/06",adv:45,t25:98,nh:190,nl:55},
+    {d:"02/09",adv:60,t25:112,nh:250,nl:35},{d:"02/10",adv:55,t25:106,nh:220,nl:42},
+    {d:"02/12",adv:58,t25:110,nh:230,nl:30},{d:"02/13",adv:50,t25:100,nh:200,nl:50},
+  ],
+};
+
+// ============================================================
+// EXPOSURE CALCULATION (v2.1: b80pct直接使用)
+// ============================================================
+function calcExposure(indices, breadth, sectors) {
+  const components = [];
+
+  // ① Index × 21EMA (40pts)
+  let s1 = 0;
+  indices.forEach(idx => {
+    if (idx.emaPos === "above") s1 += 13.33;
+    else if (idx.emaPos === "inside") s1 += 6.67;
+  });
+  s1 = Math.round(s1 * 10) / 10;
+  const killSwitch = s1 === 0;
+  components.push({ name: "Index×21EMA", pts: s1, max: 40 });
+
+  // ② Index × 50SMA (10pts)
+  let s2 = 0;
+  indices.forEach(idx => { if (idx.abv50) s2 += 3.33; });
+  s2 = Math.round(s2 * 10) / 10;
+  components.push({ name: "Index×50SMA", pts: s2, max: 10 });
+
+  // ③ 騰落レシオ25 (15pts)
+  const t = breadth.toraku25;
+  let s3 = 0;
+  if (t >= 90 && t <= 110) s3 = 15;
+  else if ((t >= 80 && t < 90) || (t > 110 && t <= 120)) s3 = 10;
+  else if ((t >= 70 && t < 80) || (t > 120 && t <= 130)) s3 = 5;
+  components.push({ name: "騰落レシオ(25)", pts: s3, max: 15 });
+
+  // ④ NH/NL比率 (10pts)
+  const nh = breadth.newHigh, nl = breadth.newLow;
+  const s4 = (nh + nl) > 0 ? Math.round(nh / (nh + nl) * 10 * 10) / 10 : 0;
+  components.push({ name: "NH/NL比率", pts: s4, max: 10 });
+
+  // ⑤ 値上がり率 (10pts)
+  const ap = breadth.advPct;
+  let s5 = 0;
+  if (ap >= 55) s5 = 10;
+  else if (ap >= 45) s5 = 7;
+  else if (ap >= 35) s5 = 4;
+  components.push({ name: "値上がり率", pts: s5, max: 10 });
+
+  // ⑥ Sector Breadth (15pts) — Phase4比率×10 + b80pct平均≥20%なら+5
+  let phase4Count = 0;
+  let b80Sum = 0;
+  sectors.forEach(s => {
+    if (s.phase.startsWith("4")) phase4Count++;
+    // v2.1: b80pctが直接提供される場合はそれを使用、なければ生カウントから計算
+    b80Sum += s.b80pct != null ? s.b80pct : (s.liquid > 0 ? s.pct80 / s.liquid * 100 : 0);
+  });
+  const phase4Ratio = sectors.length > 0 ? phase4Count / sectors.length : 0;
+  const b80Avg = sectors.length > 0 ? b80Sum / sectors.length : 0;
+  let s6 = Math.round(phase4Ratio * 10 * 10) / 10;
+  if (b80Avg >= 20) s6 += 5;
+  s6 = Math.min(15, s6);
+  components.push({ name: "Sector Breadth", pts: s6, max: 15 });
+
+  const raw = components.reduce((sum, c) => sum + c.pts, 0);
+  const score = killSwitch ? 0 : Math.round(Math.min(100, raw) * 10) / 10;
+
+  let label;
+  if (killSwitch) label = "RISK OFF";
+  else if (score >= 80) label = "AGGRESSIVE";
+  else if (score >= 60) label = "BULLISH";
+  else if (score >= 40) label = "CAUTIOUS";
+  else if (score >= 20) label = "DEFENSIVE";
+  else label = "RISK OFF";
+
+  return { score, label, components, killSwitch, raw: Math.round(raw * 10) / 10 };
+}
+
+// v2.1: sort by Phase then rs21 (index RS) — rs21w removed
+let SECTORS_RAW = [
+  {name:"商社・卸売",rs21:27.94,rs63:28.61,rs126:26.65,er21:1.2,er63:0.8,er126:0.5,pct80:36,pct60:56,b80pct:25.4,b60pct:39.4,phase:"2:失速",count:289,liquid:142,delta5d:3.2,rsDelta5d:1.1},
+  {name:"鉄鋼・非鉄",rs21:32.73,rs63:47.19,rs126:45.47,er21:2.1,er63:1.5,er126:1.2,pct80:16,pct60:20,b80pct:32.7,b60pct:40.8,phase:"2:失速",count:71,liquid:49,delta5d:5.8,rsDelta5d:2.3},
+  {name:"不動産",rs21:31.17,rs63:26.67,rs126:22.37,er21:1.8,er63:0.6,er126:0.3,pct80:21,pct60:30,b80pct:27.6,b60pct:39.5,phase:"4:強↑",count:130,liquid:76,delta5d:4.1,rsDelta5d:1.8},
+  {name:"銀行",rs21:80.11,rs63:91.32,rs126:93.34,er21:-1.5,er63:2.0,er126:3.2,pct80:49,pct60:72,b80pct:65.3,b60pct:96.0,phase:"1:弱↓",count:79,liquid:75,delta5d:-2.5,rsDelta5d:-1.2},
+  {name:"機械",rs21:40.67,rs63:42.51,rs126:42.22,er21:0.8,er63:0.5,er126:0.4,pct80:61,pct60:79,b80pct:39.9,b60pct:51.6,phase:"2:失速",count:213,liquid:153,delta5d:-1.3,rsDelta5d:-0.5},
+  {name:"電気・ガス",rs21:57.14,rs63:42.23,rs126:40.79,er21:3.5,er63:1.2,er126:0.8,pct80:11,pct60:15,b80pct:47.8,b60pct:65.2,phase:"4:強↑",count:28,liquid:23,delta5d:6.2,rsDelta5d:3.1},
+  {name:"小売",rs21:25.08,rs63:19.79,rs126:15.65,er21:1.5,er63:0.3,er126:-0.2,pct80:32,pct60:43,b80pct:18.7,b60pct:25.1,phase:"4:強↑",count:327,liquid:171,delta5d:2.8,rsDelta5d:0.9},
+  {name:"エネルギー資源",rs21:57.48,rs63:64.63,rs126:71.20,er21:-2.0,er63:1.8,er126:2.5,pct80:5,pct60:8,b80pct:41.7,b60pct:66.7,phase:"1:弱↓",count:14,liquid:12,delta5d:-3.1,rsDelta5d:-1.8},
+  {name:"医薬品",rs21:30.77,rs63:30.04,rs126:28.16,er21:2.0,er63:0.5,er126:0.2,pct80:14,pct60:20,b80pct:21.9,b60pct:31.3,phase:"4:強↑",count:80,liquid:64,delta5d:3.5,rsDelta5d:1.4},
+  {name:"素材・化学",rs21:36.76,rs63:40.19,rs126:38.29,er21:0.3,er63:0.4,er126:0.3,pct80:63,pct60:82,b80pct:33.7,b60pct:43.9,phase:"2:失速",count:278,liquid:187,delta5d:-0.8,rsDelta5d:-0.3},
+  {name:"自動車・輸送機",rs21:39.71,rs63:39.42,rs126:39.69,er21:-0.2,er63:0.3,er126:0.4,pct80:25,pct60:30,b80pct:37.3,b60pct:44.8,phase:"3:改善",count:103,liquid:67,delta5d:1.5,rsDelta5d:0.6},
+  {name:"建設・資材",rs21:37.43,rs63:41.70,rs126:41.80,er21:-1.0,er63:0.2,er126:0.3,pct80:77,pct60:89,b80pct:46.1,b60pct:53.3,phase:"1:弱↓",count:280,liquid:167,delta5d:-1.9,rsDelta5d:-0.7},
+  {name:"電機・精密",rs21:40.63,rs63:44.52,rs126:44.17,er21:0.5,er63:0.6,er126:0.5,pct80:72,pct60:104,b80pct:32.9,b60pct:47.5,phase:"2:失速",count:280,liquid:219,delta5d:-0.4,rsDelta5d:0.2},
+  {name:"その他",rs21:21.24,rs63:19.34,rs126:21.24,er21:-0.5,er63:-0.3,er126:0.1,pct80:47,pct60:72,b80pct:21.7,b60pct:33.2,phase:"3:改善",count:439,liquid:217,delta5d:0.9,rsDelta5d:0.4},
+  {name:"金融（除く銀行）",rs21:30.87,rs63:35.18,rs126:32.45,er21:0.6,er63:0.8,er126:0.5,pct80:11,pct60:21,b80pct:17.2,b60pct:32.8,phase:"2:失速",count:87,liquid:64,delta5d:-2.1,rsDelta5d:-0.9},
+  {name:"食品",rs21:29.78,rs63:23.81,rs126:19.84,er21:2.5,er63:0.4,er126:-0.1,pct80:15,pct60:26,b80pct:18.3,b60pct:31.7,phase:"4:強↑",count:134,liquid:82,delta5d:4.7,rsDelta5d:2.0},
+  {name:"運輸・物流",rs21:30.59,rs63:29.07,rs126:26.74,er21:0.8,er63:0.3,er126:0.1,pct80:15,pct60:23,b80pct:25.4,b60pct:39.0,phase:"4:強↑",count:104,liquid:59,delta5d:1.2,rsDelta5d:0.3},
+  {name:"情報通信・サービスその他",rs21:15.09,rs63:14.14,rs126:12.67,er21:0.2,er63:-0.1,er126:-0.3,pct80:73,pct60:103,b80pct:12.8,b60pct:18.1,phase:"4:強↑",count:1235,liquid:569,delta5d:0.5,rsDelta5d:0.1},
+];
+const phaseVal=p=>p.startsWith("4")?4:p.startsWith("3")?3:p.startsWith("2")?2:1;
+SECTORS_RAW.sort((a,b)=>{const dp=phaseVal(b.phase)-phaseVal(a.phase);return dp!==0?dp:b.rs21-a.rs21;});
+let SECTORS=SECTORS_RAW;
+SECTORS.forEach((s,i)=>s.rank=i+1);
+let EXPOSURE = calcExposure(INDICES, BREADTH, SECTORS);
+
+// Fake history generator (fallback)
+function genH(current,trend,vol){const a=[];for(let i=0;i<21;i++){const t=i/20;a.push(Math.max(0,current-trend*(20-i)+(Math.random()-0.5)*vol*(1-t*0.5)));}a[20]=current;return a;}
+let SH={};
+SECTORS.forEach(s=>{
+  const t=(s.phase.startsWith("4")?0.8:s.phase.startsWith("3")?0.3:s.phase.startsWith("2")?-0.3:-0.6);
+  SH[s.name]={rs21:genH(s.rs21,t,3),er21:genH(s.er21||0,t*0.5,2),rs63:genH(s.rs63,0.2,2),
+    pct60:genH(s.b60pct||30,2,4),pct80:genH(s.b80pct||15,1.5,3)};
+});
+
+const SCREEN_ORDER=["Momentum","Alert","EMA21","VCS","Movers","Quiet","Growth"];
+const SCREEN_META = {
+  Momentum:{label:"St_Momentum",icon:"⚡",color:"var(--pink)",desc:"RS21Δ上位30, RS21≥Top, ADR≥2.5%"},
+  Alert:   {label:"St_Alert",icon:"⚑",color:"var(--teal)",desc:"ピボットブレイクアウト検出"},
+  EMA21:   {label:"St_21EMA",icon:"◎",color:"var(--purple)",desc:"Core Stats条件適合"},
+  VCS:     {label:"St_VCS",icon:"◈",color:"var(--cyan)",desc:"VCS≥60, RS21>60, Vol≥200K"},
+  Movers:  {label:"St_Movers",icon:"↗",color:"var(--green)",desc:"Chg≥2%, RV≥1.5, RS21≥70, MCap≥100億"},
+  Quiet:   {label:"St_Quiet",icon:"◇",color:"var(--blue)",desc:"Range%(30d)≤18%, RS21≥60, RV<1.5, ボラ収縮"},
+  Growth:  {label:"St_Growth",icon:"★",color:"var(--amber)",desc:"EPS≥20%, Sales≥20%, RS21≥60"},
+};
+
+let ALL_STOCKS = [
+  {screen:"VCS",t:"247A",name:"Ａｉロボティクス",sector:"素材・化学",price:1525,rs21:95.2,rs63:47.6,adr:4.4,vcs:89.1,chg:4.24,rv:1.2,atr21e:1.71,atr50s:1.56,e21p:10.3,stockER:5.2,rsRoc5d:3.1,rsDelta5d:2.5,avgVal:1.2},
+  {screen:"VCS",t:"4592",name:"サンバイオ",sector:"医薬品",price:2044,rs21:81.0,rs63:60.0,adr:5.2,vcs:76.5,chg:-4.58,rv:1.2,atr21e:1.06,atr50s:2.02,e21p:10.0,stockER:3.1,rsRoc5d:1.5,rsDelta5d:0.8,avgVal:2.5},
+  {screen:"VCS",t:"8783",name:"ａｂｃ",sector:"金融（除く銀行）",price:262,rs21:61.9,rs63:45.0,adr:3.9,vcs:67.6,chg:8.26,rv:2.6,atr21e:1.55,atr50s:1.49,e21p:8.7,stockER:2.8,rsRoc5d:4.2,rsDelta5d:1.9,avgVal:0.5},
+  {screen:"VCS",t:"6927",name:"ヘリオス テクノ",sector:"電機・精密",price:1280,rs21:100.0,rs63:88.1,adr:2.3,vcs:64.2,chg:0.63,rv:0.8,atr21e:0.42,atr50s:2.85,e21p:3.1,stockER:4.5,rsRoc5d:2.0,rsDelta5d:1.2,avgVal:0.8},
+  {screen:"Alert",t:"6758",name:"ソニーグループ",sector:"電機・精密",price:3850,rs21:78.5,rs63:70.0,adr:3.8,pivot:3720,chg:1.2,rv:1.45,atr21e:0.35,atr50s:1.80,e21p:2.9,stockER:1.8,rsRoc5d:0.9,rsDelta5d:0.5,avgVal:85.0},
+  {screen:"Alert",t:"7203",name:"トヨタ自動車",sector:"自動車・輸送機",price:3200,rs21:71.4,rs63:65.0,adr:2.9,pivot:3050,chg:0.8,rv:1.1,atr21e:0.22,atr50s:1.45,e21p:2.1,stockER:1.2,rsRoc5d:0.5,rsDelta5d:0.3,avgVal:120.0},
+  {screen:"Movers",t:"6072",name:"地盤ネットHD",sector:"情報通信・サービスその他",price:648,rs21:100.0,rs63:52.4,adr:3.4,chg:97.56,rv:3.5,atr21e:5.2,atr50s:8.1,e21p:42.0,stockER:8.5,rsRoc5d:12.0,rsDelta5d:8.0,avgVal:0.3},
+  {screen:"Movers",t:"141A",name:"トライアルHD",sector:"小売",price:3890,rs21:100.0,rs63:90.5,adr:3.8,chg:21.94,rv:4.2,atr21e:3.8,atr50s:5.2,e21p:18.5,stockER:6.2,rsRoc5d:5.5,rsDelta5d:3.8,avgVal:5.2},
+  {screen:"Movers",t:"8705",name:"日産証券グループ",sector:"金融（除く銀行）",price:269,rs21:100.0,rs63:75.0,adr:4.2,chg:21.72,rv:5.1,atr21e:4.1,atr50s:6.3,e21p:22.0,stockER:7.1,rsRoc5d:6.8,rsDelta5d:4.5,avgVal:0.4},
+  {screen:"Quiet",t:"1435",name:"ｒｏｂｏｔ ｈｏｍｅ",sector:"不動産",price:221,rs21:100.0,rs63:81.0,adr:5.4,chg:9.41,rv:20.6,atr21e:3.2,atr50s:4.8,e21p:15.2,stockER:5.8,rsRoc5d:4.0,rsDelta5d:2.5,avgVal:0.2},
+  {screen:"Quiet",t:"2764",name:"ひらまつ",sector:"小売",price:149,rs21:100.0,rs63:85.0,adr:4.3,chg:13.74,rv:19.5,atr21e:4.5,atr50s:6.2,e21p:20.1,stockER:6.0,rsRoc5d:5.2,rsDelta5d:3.1,avgVal:0.1},
+  {screen:"Growth",t:"6840",name:"ＡＫＩＢＡホールディングス",sector:"電機・精密",price:591,rs21:95.2,rs63:80.0,adr:6.9,eps:633.3,sales:38.2,fcstEps:45.0,fcstSales:22.0,atr21e:2.1,atr50s:3.5,e21p:12.5,stockER:4.8,rsRoc5d:3.5,rsDelta5d:2.0,avgVal:0.6},
+  {screen:"Growth",t:"6927",name:"ヘリオス テクノ",sector:"電機・精密",price:1280,rs21:100.0,rs63:88.1,adr:2.3,eps:301.2,sales:74.1,fcstEps:55.0,fcstSales:30.0,atr21e:0.42,atr50s:2.85,e21p:3.1,stockER:4.5,rsRoc5d:2.0,rsDelta5d:1.2,avgVal:0.8},
+  {screen:"Growth",t:"6834",name:"精工技研",sector:"電機・精密",price:19010,rs21:100.0,rs63:85.7,adr:6.3,eps:196.9,sales:51.4,fcstEps:null,fcstSales:null,atr21e:1.85,atr50s:3.20,e21p:9.8,stockER:5.5,rsRoc5d:3.8,rsDelta5d:2.2,avgVal:1.5},
+  {screen:"EMA21",t:"5741",name:"ＵＡＣＪ",sector:"鉄鋼・非鉄",price:2690,rs21:81.0,rs63:70.0,adr:5.0,atr21e:0.48,atr50s:1.85,e21p:7.4,stockER:2.5,rsRoc5d:1.8,rsDelta5d:0.9,avgVal:3.2},
+  {screen:"EMA21",t:"3105",name:"日清紡HD",sector:"電機・精密",price:1567.5,rs21:71.4,rs63:60.0,adr:3.7,atr21e:0.59,atr50s:2.21,e21p:5.0,stockER:1.5,rsRoc5d:0.8,rsDelta5d:0.4,avgVal:1.8},
+  {screen:"Momentum",t:"1435",name:"ｒｏｂｏｔ ｈｏｍｅ",sector:"不動産",price:221,rs21:100.0,rs63:81.0,rs21d:100.0,adr:5.4,atr21e:3.2,atr50s:4.8,e21p:15.2,stockER:5.8,rsRoc5d:4.0,rsDelta5d:2.5,avgVal:0.2},
+  {screen:"Momentum",t:"2501",name:"サッポロHD",sector:"食品",price:1880.5,rs21:100.0,rs63:95.2,rs21d:100.0,adr:3.1,atr21e:0.85,atr50s:2.90,e21p:6.2,stockER:3.8,rsRoc5d:2.5,rsDelta5d:1.5,avgVal:8.0},
+  {screen:"Momentum",t:"141A",name:"トライアルHD",sector:"小売",price:3890,rs21:100.0,rs63:90.5,rs21d:95.2,adr:3.8,atr21e:3.8,atr50s:5.2,e21p:18.5,stockER:6.2,rsRoc5d:5.5,rsDelta5d:3.8,avgVal:5.2},
+  {screen:"Momentum",t:"6834",name:"精工技研",sector:"電機・精密",price:19010,rs21:100.0,rs63:85.7,rs21d:95.2,adr:6.3,atr21e:1.85,atr50s:3.20,e21p:9.8,stockER:5.5,rsRoc5d:3.8,rsDelta5d:2.2,avgVal:1.5},
+];
+
+// ============================================================
+// UTILITY
+// ============================================================
+const fmt=(v,d=1)=>v==null?"—":Number(v).toFixed(d);
+const fmtP=v=>v==null?"—":v>=1000?Math.round(v).toLocaleString():Number(v).toFixed(1);
+const pct=v=>v==null?"—":(v>0?"+":"")+fmt(v)+"%";
+const rsC=v=>v>=80?"var(--blue)":v>=60?"var(--green)":v>=40?"var(--amber)":"var(--red)";
+const chgC=v=>v>0?"var(--green)":v<0?"var(--red)":"var(--text-muted)";
+const phC=p=>p.startsWith("4")?"var(--green)":p.startsWith("3")?"var(--blue)":p.startsWith("2")?"var(--amber)":"var(--red)";
+// v2.1: ER color — positive=green, negative=red, threshold at 0
+const erC=v=>v>0?"var(--green)":v<0?"var(--red)":"var(--text-muted)";
+const adr_ok=v=>v>=2.5&&v<=7;const r21_ok=v=>v>=-0.3&&v<=0.8;const e21_ok=v=>v<=4;const r50_ok=v=>v<=2.5;
+const entryScore=s=>{let n=0;if(adr_ok(s.adr))n++;if(s.atr21e!=null&&r21_ok(s.atr21e))n++;if(s.e21p!=null&&e21_ok(s.e21p))n++;if(s.atr50s!=null&&r50_ok(s.atr50s))n++;return n;};
+const bandPct=(n,liq)=>liq>0?Math.round(n/liq*100):0;
+const sparkDelta=(arr,cur)=>{if(!arr||arr.length<2)return null;const first=arr[0],last=cur!=null?cur:arr[arr.length-1];const d=last-first;return{first,last,d,pct:first!==0?d/first*100:0};};
+const DeltaBadge=({d,unit=""})=>{if(!d)return null;const v=d.d;const c=v>0?"var(--green)":v<0?"var(--red)":"var(--text-muted)";
+  return React.createElement("span",{style:{fontSize:10,fontFamily:"var(--font-mono)",fontWeight:600,color:c,marginLeft:4}},(v>0?"+":"")+fmt(v,1)+unit);};
+
+function buildTM(stocks){const m={};stocks.forEach(s=>{if(!m[s.t])m[s.t]={screens:new Set()};m[s.t].screens.add(s.screen);});
+  Object.values(m).forEach(v=>{v.screens=[...v.screens];v.count=v.screens.length;});return m;}
+let TM=buildTM(ALL_STOCKS);
+
+// ============================================================
+// LIVE DATA: Fetch & Apply (v2.1)
+// ============================================================
+function fetchDashboard(date) {
+  if (!API_URL || API_URL.includes("YOUR_")) {
+    return Promise.reject(new Error("API_URL not configured"));
+  }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT);
+  const url = date ? API_URL + "?action=dashboard&date=" + date : API_URL + "?action=dashboard";
+  return fetch(url, { signal: ctrl.signal })
+    .then(r => { clearTimeout(timer); return r.json(); })
+    .then(api => {
+      if (!api.ok) throw new Error(api.error || "API error");
+      return api;
+    });
+}
+
+function fetchAvailableDates() {
+  if (!API_URL || API_URL.includes("YOUR_")) {
+    return Promise.resolve({ available_dates: [], screen_dates: {} });
+  }
+  return fetch(API_URL + "?action=history_dates")
+    .then(r => r.json())
+    .catch(() => ({ available_dates: [], screen_dates: {} }));
+}
+
+function applyLiveData(api) {
+  if (api.indices && api.indices.length > 0) {
+    INDICES = api.indices;
+    if (api.indices[0].date) MARKET_DATE = api.indices[0].date;
+  }
+
+  if (api.breadth) {
+    BREADTH = api.breadth;
+    if (api.breadth.date) MARKET_DATE = api.breadth.date;
+  }
+
+  if (api.sectors && api.sectors.length > 0) {
+    SECTORS_RAW = api.sectors;
+    // v2.1: Sort by Phase then rs21 (index RS) — rs21w removed
+    SECTORS_RAW.sort((a,b) => {
+      const dp = phaseVal(b.phase) - phaseVal(a.phase);
+      return dp !== 0 ? dp : b.rs21 - a.rs21;
+    });
+    SECTORS = SECTORS_RAW;
+    SECTORS.forEach((s, i) => s.rank = i + 1);
+
+    // v2.1: Rebuild SH — replace rs21w with er21
+    SH = {};
+    SECTORS.forEach(s => {
+      const h = s.rsHist;
+      if (h && h.rs21 && h.rs21.length >= 5) {
+        SH[s.name] = {
+          rs21: h.rs21,
+          er21: h.er21 && h.er21.length >= 5 ? h.er21 : genH(s.er21 || 0, 0.3, 2),
+          rs63: h.rs63 && h.rs63.length >= 5 ? h.rs63 : genH(s.rs63, 0.2, 2),
+          pct60: h.pct60 && h.pct60.length >= 5 ? h.pct60 : genH(s.liquid > 0 ? s.pct60 / s.liquid * 100 : 30, 1.5, 4),
+          pct80: h.pct80 && h.pct80.length >= 5 ? h.pct80 : genH(s.liquid > 0 ? s.pct80 / s.liquid * 100 : 15, 1, 3),
+        };
+      } else {
+        const t = s.phase.startsWith("4") ? 0.8 : s.phase.startsWith("3") ? 0.3 : s.phase.startsWith("2") ? -0.3 : -0.6;
+        const p80r = s.b80pct || (s.liquid > 0 ? s.pct80 / s.liquid * 100 : 0);
+        const p60r = s.b60pct || (s.liquid > 0 ? s.pct60 / s.liquid * 100 : 0);
+        SH[s.name] = {
+          rs21: genH(s.rs21, t, 3),
+          er21: genH(s.er21 || 0, t * 0.5, 2),
+          rs63: genH(s.rs63, 0.2, 2),
+          pct60: genH(Math.max(5, p60r), 2, 4),
+          pct80: genH(Math.max(2, p80r), 1.5, 3),
+        };
+      }
+    });
+  }
+
+  EXPOSURE = calcExposure(INDICES, BREADTH, SECTORS);
+
+  if (api.stocks && api.stocks.length > 0) {
+    ALL_STOCKS = api.stocks;
+    TM = buildTM(ALL_STOCKS);
+  }
+
+  DATA_MODE = "LIVE";
+}
+
+function applyHistoricalData(api) {
+  if (api.breadth) {
+    BREADTH = api.breadth;
+    MARKET_DATE = api.date || api.breadth.date || MARKET_DATE;
+  } else {
+    BREADTH = { advPct: 0, advances: 0, declines: 0, toraku25: 0, toraku10: 0, newHigh: 0, newLow: 0, hist: [] };
+    MARKET_DATE = api.date || MARKET_DATE;
+  }
+
+  if (api.sectors && api.sectors.length > 0) {
+    SECTORS_RAW = api.sectors;
+    SECTORS_RAW.sort((a,b) => {
+      const dp = phaseVal(b.phase) - phaseVal(a.phase);
+      return dp !== 0 ? dp : b.rs21 - a.rs21;
+    });
+    SECTORS = SECTORS_RAW;
+    SECTORS.forEach((s, i) => s.rank = i + 1);
+
+    SH = {};
+    SECTORS.forEach(s => {
+      const h = s.rsHist;
+      if (h && h.rs21 && h.rs21.length >= 5) {
+        SH[s.name] = {
+          rs21: h.rs21,
+          er21: h.er21 && h.er21.length >= 5 ? h.er21 : genH(s.er21 || 0, 0.3, 2),
+          rs63: h.rs63 && h.rs63.length >= 5 ? h.rs63 : genH(s.rs63, 0.2, 2),
+          pct60: h.pct60 && h.pct60.length >= 5 ? h.pct60 : genH(s.liquid > 0 ? s.pct60 / s.liquid * 100 : 30, 1.5, 4),
+          pct80: h.pct80 && h.pct80.length >= 5 ? h.pct80 : genH(s.liquid > 0 ? s.pct80 / s.liquid * 100 : 15, 1, 3),
+        };
+      } else {
+        const t = s.phase.startsWith("4") ? 0.8 : s.phase.startsWith("3") ? 0.3 : s.phase.startsWith("2") ? -0.3 : -0.6;
+        const p80r = s.b80pct || (s.liquid > 0 ? s.pct80 / s.liquid * 100 : 0);
+        const p60r = s.b60pct || (s.liquid > 0 ? s.pct60 / s.liquid * 100 : 0);
+        SH[s.name] = {
+          rs21: genH(s.rs21, t, 3),
+          er21: genH(s.er21 || 0, t * 0.5, 2),
+          rs63: genH(s.rs63, 0.2, 2),
+          pct60: genH(Math.max(5, p60r), 2, 4),
+          pct80: genH(Math.max(2, p80r), 1.5, 3),
+        };
+      }
+    });
+  }
+
+  EXPOSURE = calcExposure(INDICES, BREADTH, SECTORS);
+
+  if (api.stocks && api.stocks.length > 0) {
+    ALL_STOCKS = api.stocks;
+    TM = buildTM(ALL_STOCKS);
+  } else {
+    ALL_STOCKS = [];
+    TM = {};
+  }
+
+  DATA_MODE = "HISTORY";
+}
+
+// ============================================================
+// BASE COMPONENTS
+// ============================================================
+function Spark({data,w=90,h=22,color="var(--green)",label}){
+  if(!data||data.length<2)return null;
+  const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+  const pts=data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v-mn)/rng)*h}`).join(" ");
+  return React.createElement("div",{style:{display:"inline-flex",flexDirection:"column",alignItems:"flex-start"}},
+    label&&React.createElement("span",{style:{fontSize:9,color:"var(--text-muted)",marginBottom:2}},label),
+    React.createElement("svg",{width:w,height:h,style:{display:"block",overflow:"visible"}},
+      React.createElement("polyline",{points:pts,fill:"none",stroke:color,strokeWidth:1.5,strokeLinejoin:"round"}),
+      React.createElement("circle",{cx:w,cy:h-((data[data.length-1]-mn)/rng)*h,r:2,fill:color})),
+    React.createElement("span",{style:{fontSize:10,fontFamily:"var(--font-mono)",fontWeight:600,color,marginTop:1}},fmt(data[data.length-1])));
+}
+
+const bandC=v=>v>=40?"var(--blue)":v>=25?"var(--green)":v>=15?"var(--amber)":"var(--red)";
+function MiniBar({data,h=54,color="var(--green)",max:fixedMax,unit="",colorByVal,colorByBand,colorByER,refLine}){
+  const cRef=useRef(null);const [cW,setCW]=useState(0);const [sel,setSel]=useState(null);
+  useEffect(()=>{if(cRef.current){const w=cRef.current.offsetWidth;if(w>0&&w!==cW)setCW(w);}});
+  if(!data||data.length<2)return null;
+  const mn=colorByER?Math.min(...data,0):0;
+  const mx=fixedMax||(colorByER?Math.max(...data,0.1):Math.max(...data,1));
+  const range=mx-mn||1;
+  const w=cW||300;const gap=1;const bw=Math.max(4,Math.floor((w-gap*(data.length-1))/data.length));
+  const totalW=bw*data.length+gap*(data.length-1);
+  const barColor=v=>colorByVal?rsC(v):colorByBand?bandC(v):colorByER?erC(v):color;
+  const zeroY=colorByER?(1-(0-mn)/range)*h:null;
+  const refY=refLine!=null&&!colorByER&&mx>0?(1-refLine/mx)*h:null;
+  return React.createElement("div",{ref:cRef,style:{position:"relative",width:"100%",minHeight:h+20}},
+    sel!=null&&React.createElement("div",{style:{height:16,marginBottom:2,display:"flex",alignItems:"center"}},
+      React.createElement("span",{style:{fontSize:10,fontFamily:"var(--font-mono)",fontWeight:700,color:barColor(data[sel]),
+        background:"var(--bg-card)",padding:"0 4px",borderRadius:3,border:"1px solid var(--border)"}},
+        fmt(data[sel],1)+unit)),
+    cW>0&&React.createElement("svg",{width:totalW,height:h,style:{display:"block",cursor:"pointer"},onClick:e=>{
+      const rect=e.currentTarget.getBoundingClientRect();const x=e.clientX-rect.left;
+      const idx=Math.min(data.length-1,Math.max(0,Math.floor(x/(bw+gap))));setSel(sel===idx?null:idx);}},
+      refY!=null&&React.createElement("line",{x1:0,y1:refY,x2:totalW,y2:refY,stroke:"var(--text-muted)",strokeWidth:0.5,strokeDasharray:"3,3",opacity:0.4}),
+      refY!=null&&React.createElement("text",{x:totalW-2,y:refY-2,fill:"var(--text-muted)",fontSize:7,fontFamily:"var(--font-mono)",textAnchor:"end"},refLine),
+      zeroY!=null&&React.createElement("line",{x1:0,y1:zeroY,x2:totalW,y2:zeroY,stroke:"var(--text-muted)",strokeWidth:0.5,strokeDasharray:"2,2",opacity:0.5}),
+      data.map((v,i)=>{
+        const isLast=i===data.length-1;const isSel=sel===i;
+        const op=isSel||isLast?1:0.35+0.5*(i/data.length);
+        if(colorByER){
+          const y0=zeroY;
+          const barH=Math.abs((v/range)*h);
+          const y=v>=0?y0-barH:y0;
+          return React.createElement("rect",{key:i,x:i*(bw+gap),y:Math.max(0,y),width:bw,height:Math.min(barH,h),rx:1,
+            fill:barColor(v),opacity:op,stroke:isSel?"var(--text-primary)":"none",strokeWidth:isSel?1:0});
+        }
+        const bh=Math.max(1,(v/mx)*h);
+        return React.createElement("rect",{key:i,x:i*(bw+gap),y:h-bh,width:bw,height:bh,rx:1,
+          fill:barColor(v),opacity:op,stroke:isSel?"var(--text-primary)":"none",strokeWidth:isSel?1:0});})),
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:2,fontSize:9,fontFamily:"var(--font-mono)",color:"var(--text-muted)"}},
+      React.createElement("span",null,fmt(data[0],1)+unit),
+      React.createElement("span",{style:{fontWeight:700,color:barColor(data[data.length-1])}},fmt(data[data.length-1],1)+unit)));
+}
+
+function Gauge({score,label,size=110}){
+  const r=size/2-8,cH=Math.PI*r,off=cH*(1-Math.min(100,score)/100);
+  const c=score>=80?"var(--green)":score>=60?"#66bb6a":score>=40?"var(--amber)":score>=20?"#ef6c00":"var(--red)";
+  return React.createElement("svg",{width:size,height:size/2+14,viewBox:`0 0 ${size} ${size/2+14}`},
+    React.createElement("path",{d:`M 8,${size/2+4} A ${r},${r} 0 0 1 ${size-8},${size/2+4}`,fill:"none",stroke:"var(--border)",strokeWidth:5,strokeLinecap:"round"}),
+    React.createElement("path",{d:`M 8,${size/2+4} A ${r},${r} 0 0 1 ${size-8},${size/2+4}`,fill:"none",stroke:c,strokeWidth:5,strokeLinecap:"round",strokeDasharray:cH,strokeDashoffset:off}),
+    React.createElement("text",{x:size/2,y:size/2-2,textAnchor:"middle",style:{fontSize:20,fontWeight:700,fill:"var(--text-primary)",fontFamily:"var(--font-mono)"}},Math.round(score)),
+    React.createElement("text",{x:size/2,y:size/2+12,textAnchor:"middle",style:{fontSize:8,fontWeight:600,fill:c,letterSpacing:"0.06em"}},label));
+}
+
+function Card({children,style={}}){return React.createElement("div",{style:{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",...style}},children);}
+function SectionTitle({icon,title,sub}){
+  return React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--border)"}},
+    React.createElement("span",{style:{fontSize:15}},icon),
+    React.createElement("span",{style:{fontSize:17,fontWeight:700}},title),
+    sub&&React.createElement("span",{style:{fontSize:12,color:"var(--text-secondary)",marginLeft:4}},sub));}
+function DupBadge({ticker}){const info=TM[ticker];if(!info||info.count<=1)return null;
+  return React.createElement("span",{title:info.screens.map(s=>SCREEN_META[s]?.label).join("+"),style:{
+    display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:17,height:17,borderRadius:9,
+    fontSize:9,fontWeight:700,padding:"0 4px",background:"var(--amber-bg)",color:"var(--amber)",border:"1px solid var(--amber)",marginLeft:4,cursor:"help"}},info.count);}
+function EntryCell({val,ok,unit=""}){if(val==null)return React.createElement("td",{style:tdS()},React.createElement("span",{style:{color:"var(--text-muted)"}},"—"));
+  return React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:12,fontWeight:600,color:ok(val)?"var(--green)":"var(--text-muted)"}},fmt(val)+unit));}
+function ScoreBadge({stock}){const sc=entryScore(stock);
+  return React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:700,fontSize:12,padding:"1px 6px",borderRadius:3,
+    background:sc>=3?"var(--green-bg)":sc>=2?"var(--amber-bg)":"transparent",color:sc>=3?"var(--green)":sc>=2?"var(--amber)":"var(--text-muted)"}},sc+"/4");}
+
+const thS=(x={})=>({padding:"8px 8px",textAlign:"center",fontSize:10,fontWeight:700,color:"var(--text-muted)",letterSpacing:"0.03em",borderBottom:"2px solid var(--border)",whiteSpace:"nowrap",...x});
+const tdS=()=>({padding:"7px 8px",textAlign:"center",borderBottom:"1px solid var(--border)"});
+
+// ============================================================
+// SECTION 1: MARKET CONDITION
+// ============================================================
+function MarketSection({isHistory}){
+  return React.createElement("section",{id:"market",style:{marginBottom:28}},
+    React.createElement(SectionTitle,{icon:"🌡️",title:"Market Condition"}),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 280px",gap:10,marginBottom:10}},
+      !isHistory && React.createElement(Card,{style:{padding:"10px 14px",overflow:"auto"}},
+        React.createElement("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:12}},
+          React.createElement("thead",null,
+            React.createElement("tr",{style:{background:"var(--bg-elevated)"}},
+              React.createElement("th",{style:thS({textAlign:"left"})},"指数"),
+              React.createElement("th",{style:thS()},"値"),
+              React.createElement("th",{style:thS()},"1W%"),
+              React.createElement("th",{style:thS()},"1M%"),
+              React.createElement("th",{style:thS()},"YTD"),
+              React.createElement("th",{style:thS()},"1Y%"),
+              React.createElement("th",{style:thS()},"52WH%"),
+              React.createElement("th",{style:thS()},"Dist10"),
+              React.createElement("th",{style:thS()},"Dist21"),
+              React.createElement("th",{style:thS()},"Dist50"),
+              React.createElement("th",{style:thS()},"EMA"))),
+          React.createElement("tbody",null,
+            INDICES.map(idx=>
+              React.createElement("tr",{key:idx.name,className:"stock-row"},
+                React.createElement("td",{style:{...tdS(),textAlign:"left",fontWeight:700,fontSize:12}},idx.name),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:700}},fmtP(idx.val))),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:chgC(idx.chg1w)}},pct(idx.chg1w))),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:chgC(idx.chg1m)}},pct(idx.chg1m))),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:chgC(idx.chgYtd)}},pct(idx.chgYtd))),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:chgC(idx.chg1y)}},pct(idx.chg1y))),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",color:"var(--text-muted)"}},fmt(idx.pct52wh)+"%")),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:600,color:idx.dist10>0?"var(--green)":"var(--red)"}},fmt(idx.dist10)+"%")),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:600,color:idx.dist21>0?"var(--green)":"var(--red)"}},fmt(idx.dist21)+"%")),
+                React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:600,color:idx.dist50>0?"var(--green)":"var(--red)"}},fmt(idx.dist50)+"%")),
+                React.createElement("td",{style:tdS()},
+                  React.createElement("span",{style:{fontSize:10,fontWeight:600,padding:"2px 6px",borderRadius:3,
+                    background:idx.emaPos==="above"?"var(--green-bg)":idx.emaPos==="inside"?"var(--amber-bg)":"var(--red-bg)",
+                    color:idx.emaPos==="above"?"var(--green)":idx.emaPos==="inside"?"var(--amber)":"var(--red)"}},idx.emaPos))))))),
+      isHistory && React.createElement(Card,{style:{padding:"16px",display:"flex",alignItems:"center",justifyContent:"center",minHeight:80}},
+        React.createElement("span",{style:{fontSize:12,color:"var(--text-muted)"}},"📅 指数スコアカードは履歴モードでは非表示です")),
+      React.createElement(Card,{style:{padding:"14px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+        React.createElement(Gauge,{score:EXPOSURE.score,label:EXPOSURE.label}),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginTop:6}},"Exposure Score"),
+        React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"center",marginTop:6}},
+          EXPOSURE.components.map(c=>
+            React.createElement("span",{key:c.name,style:{fontSize:9,fontFamily:"var(--font-mono)",padding:"1px 4px",borderRadius:2,
+              background:c.pts>=c.max*0.7?"var(--green-bg)":c.pts>=c.max*0.4?"var(--amber-bg)":"var(--red-bg)",
+              color:c.pts>=c.max*0.7?"var(--green)":c.pts>=c.max*0.4?"var(--amber)":"var(--red)"}},
+              c.name.slice(0,6)+":"+fmt(c.pts,0)+"/"+c.max))))),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}},
+      React.createElement(Card,{style:{padding:"10px 12px"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text-secondary)",fontWeight:600,marginBottom:4}},"騰落レシオ (25日)"),
+        React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:6}},
+          React.createElement("span",{style:{fontSize:24,fontWeight:700,fontFamily:"var(--font-mono)",color:BREADTH.toraku25>=120?"var(--red)":BREADTH.toraku25>=80?"var(--green)":"var(--amber)"}},fmt(BREADTH.toraku25)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text-muted)"}},"10日:"+fmt(BREADTH.toraku10))),
+        BREADTH.hist&&BREADTH.hist.length>1&&React.createElement("div",{style:{marginTop:5}},React.createElement(Spark,{data:BREADTH.hist.map(h=>h.t25),w:100,h:24,color:"var(--green)"}))),
+      React.createElement(Card,{style:{padding:"10px 12px"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text-secondary)",fontWeight:600,marginBottom:4}},"値上がり率"),
+        React.createElement("div",{style:{fontSize:24,fontWeight:700,fontFamily:"var(--font-mono)",color:BREADTH.advPct>=50?"var(--green)":"var(--red)"}},fmt(BREADTH.advPct)+"%"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text-muted)",marginTop:3}},"↑"+BREADTH.advances+" ↓"+BREADTH.declines),
+        React.createElement("div",{style:{display:"flex",height:5,borderRadius:2,overflow:"hidden",marginTop:4,background:"var(--bg-elevated)"}},
+          React.createElement("div",{style:{width:BREADTH.advPct+"%",background:"var(--green)"}}),React.createElement("div",{style:{flex:1,background:"var(--red)"}}))),
+      React.createElement(Card,{style:{padding:"10px 12px"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text-secondary)",fontWeight:600,marginBottom:4}},"新高値 / 新安値"),
+        React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:4}},
+          React.createElement("span",{style:{fontSize:24,fontWeight:700,fontFamily:"var(--font-mono)",color:"var(--green)"}},BREADTH.newHigh),
+          React.createElement("span",{style:{fontSize:13,color:"var(--text-muted)"}}," / "),
+          React.createElement("span",{style:{fontSize:18,fontWeight:600,fontFamily:"var(--font-mono)",color:"var(--red)"}},BREADTH.newLow)),
+        BREADTH.hist&&BREADTH.hist.length>1&&React.createElement("div",{style:{marginTop:5}},React.createElement(Spark,{data:BREADTH.hist.map(h=>h.nh),w:100,h:24,color:"var(--green)"}))),
+      React.createElement(Card,{style:{padding:"10px 12px"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text-secondary)",fontWeight:600,marginBottom:4}},"値上がり率推移"),
+        BREADTH.hist&&BREADTH.hist.length>1&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{marginTop:8}},React.createElement(Spark,{data:BREADTH.hist.map(h=>h.adv),w:100,h:28,color:"var(--blue)"})),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text-muted)",marginTop:4}},
+            React.createElement("span",null,BREADTH.hist[0]?.d||""),React.createElement("span",null,BREADTH.hist[BREADTH.hist.length-1]?.d||""))))));
+}
+
+// ============================================================
+// SECTION 2: SECTOR ROTATION (v2.1)
+// ============================================================
+function SectorSection({onSectorClick,activeSector}){
+  const [sortKey,setSortKey]=useState("rank");
+  const sorted=useMemo(()=>{
+    const arr=[...SECTORS];
+    if(sortKey==="rank")return arr;
+    if(sortKey==="phase"){return arr.sort((a,b)=>{const dp=phaseVal(b.phase)-phaseVal(a.phase);return dp!==0?dp:b.rs21-a.rs21;});}
+    if(sortKey==="b80pct")return arr.sort((a,b)=>(b.b80pct||bandPct(b.pct80,b.liquid))-(a.b80pct||bandPct(a.pct80,a.liquid)));
+    if(sortKey==="delta5d")return arr.sort((a,b)=>(b.delta5d||0)-(a.delta5d||0));
+    if(sortKey==="rsDelta5d")return arr.sort((a,b)=>(b.rsDelta5d||0)-(a.rsDelta5d||0));
+    if(sortKey==="er21")return arr.sort((a,b)=>(b.er21||0)-(a.er21||0));
+    return arr;
+  },[sortKey]);
+  const pD=useMemo(()=>{const d={"4:強↑":0,"3:改善":0,"2:失速":0,"1:弱↓":0};SECTORS.forEach(s=>d[s.phase]++);return d;},[]);
+
+  return React.createElement("section",{id:"sectors",style:{marginBottom:28}},
+    React.createElement(SectionTitle,{icon:"🏭",title:"Sector Rotation"}),
+    React.createElement(Card,{style:{marginBottom:12,padding:"8px 14px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text-secondary)",fontWeight:600}},"Phase"),
+      React.createElement("div",{style:{flex:1,display:"flex",height:7,borderRadius:4,overflow:"hidden",minWidth:100}},
+        [["4:強↑","var(--green)"],["3:改善","var(--blue)"],["2:失速","var(--amber)"],["1:弱↓","var(--red)"]].map(([ph,c])=>
+          React.createElement("div",{key:ph,title:ph+":"+pD[ph],style:{width:SECTORS.length>0?(pD[ph]/SECTORS.length*100)+"%":"25%",background:c}}))),
+      [["4:強↑","var(--green)"],["3:改善","var(--blue)"],["2:失速","var(--amber)"],["1:弱↓","var(--red)"]].map(([ph,c])=>
+        React.createElement("span",{key:ph,style:{fontSize:10,color:c,fontWeight:600}},ph.split(":")[1]+":"+pD[ph])),
+      React.createElement("span",{style:{fontSize:10,color:"var(--text-muted)",marginLeft:6}},"Sort:"),
+      // v2.1: sort buttons — RS21, Phase, ≥80%, ER_Δ5D, RS_Δ5D, ER21
+      ["rank","phase","b80pct","delta5d","rsDelta5d","er21"].map(k=>
+        React.createElement("button",{key:k,onClick:()=>setSortKey(k),style:{fontSize:9,padding:"2px 7px",borderRadius:3,border:"1px solid",fontWeight:600,
+          borderColor:sortKey===k?"var(--text-secondary)":"var(--border)",background:sortKey===k?"var(--bg-hover)":"transparent",
+          color:sortKey===k?"var(--text-primary)":"var(--text-muted)"}},{rank:"RS21",phase:"Phase",b80pct:"≥80%",delta5d:"ER_Δ5D",rsDelta5d:"RS_Δ5D",er21:"ER21"}[k]))),
+    React.createElement(SectorGrid,{sectors:sorted,activeSector,onSectorClick}));
+}
+
+function SectorGrid({sectors,activeSector,onSectorClick}){
+  const cols=7;const rows=[];
+  for(let i=0;i<sectors.length;i+=cols)rows.push(sectors.slice(i,i+cols));
+  const aRI=activeSector?rows.findIndex(r=>r.some(s=>s.name===activeSector)):-1;
+  const aSD=activeSector?SECTORS.find(s=>s.name===activeSector):null;
+  const els=[];
+  rows.forEach((row,ri)=>{
+    els.push(React.createElement("div",{key:"r-"+ri,style:{display:"grid",gridTemplateColumns:`repeat(${cols},1fr)`,gap:5}},
+      row.map(s=>{
+        const isA=activeSector===s.name;
+        const int=Math.min(1,Math.max(0,(s.rs21-10)/70));
+        const bg=s.rs21>=60?`rgba(34,197,94,${0.05+int*0.12})`:s.rs21>=40?`rgba(245,158,11,${0.03+int*0.08})`:`rgba(239,68,68,${0.03+(1-int)*0.08})`;
+        const b80display = s.b80pct != null ? Math.round(s.b80pct) : bandPct(s.pct80,s.liquid);
+        return React.createElement("div",{key:s.rank||s.name,className:"sector-tile",onClick:()=>onSectorClick(isA?null:s.name),
+          style:{background:bg,border:isA?"2px solid var(--blue)":"1px solid var(--border)",borderRadius:6,padding:"9px 11px",cursor:"pointer",borderLeftWidth:3,borderLeftColor:phC(s.phase)}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}},
+            React.createElement("div",{style:{minWidth:0}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:100}},s.name),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginTop:1}},"#"+s.rank+" · "+s.liquid+"/"+s.count)),
+            // v2.1: RS21 as primary, ER21 as sub-metric
+            React.createElement("div",{style:{textAlign:"right"}},
+              React.createElement("div",{style:{fontSize:18,fontWeight:700,fontFamily:"var(--font-mono)",color:rsC(s.rs21)}},fmt(s.rs21)),
+              React.createElement("div",{style:{fontSize:10,color:erC(s.er21||0),fontFamily:"var(--font-mono)"}},"ER:"+fmt(s.er21||0)))),
+          React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}},
+            React.createElement("span",{style:{padding:"1px 5px",borderRadius:3,fontWeight:600,fontSize:10,background:phC(s.phase)+"18",color:phC(s.phase)}},s.phase),
+            s.delta5d!=null&&React.createElement("span",{style:{fontSize:10,fontWeight:600,fontFamily:"var(--font-mono)",color:s.delta5d>0?"var(--green)":s.delta5d<0?"var(--red)":"var(--text-muted)"}},"ERΔ"+(s.delta5d>0?"+":"")+fmt(s.delta5d)),
+            s.rsDelta5d!=null&&React.createElement("span",{style:{fontSize:9,fontFamily:"var(--font-mono)",color:s.rsDelta5d>0?"var(--green)":s.rsDelta5d<0?"var(--red)":"var(--text-muted)"}},"RSΔ"+(s.rsDelta5d>0?"+":"")+fmt(s.rsDelta5d)),
+            React.createElement("span",{style:{marginLeft:"auto",fontSize:10,fontWeight:600,fontFamily:"var(--font-mono)",color:b80display>=20?"var(--blue)":"var(--text-muted)"}},"≥80:"+b80display+"%")));
+      })));
+    if(ri===aRI&&aSD){
+      const h=SH[aSD.name]||{rs21:[],er21:[],rs63:[],pct60:[],pct80:[]};
+      const b80display = aSD.b80pct != null ? Math.round(aSD.b80pct) : bandPct(aSD.pct80,aSD.liquid);
+      const b60display = aSD.b60pct != null ? Math.round(aSD.b60pct) : bandPct(aSD.pct60,aSD.liquid);
+      els.push(React.createElement("div",{key:"detail",className:"detail-panel"},
+        React.createElement(Card,{style:{padding:"14px 18px",borderColor:"var(--blue)",borderWidth:1}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
+              React.createElement("span",{style:{fontSize:15,fontWeight:700}},aSD.name),
+              React.createElement("span",{style:{padding:"2px 7px",borderRadius:4,fontSize:10,fontWeight:600,background:phC(aSD.phase)+"18",color:phC(aSD.phase)}},aSD.phase),
+              React.createElement("span",{style:{fontSize:11,color:"var(--text-muted)"}},"#"+aSD.rank+" · "+aSD.liquid+"銘柄(流動)")),
+            React.createElement("button",{onClick:()=>onSectorClick(null),style:{fontSize:10,padding:"3px 10px",borderRadius:4,border:"1px solid var(--border)",background:"var(--bg-elevated)",color:"var(--text-secondary)"}},"✕ 閉じる")),
+          // v2.1: RS metrics row + ER metrics row
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,auto) 1fr",gap:16,marginBottom:14}},
+            // RS21, RS63, RS126
+            [{l:"RS(21)",v:aSD.rs21,c:rsC(aSD.rs21),hd:h.rs21,cv:aSD.rs21},
+             {l:"RS(63)",v:aSD.rs63,c:rsC(aSD.rs63),hd:null,cv:null},
+             {l:"RS(126)",v:aSD.rs126,c:rsC(aSD.rs126),hd:null,cv:null}].map(({l,v,c,hd,cv})=>{
+              const delta=hd?sparkDelta(hd,cv):null;
+              return React.createElement("div",{key:l},React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginBottom:2}},l),
+                React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:4}},
+                  React.createElement("span",{style:{fontSize:22,fontWeight:700,fontFamily:"var(--font-mono)",color:c}},fmt(v)),
+                  delta&&React.createElement("span",{style:{fontSize:10,fontFamily:"var(--font-mono)",fontWeight:600,
+                    color:delta.d>0?"var(--green)":delta.d<0?"var(--red)":"var(--text-muted)"}},
+                    (delta.d>0?"▲":"▼")+fmt(Math.abs(delta.d),1))));}),
+            // Band metrics
+            React.createElement("div",{style:{display:"flex",gap:14,alignItems:"center"}},
+              React.createElement("div",null,React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginBottom:2}},"RS≥80 Band"),
+                React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:4}},
+                  React.createElement("span",{style:{fontSize:15,fontWeight:700,fontFamily:"var(--font-mono)",color:"var(--blue)"}},b80display+"% "),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text-muted)",fontWeight:500}},aSD.pct80+"/"+aSD.liquid),
+                  (()=>{const d=sparkDelta(h.pct80,b80display);return d?React.createElement("span",{style:{fontSize:10,fontFamily:"var(--font-mono)",fontWeight:600,marginLeft:4,
+                    color:d.d>0?"var(--green)":d.d<0?"var(--red)":"var(--text-muted)"}},
+                    (d.d>0?"▲":"▼")+fmt(Math.abs(d.d),0)+"%"):null;})())),
+              React.createElement("div",null,React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginBottom:2}},"RS≥60 Band"),
+                React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:4}},
+                  React.createElement("span",{style:{fontSize:15,fontWeight:700,fontFamily:"var(--font-mono)",color:"var(--green)"}},b60display+"% "),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text-muted)",fontWeight:500}},aSD.pct60+"/"+aSD.liquid),
+                  (()=>{const d=sparkDelta(h.pct60,b60display);return d?React.createElement("span",{style:{fontSize:10,fontFamily:"var(--font-mono)",fontWeight:600,marginLeft:4,
+                    color:d.d>0?"var(--green)":d.d<0?"var(--red)":"var(--text-muted)"}},
+                    (d.d>0?"▲":"▼")+fmt(Math.abs(d.d),0)+"%"):null;})())))),
+          // v2.1: ER metrics row
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,auto) 1fr",gap:16,marginBottom:14}},
+            [{l:"ER(21)",v:aSD.er21},{l:"ER(63)",v:aSD.er63},{l:"ER(126)",v:aSD.er126}].map(({l,v})=>
+              React.createElement("div",{key:l},React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginBottom:2}},l),
+                React.createElement("span",{style:{fontSize:16,fontWeight:700,fontFamily:"var(--font-mono)",color:erC(v||0)}},(v>0?"+":"")+fmt(v||0)))),
+            React.createElement("div",{style:{display:"flex",gap:14,alignItems:"center"}},
+              React.createElement("div",null,React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginBottom:2}},"ER_Δ5D"),
+                React.createElement("span",{style:{fontSize:15,fontWeight:700,fontFamily:"var(--font-mono)",color:erC(aSD.delta5d||0)}},(aSD.delta5d>0?"+":"")+fmt(aSD.delta5d||0))),
+              React.createElement("div",null,React.createElement("div",{style:{fontSize:10,color:"var(--text-muted)",marginBottom:2}},"RS_Δ5D"),
+                React.createElement("span",{style:{fontSize:15,fontWeight:700,fontFamily:"var(--font-mono)",color:erC(aSD.rsDelta5d||0)}},(aSD.rsDelta5d>0?"+":"")+fmt(aSD.rsDelta5d||0))))),
+          // Charts: RS21推移, ER21推移, Band推移
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}},
+            [{l:"RS(21) 推移",d:h.rs21,c:rsC(aSD.rs21),u:"",cv:aSD.rs21,mx:100,cbv:true,cbb:false,cer:false,rl:50},
+             {l:"ER(21) 推移",d:h.er21,c:"var(--green)",u:"",cv:aSD.er21,mx:null,cbv:false,cbb:false,cer:true,rl:null},
+             {l:"RS≥80 Band % 推移",d:h.pct80,c:"var(--blue)",u:"%",cv:b80display,mx:100,cbv:false,cbb:true,cer:false,rl:20}].map(({l,d,c,u,cv,mx,cbv,cbb,cer,rl})=>{
+              const delta=sparkDelta(d,cv);
+              return React.createElement("div",{key:l,style:{background:"var(--bg-elevated)",borderRadius:6,padding:"10px 12px",overflow:"visible"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}},
+                  React.createElement("span",{style:{fontSize:9,color:"var(--text-muted)"}},l),
+                  delta&&React.createElement("span",{style:{fontSize:9,fontFamily:"var(--font-mono)",fontWeight:600,
+                    color:delta.d>0?"var(--green)":delta.d<0?"var(--red)":"var(--text-muted)"}},
+                    "1M "+(delta.d>0?"+":"")+fmt(delta.d,1)+u)),
+                React.createElement(MiniBar,{data:d,h:54,color:c,max:mx,unit:u,colorByVal:cbv,colorByBand:cbb,colorByER:cer,refLine:rl}));})),
+          React.createElement("div",{style:{marginTop:10,fontSize:11,color:"var(--text-muted)"}},"🔗 この業種の銘柄は下部Stock Screensに自動フィルタされます"))));
+    }
+  });
+  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:5}},els);
+}
+
+// ============================================================
+// SECTION 3: STOCK SCREENS (v2.1)
+// ============================================================
+function ScreensSection({sectorFilter}){
+  const [active,setActive]=useState("ALL");
+  const [sortCol,setSortCol]=useState({key:"rs21",desc:true});
+  const allUnique=useMemo(()=>{
+    const map={};ALL_STOCKS.forEach(s=>{
+      if(!map[s.t]){map[s.t]={...s,_screens:[s.screen]};}
+      else{map[s.t]._screens.push(s.screen);
+        if(s.vcs!=null)map[s.t].vcs=s.vcs;if(s.eps!=null)map[s.t].eps=s.eps;if(s.sales!=null)map[s.t].sales=s.sales;
+        if(s.pivot!=null)map[s.t].pivot=s.pivot;if(s.rs63!=null)map[s.t].rs63=s.rs63;if(s.rs21d!=null)map[s.t].rs21d=s.rs21d;
+        if(s.stockER!=null)map[s.t].stockER=s.stockER;if(s.rsRoc5d!=null)map[s.t].rsRoc5d=s.rsRoc5d;
+        if(s.rsDelta5d!=null)map[s.t].rsDelta5d=s.rsDelta5d;if(s.avgVal!=null)map[s.t].avgVal=s.avgVal;
+        if(s.fcstEps!=null)map[s.t].fcstEps=s.fcstEps;if(s.fcstSales!=null)map[s.t].fcstSales=s.fcstSales;
+        if(s.rv!=null&&(map[s.t].rv==null||s.rv>map[s.t].rv))map[s.t].rv=s.rv;
+        if(s.chg!=null&&(map[s.t].chg==null||Math.abs(s.chg)>Math.abs(map[s.t].chg)))map[s.t].chg=s.chg;
+        if(s.price!=null)map[s.t].price=s.price;}});return Object.values(map);},[]);
+  const filtered=useMemo(()=>{
+    let st=active==="ALL"?allUnique:ALL_STOCKS.filter(s=>s.screen===active).map(s=>({...s,_screens:TM[s.t]?.screens||[s.screen]}));
+    if(sectorFilter)st=st.filter(s=>s.sector===sectorFilter);
+    const textCols=new Set(["name","sector","pivot"]);
+    st.sort((a,b)=>{
+      let av,bv;
+      if(sortCol.key==="score"){av=entryScore(a);bv=entryScore(b);}
+      else if(sortCol.key==="_dup"){av=(a._screens||[]).length;bv=(b._screens||[]).length;}
+      else{av=a[sortCol.key]??null;bv=b[sortCol.key]??null;}
+      if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return -1;
+      if(textCols.has(sortCol.key)){const cmp=String(av).localeCompare(String(bv),"ja");return sortCol.desc?-cmp:cmp;}
+      return sortCol.desc?bv-av:av-bv;});return st;
+  },[active,sectorFilter,sortCol,allUnique]);
+  const counts=useMemo(()=>{const c={ALL:allUnique.length};SCREEN_ORDER.forEach(k=>c[k]=ALL_STOCKS.filter(s=>s.screen===k).length);return c;},[allUnique]);
+  const doSort=key=>setSortCol(p=>p.key===key?{key,desc:!p.desc}:{key,desc:true});
+  const SortTh=({k,children,extra={}})=>{const isA=sortCol.key===k;
+    return React.createElement("th",{onClick:()=>doSort(k),style:{...thS({cursor:"pointer",color:isA?"var(--text-primary)":"var(--text-muted)",...extra})}},children,isA?(sortCol.desc?" ▾":" ▴"):"");};
+  const dupStocks=useMemo(()=>allUnique.filter(s=>s._screens.length>=2).sort((a,b)=>b._screens.length-a._screens.length),[allUnique]);
+
+  return React.createElement("section",{id:"screens",style:{marginBottom:28}},
+    React.createElement(SectionTitle,{icon:"🔍",title:"Stock Screens",sub:sectorFilter?"「"+sectorFilter+"」フィルタ中":null}),
+    React.createElement("div",{style:{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}},
+      React.createElement("button",{onClick:()=>setActive("ALL"),style:{padding:"5px 12px",borderRadius:5,border:"1px solid",fontSize:12,fontWeight:600,
+        borderColor:active==="ALL"?"var(--text-primary)":"var(--border)",background:active==="ALL"?"var(--text-primary)":"transparent",
+        color:active==="ALL"?"var(--bg-base)":"var(--text-secondary)"}},"ALL ",React.createElement("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:20,height:20,borderRadius:10,fontSize:10,fontWeight:700,background:active==="ALL"?"rgba(0,0,0,0.2)":"var(--bg-elevated)",marginLeft:4}},counts.ALL)),
+      SCREEN_ORDER.map(k=>{const m=SCREEN_META[k],isA=active===k;
+        return React.createElement("button",{key:k,onClick:()=>setActive(k),style:{padding:"5px 12px",borderRadius:5,border:"1px solid",fontSize:12,fontWeight:600,
+          borderColor:isA?m.color:"var(--border)",background:isA?m.color+"18":"transparent",
+          color:isA?m.color:"var(--text-secondary)"}},m.icon+" "+m.label+" ",React.createElement("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",minWidth:20,height:20,borderRadius:10,fontSize:10,fontWeight:700,background:isA?m.color+"33":"var(--bg-elevated)",color:isA?m.color:"var(--text-muted)",marginLeft:3}},counts[k]));})),
+    active!=="ALL"&&React.createElement("div",{style:{fontSize:11,color:"var(--text-muted)",marginBottom:8,padding:"4px 10px",background:"var(--bg-elevated)",borderRadius:4,display:"inline-block"}},SCREEN_META[active]?.desc),
+    // Cross-Screen Overlap
+    active==="ALL"&&dupStocks.length>0&&React.createElement(Card,{style:{marginBottom:10,padding:"10px 14px",borderColor:"var(--amber)"}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--amber)",marginBottom:6}},"🔥 Cross-Screen Overlap — "+dupStocks.length+" stocks matched 2+ screens"),
+      React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+        dupStocks.map(s=>React.createElement("div",{key:s.t,
+          style:{display:"flex",alignItems:"center",gap:4,padding:"4px 8px",borderRadius:4,background:"var(--amber-bg)",border:"1px solid rgba(245,158,11,0.3)",fontSize:11}},
+          React.createElement("a",{href:"https://shikiho.toyokeizai.net/stocks/"+s.t,target:"_blank",
+            style:{fontWeight:700,textDecoration:"none",color:"var(--text-primary)",borderBottom:"1px dotted var(--text-muted)"},
+            onMouseOver:e=>e.target.style.borderBottomStyle="solid",onMouseOut:e=>e.target.style.borderBottomStyle="dotted"},s.name),
+          React.createElement("a",{href:"https://jp.tradingview.com/symbols/TSE-"+s.t+"/",target:"_blank",style:{color:"var(--text-muted)",fontSize:10,textDecoration:"none"}},s.t),
+          React.createElement("span",{style:{fontWeight:700,color:"var(--amber)",fontSize:10}},"×"+s._screens.length),
+          React.createElement("span",{style:{fontSize:9,color:"var(--text-muted)"}},s._screens.map(sc=>SCREEN_META[sc]?.icon).join("")))))),
+    // Table
+    React.createElement(Card,{style:{padding:0,overflow:"hidden"}},
+      React.createElement("div",{style:{overflowX:"auto"}},
+        React.createElement("table",{style:{width:"100%",borderCollapse:"separate",borderSpacing:0,fontSize:13}},
+          React.createElement("thead",null,
+            React.createElement("tr",{style:{background:"var(--bg-elevated)"}},
+              React.createElement(SortTh,{k:"name",extra:{textAlign:"left",paddingLeft:14,minWidth:150}},"銘柄"),
+              React.createElement(SortTh,{k:"_dup",extra:{maxWidth:70}},"Screens"),
+              React.createElement(SortTh,{k:"sector",extra:{maxWidth:90}},"セクター"),
+              React.createElement(SortTh,{k:"price"},"Price"),
+              React.createElement(SortTh,{k:"rs21"},"RS21"),
+              // v2.1: StockER column (always visible)
+              React.createElement(SortTh,{k:"stockER",extra:{color:"var(--cyan)"}},"StER"),
+              (active==="VCS"||active==="ALL")&&React.createElement(SortTh,{k:"vcs"},"VCS"),
+              (active==="Movers"||active==="Quiet"||active==="ALL")&&React.createElement(SortTh,{k:"chg"},"Chg%"),
+              (active==="Movers"||active==="Quiet"||active==="ALL")&&React.createElement(SortTh,{k:"rv"},"RV"),
+              active==="Growth"&&React.createElement(SortTh,{k:"eps"},"EPS%"),
+              active==="Growth"&&React.createElement(SortTh,{k:"sales"},"Sales%"),
+              active==="Growth"&&React.createElement(SortTh,{k:"fcstEps"},"予EPS%"),
+              active==="Growth"&&React.createElement(SortTh,{k:"fcstSales"},"予Sales%"),
+              active==="Momentum"&&React.createElement(SortTh,{k:"rs63"},"RS63"),
+              active==="Momentum"&&React.createElement(SortTh,{k:"rs21d"},"RS_ROC21"),
+              active==="Momentum"&&React.createElement(SortTh,{k:"rsRoc5d"},"RS_ROC5"),
+              active==="Alert"&&React.createElement(SortTh,{k:"pivot"},"Pivot"),
+              React.createElement(SortTh,{k:"adr",extra:{borderLeft:"2px solid var(--amber)",color:"var(--amber)"}},"ADR%"),
+              React.createElement(SortTh,{k:"atr21e",extra:{color:"var(--amber)"}},"R×21E"),
+              React.createElement(SortTh,{k:"e21p",extra:{color:"var(--amber)"}},"E21L%"),
+              React.createElement(SortTh,{k:"atr50s",extra:{color:"var(--amber)"}},"R×50S"),
+              React.createElement(SortTh,{k:"score",extra:{color:"var(--amber)"}},"基準"))),
+          React.createElement("tbody",null,
+            filtered.length===0
+              ?React.createElement("tr",null,React.createElement("td",{colSpan:20,style:{padding:20,textAlign:"center",color:"var(--text-muted)"}},sectorFilter?"「"+sectorFilter+"」に該当なし":"該当銘柄なし"))
+              :filtered.map((s,i)=>{
+                const dn=TM[s.t]?.count||1,hiD=dn>=3,sc=entryScore(s);
+                return React.createElement("tr",{key:s.t+"-"+i+"-"+(s.screen||"all"),className:"stock-row",
+                  style:{background:hiD?"rgba(245,158,11,0.03)":sc>=3?"rgba(34,197,94,0.03)":"transparent"}},
+                  React.createElement("td",{style:{padding:"7px 8px 7px 14px",whiteSpace:"nowrap",borderBottom:"1px solid var(--border)"}},
+                    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                      React.createElement("a",{href:"https://shikiho.toyokeizai.net/stocks/"+s.t,target:"_blank",
+                        style:{fontWeight:700,fontSize:13,textDecoration:"none",color:"var(--text-primary)",borderBottom:"1px dotted var(--text-muted)"},
+                        onMouseOver:e=>e.target.style.borderBottomStyle="solid",onMouseOut:e=>e.target.style.borderBottomStyle="dotted"},s.name),
+                      React.createElement("a",{href:"https://jp.tradingview.com/symbols/TSE-"+s.t+"/",target:"_blank",style:{color:"var(--text-muted)",fontSize:10,textDecoration:"none"}},s.t),
+                      React.createElement(DupBadge,{ticker:s.t}))),
+                  React.createElement("td",{style:{...tdS(),maxWidth:100}},
+                    (s._screens||[]).map(sc=>React.createElement("span",{key:sc,style:{display:"inline-block",fontSize:9,padding:"1px 3px",borderRadius:2,marginRight:1,
+                      background:(SCREEN_META[sc]?.color||"#666")+"18",color:SCREEN_META[sc]?.color||"#666",fontWeight:600}},SCREEN_META[sc]?.icon||sc))),
+                  React.createElement("td",{style:{...tdS(),maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text-secondary)"}},s.sector)),
+                  React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:600,color:"var(--text-primary)"}},fmtP(s.price))),
+                  React.createElement("td",{style:tdS()},React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:700,color:rsC(s.rs21)}},fmt(s.rs21))),
+                  // v2.1: Stock ER column
+                  React.createElement("td",{style:tdS()},
+                    s.stockER!=null?React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:600,color:erC(s.stockER)}},(s.stockER>0?"+":"")+fmt(s.stockER))
+                    :React.createElement("span",{style:{color:"var(--text-muted)"}},"—")),
+                  (active==="VCS"||active==="ALL")&&React.createElement("td",{style:tdS()},
+                    s.vcs!=null?React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:700,fontSize:12,padding:"1px 6px",borderRadius:3,
+                      background:s.vcs>=80?"var(--green-bg)":s.vcs>=60?"var(--blue-bg)":"transparent",
+                      color:s.vcs>=80?"var(--green)":s.vcs>=60?"var(--blue)":"var(--text-muted)"}},fmt(s.vcs))
+                    :React.createElement("span",{style:{color:"var(--text-muted)"}},"—")),
+                  (active==="Movers"||active==="Quiet"||active==="ALL")&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:chgC(s.chg||0)}},s.chg!=null?pct(s.chg):"—")),
+                  (active==="Movers"||active==="Quiet"||active==="ALL")&&React.createElement("td",{style:tdS()},
+                    s.rv!=null?React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:600,color:s.rv>=2?"var(--blue)":"var(--text-secondary)"}},fmt(s.rv)+"x")
+                    :React.createElement("span",{style:{color:"var(--text-muted)"}},"—")),
+                  active==="Growth"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:"var(--green)"}},s.eps!=null?"+"+fmt(s.eps)+"%":"—")),
+                  active==="Growth"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:"var(--green)"}},s.sales!=null?"+"+fmt(s.sales)+"%":"—")),
+                  // v2.1: Forecast EPS/Sales columns for Growth
+                  active==="Growth"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:s.fcstEps!=null&&s.fcstEps>0?"var(--cyan)":"var(--text-muted)"}},s.fcstEps!=null?(s.fcstEps>0?"+":"")+fmt(s.fcstEps)+"%":"—")),
+                  active==="Growth"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:s.fcstSales!=null&&s.fcstSales>0?"var(--cyan)":"var(--text-muted)"}},s.fcstSales!=null?(s.fcstSales>0?"+":"")+fmt(s.fcstSales)+"%":"—")),
+                  active==="Momentum"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:rsC(s.rs63||0)}},fmt(s.rs63))),
+                  active==="Momentum"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:"var(--green)"}},fmt(s.rs21d))),
+                  // v2.1: RS_ROC(5D) for Momentum
+                  active==="Momentum"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:chgC(s.rsRoc5d||0)}},s.rsRoc5d!=null?fmt(s.rsRoc5d):"—")),
+                  active==="Alert"&&React.createElement("td",{style:tdS()},
+                    React.createElement("span",{style:{fontFamily:"var(--font-mono)",fontWeight:600,color:"var(--teal)"}},s.pivot!=null?s.pivot.toLocaleString():"—")),
+                  React.createElement(EntryCell,{val:s.adr,ok:adr_ok,unit:"%"}),
+                  React.createElement(EntryCell,{val:s.atr21e,ok:r21_ok}),
+                  React.createElement(EntryCell,{val:s.e21p,ok:e21_ok,unit:"%"}),
+                  React.createElement(EntryCell,{val:s.atr50s,ok:r50_ok}),
+                  React.createElement("td",{style:tdS()},React.createElement(ScoreBadge,{stock:s})));}))))),
+    React.createElement("div",{style:{marginTop:8,display:"flex",gap:10,flexWrap:"wrap",fontSize:10,color:"var(--text-muted)",alignItems:"center"}},
+      React.createElement("span",{style:{fontWeight:600,color:"var(--amber)"}},"Entry基準:"),
+      React.createElement("span",null,"ADR 2.5〜7%"),React.createElement("span",null,"R×21E -0.3〜+0.8"),
+      React.createElement("span",null,"E21L% ≤4%"),React.createElement("span",null,"R×50S ≤2.5"),
+      React.createElement("span",{style:{marginLeft:8}},"緑=適合 · 基準=4項目中の適合数")));
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function Dashboard({dataMode,selectedDate,availDates,onDateChange,onBackToLatest,isLoading}){
+  const isHistory = dataMode === "HISTORY";
+  const [sectorFilter,setSectorFilter]=useState(null);
+  const handleSC=useCallback(name=>{setSectorFilter(name);
+    if(name)setTimeout(()=>document.getElementById("screens")?.scrollIntoView({behavior:"smooth",block:"start"}),200);},[]);
+  const badgeStyle = dataMode === "LIVE"
+    ? {fontSize:10,padding:"3px 8px",borderRadius:4,background:"var(--green-bg)",color:"var(--green)",fontWeight:600,border:"1px solid var(--green)"}
+    : dataMode === "HISTORY"
+    ? {fontSize:10,padding:"3px 8px",borderRadius:4,background:"var(--blue-bg)",color:"var(--blue)",fontWeight:600,border:"1px solid var(--blue)"}
+    : {fontSize:10,padding:"3px 8px",borderRadius:4,background:"var(--amber-bg)",color:"var(--amber)",fontWeight:600};
+  const badgeText = dataMode === "LIVE" ? "● LIVE" : dataMode === "HISTORY" ? "📅 HISTORY" : "v2.1 STATIC";
+
+  const sortedDates = useMemo(() => (availDates || []).slice().sort(), [availDates]);
+  const canPrev = useMemo(() => {
+    if (!selectedDate || sortedDates.length === 0) return sortedDates.length > 0;
+    const idx = sortedDates.indexOf(selectedDate);
+    return idx > 0;
+  }, [selectedDate, sortedDates]);
+  const canNext = useMemo(() => {
+    if (!selectedDate) return false;
+    const idx = sortedDates.indexOf(selectedDate);
+    return idx >= 0 && idx < sortedDates.length - 1;
+  }, [selectedDate, sortedDates]);
+
+  const goPrev = useCallback(() => {
+    if (!selectedDate) {
+      if (sortedDates.length >= 2) onDateChange(sortedDates[sortedDates.length - 2]);
+      return;
+    }
+    const idx = sortedDates.indexOf(selectedDate);
+    if (idx > 0) onDateChange(sortedDates[idx - 1]);
+  }, [selectedDate, sortedDates, onDateChange]);
+
+  const goNext = useCallback(() => {
+    if (!selectedDate) return;
+    const idx = sortedDates.indexOf(selectedDate);
+    if (idx >= 0 && idx < sortedDates.length - 1) onDateChange(sortedDates[idx + 1]);
+  }, [selectedDate, sortedDates, onDateChange]);
+
+  const dpBtnStyle = (enabled) => ({
+    fontSize:14, padding:"2px 8px", borderRadius:4, border:"1px solid var(--border)",
+    background: enabled ? "var(--bg-elevated)" : "transparent",
+    color: enabled ? "var(--text-primary)" : "var(--text-muted)",
+    cursor: enabled ? "pointer" : "default", opacity: enabled ? 1 : 0.4,
+  });
+
+  return React.createElement("div",{style:{paddingTop:16}},
+    React.createElement("header",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",marginBottom:18,borderBottom:"1px solid var(--border)"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:10}},
+        React.createElement("span",{style:{fontSize:20,fontWeight:700}},"☁ 21 Cloud ☁"),
+        React.createElement("span",{style:{fontSize:12,color:"var(--text-muted)",fontWeight:500,fontFamily:"var(--font-mono)"}},MARKET_DATE)),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("button",{onClick:goPrev,disabled:!canPrev,style:dpBtnStyle(canPrev)},"◀"),
+        React.createElement("input",{type:"date",value:selectedDate||"",
+          min:sortedDates[0]||"",max:sortedDates[sortedDates.length-1]||"",
+          onChange:e=>e.target.value&&onDateChange(e.target.value),
+          style:{fontSize:12,fontFamily:"var(--font-mono)",padding:"3px 6px",borderRadius:4,border:"1px solid var(--border)",
+            background:"var(--bg-elevated)",color:"var(--text-primary)",cursor:"pointer"}}),
+        React.createElement("button",{onClick:goNext,disabled:!canNext,style:dpBtnStyle(canNext)},"▶"),
+        React.createElement("button",{onClick:onBackToLatest,style:{fontSize:11,fontWeight:600,padding:"4px 10px",borderRadius:4,
+          border:isHistory?"1px solid var(--green)":"1px solid var(--border)",
+          background:isHistory?"var(--green-bg)":"var(--bg-elevated)",
+          color:isHistory?"var(--green)":"var(--text-secondary)"}},"最新"),
+        isLoading && React.createElement("div",{style:{width:14,height:14,border:"2px solid var(--border)",borderTopColor:"var(--blue)",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}),
+        React.createElement("nav",{style:{display:"flex",gap:4,marginLeft:4}},
+          [["#market","Condition"],["#sectors","Sectors"],["#screens","Screens"]].map(([h,l])=>
+            React.createElement("a",{key:h,href:h,style:{fontSize:11,fontWeight:600,color:"var(--text-secondary)",padding:"4px 10px",borderRadius:4,background:"var(--bg-elevated)"}},l))),
+        React.createElement("span",{style:badgeStyle},badgeText))),
+    React.createElement(MarketSection,{isHistory}),
+    React.createElement(SectorSection,{onSectorClick:handleSC,activeSector:sectorFilter}),
+    ALL_STOCKS.length > 0
+      ? React.createElement(ScreensSection,{sectorFilter:sectorFilter})
+      : isHistory && React.createElement(Card,{style:{padding:"24px",textAlign:"center",marginBottom:22}},
+          React.createElement("span",{style:{fontSize:13,color:"var(--text-muted)"}},"📅 この日付のスクリーン結果はありません（St_Historyにデータなし）")),
+    React.createElement("div",{style:{textAlign:"center",padding:"20px 0 8px",fontSize:11,color:"var(--text-muted)"}},
+      "21 Cloud Dashboard v2.1 · "+(dataMode==="LIVE"?"Live Data via GAS API":dataMode==="HISTORY"?"Historical Data: "+MARKET_DATE:"Static Fallback Data")));
+}
+
+function LoadingScreen(){
+  return React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"60vh",gap:16}},
+    React.createElement("div",{style:{fontSize:28,fontWeight:700}},"☁ 21 Cloud ☁"),
+    React.createElement("div",{style:{width:40,height:40,border:"3px solid var(--border)",borderTopColor:"var(--blue)",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}),
+    React.createElement("div",{style:{fontSize:12,color:"var(--text-muted)"}},"Fetching live data..."),
+    React.createElement("style",null,"@keyframes spin{to{transform:rotate(360deg)}}"));
+}
+
+function DashboardWrapper(){
+  const [mode, setMode] = useState("LOADING");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [availDates, setAvailDates] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const liveDataRef = useRef(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetchDashboard().catch(err => { console.warn("API failed:", err.message); return null; }),
+      fetchAvailableDates(),
+    ]).then(([api, dates]) => {
+      if (api) {
+        applyLiveData(api);
+        liveDataRef.current = api;
+        setMode("LIVE");
+      } else {
+        DATA_MODE = "OFFLINE";
+        setMode("OFFLINE");
+      }
+      if (dates && dates.available_dates) {
+        setAvailDates(dates.available_dates);
+      }
+    });
+  }, []);
+
+  const handleDateChange = useCallback((dateStr) => {
+    setIsLoading(true);
+    setSelectedDate(dateStr);
+    fetchDashboard(dateStr)
+      .then(api => {
+        applyHistoricalData(api);
+        setMode("HISTORY");
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.warn("History fetch failed:", err.message);
+        setIsLoading(false);
+      });
+  }, []);
+
+  const handleBackToLatest = useCallback(() => {
+    setSelectedDate(null);
+    setIsLoading(true);
+    fetchDashboard()
+      .then(api => {
+        applyLiveData(api);
+        liveDataRef.current = api;
+        setMode("LIVE");
+        setIsLoading(false);
+      })
+      .catch(err => {
+        if (liveDataRef.current) {
+          applyLiveData(liveDataRef.current);
+          setMode("LIVE");
+        }
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (mode === "LOADING") return React.createElement(LoadingScreen, null);
+  return React.createElement(Dashboard, {
+    dataMode: mode, selectedDate, availDates,
+    onDateChange: handleDateChange, onBackToLatest: handleBackToLatest, isLoading,
+  });
+}
+
+ReactDOM.render(React.createElement(DashboardWrapper),document.getElementById("root"));
+</script>
+</body>
+</html>

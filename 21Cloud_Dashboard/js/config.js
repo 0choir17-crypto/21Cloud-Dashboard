@@ -25,7 +25,7 @@ export const SCREEN_COLS = Object.fromEntries(SCREENS.map(s => [s.key, s.columns
 export const SHEET_GIDS = {
     Portfolio: 726693304,
     Indices: 593468503,
-    Sectors: 462928075,
+    Sectors: 593468503,
     St_History: 1745377223,
     SectorHistory: 519198713,
     // Screen GIDs merged in
