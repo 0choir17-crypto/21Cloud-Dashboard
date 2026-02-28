@@ -115,6 +115,7 @@ dateSelect?.addEventListener('change', () => {
         document.getElementById('screenerTable'),
         document.getElementById('screenerSearch'),
         document.getElementById('screenerSort'),
+        isHistory,
     );
 });
 
@@ -130,9 +131,8 @@ async function loadData() {
         // Fetch all sheets in parallel
         const data = await fetchSheets([
             'Indices', 'Sectors', 'SectorHistory',
-            'St_Momentum', 'St_21EMA', 'St_Movers', 'St_Pivot',
-            'St_Surprise', 'St_EREvent', 'St_Quiet',
-            'St_SectorAlpha', 'St_Earnings',
+            'St_PEAD', 'St_CANSLIM', 'St_RVOL',
+            'St_HiddenLdr', 'St_DeepRecov', 'St_SectorAlpha',
             'St_History',
         ]);
 
@@ -210,11 +210,10 @@ async function loadData() {
             // Populate date picker — merge dates from St_History + SectorHistory
             const dateSelect = document.getElementById('dateSelect');
             if (dateSelect) {
-                const sectorHistoryRows = data.SectorHistory || [];
-                const allDates = new Set([
-                    ...historyRows.map(r => r.Date).filter(Boolean),
-                    ...sectorHistoryRows.map(r => r.Date).filter(Boolean),
-                ]);
+                // Only use St_History dates (SectorHistory has no screener data)
+                const allDates = new Set(
+                    historyRows.map(r => r.Date).filter(Boolean)
+                );
                 const dates = [...allDates].sort().reverse();
                 dateSelect.innerHTML = '<option value="today">Today</option>';
                 dates.forEach(d => {

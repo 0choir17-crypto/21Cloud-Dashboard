@@ -345,7 +345,7 @@ function renderPositions(rows, summary, container) {
     // Only include rows with valid stock ticker (4-5 digit code)
     const dataRows = rows.filter(r => {
         const t = String(r.Ticker || '').trim();
-        return /^\d{4,5}$/.test(t);
+        return /^\d{4,5}[A-Za-z]?$/.test(t);
     });
 
     let html = `<h2 class="pf-section-title">保有ポジション <span class="pf-count">(${dataRows.length})</span></h2>`;
@@ -355,7 +355,7 @@ function renderPositions(rows, summary, container) {
     } else {
         html += '<div class="pf-position-cards">';
         dataRows.forEach(row => {
-            const ticker = String(row.Ticker || '').replace(/[^\d]/g, '');
+            const ticker = String(row.Ticker || '').replace(/[^\dA-Za-z]/g, '');
             const name = row['銘柄名'] || '';
             const sector = row['セクター'] || '';
             const entryDate = row['Entry日'] || '';
@@ -474,7 +474,7 @@ function renderEntryPlans(rows, container) {
 
     rows.forEach(row => {
         if (!row.Ticker && !row['銘柄名']) return;
-        const ticker = String(row.Ticker || '').replace(/[^\d]/g, '');
+        const ticker = String(row.Ticker || '').replace(/[^\dA-Za-z]/g, '');
         const stopDist = parseNum(row['StopDist%']);
         const stopWarn = stopDist !== null && Math.abs(stopDist) > 5;
         const judgment = row['判定'] || '';
@@ -611,7 +611,7 @@ function renderTradeHistory(rows, container) {
         allKeys.forEach(c => {
             const v = row[c];
             if (c === 'Ticker') {
-                const t = String(v || '').replace(/[^\d]/g, '');
+                const t = String(v || '').replace(/[^\dA-Za-z]/g, '');
                 html += `<td class="col-ticker"><a href="https://jp.tradingview.com/chart/?symbol=TSE:${t}" target="_blank" rel="noopener">${t || '--'}</a></td>`;
             } else if (c === 'R倍率') {
                 html += `<td class="${rCls(v)}" style="font-weight:600">${v != null ? Number(v).toFixed(2) + 'R' : '--'}</td>`;

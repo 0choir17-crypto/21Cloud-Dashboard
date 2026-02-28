@@ -9,31 +9,42 @@ import { SCREENS, SCREEN_COLS, ENTRY } from './config.js';
 // Columns to display
 const BASE_COLS = ['Ticker', 'Name', 'Sector', 'DAY%', 'RS21'];
 const POST_RS_COLS = ['ER_1W(vsSec)'];  // after RS21, before screen-specific
-const TAIL_COL = 'ER_Days';  // right end before entry基準
 
 // Entry基準 thresholds (from config)
 const adr_ok = v => v >= ENTRY.adr.min && v <= ENTRY.adr.max;
 const r21_ok = v => v >= ENTRY.atr21ema.min && v <= ENTRY.atr21ema.max;
 const e21_ok = v => v <= ENTRY.dist21ema.max;
-const r50_ok = v => v <= ENTRY.atr50sma.max;
 
 function getEntry(row) {
     return {
         adr: parseFloat(row['ADR%'] ?? row['ADR%(20D)'] ?? row['ADR']),
         atr21e: parseFloat(row['R×21E'] ?? row['ATR_21EMA'] ?? row['ATR21E_R']),
         e21p: parseFloat(row['E21L%'] ?? row['Dist_21EMA%']),
-        atr50s: parseFloat(row['R×50S'] ?? row['ATR_50SMA'] ?? row['ATR50S_R']),
     };
 }
 
 function entryScore(row) {
     let n = 0;
-    const { adr, atr21e, e21p, atr50s } = getEntry(row);
+    const { adr, atr21e, e21p } = getEntry(row);
     if (!isNaN(adr) && adr_ok(adr)) n++;
     if (!isNaN(atr21e) && r21_ok(atr21e)) n++;
     if (!isNaN(e21p) && e21_ok(e21p)) n++;
-    if (!isNaN(atr50s) && r50_ok(atr50s)) n++;
     return n;
+}
+
+// ── Highlight range helpers ──
+
+function inRange(val, range) {
+    const [min, max] = range;
+    if (min !== null && min !== undefined && val < min) return false;
+    if (max !== null && max !== undefined && val > max) return false;
+    return true;
+}
+
+function matchRange(val, range) {
+    if (!range) return false;
+    if (Array.isArray(range[0])) return range.some(r => inRange(val, r));
+    return inRange(val, range);
 }
 
 let currentScreen = 'ALL';
@@ -41,6 +52,7 @@ let screenData = {};
 let tickerMap = {}; // Cross-screen overlap map
 let headerSort = { col: null, dir: null };
 let currentSector = null; // null = all sectors
+let isHistoryMode = false; // true when viewing St_History data
 let _summaryEl, _tableEl, _searchInput, _sortSelect;
 
 function rerender() {
@@ -75,9 +87,10 @@ function buildTickerMap(data) {
 let _initialized = false;
 let _tabContainer;
 
-export function initScreener(data, tabContainer, summaryEl, tableEl, searchInput, sortSelect) {
+export function initScreener(data, tabContainer, summaryEl, tableEl, searchInput, sortSelect, historyMode = false) {
     screenData = data;
     tickerMap = buildTickerMap(data);
+    isHistoryMode = historyMode;
     _summaryEl = summaryEl;
     _tableEl = tableEl;
     _searchInput = searchInput;
@@ -149,7 +162,7 @@ function renderTabs(container, onChange) {
         const count = (screenData[cfg.key] || []).length;
         if (cfg.key === currentScreen) {
             btn.style.cssText = `background:${cfg.color}18;color:${cfg.color};border-color:${cfg.color}`;
-        } else if (cfg.primary) {
+        } else {
             btn.style.cssText = `color:${cfg.color};border-color:${cfg.color}40`;
         }
         btn.innerHTML = `${cfg.label} <span class="tab-count">${count}</span>`;
@@ -273,7 +286,6 @@ function renderScreenTable(tableEl, searchText, sortKey) {
             else if (col === 'ADR%') { va = getEntry(a).adr; vb = getEntry(b).adr; }
             else if (col === 'R×21E') { va = getEntry(a).atr21e; vb = getEntry(b).atr21e; }
             else if (col === 'E21L%') { va = getEntry(a).e21p; vb = getEntry(b).e21p; }
-            else if (col === 'R×50S') { va = getEntry(a).atr50s; vb = getEntry(b).atr50s; }
             else if (col === '基準') { va = entryScore(a); vb = entryScore(b); }
             else { va = a[col]; vb = b[col]; }
 
@@ -297,30 +309,28 @@ function renderScreenTable(tableEl, searchText, sortKey) {
         }
     }
 
-    // Build columns: Base + PostRS + ScreenSpecific + Entry基準 + ER_Days(last)
+    // Build columns: Base + PostRS + ScreenSpecific + Entry基準
     const cols = [...BASE_COLS, ...POST_RS_COLS];
 
-    // Screen-specific columns
-    const specificCols = currentScreen !== 'ALL' ? (SCREEN_COLS[currentScreen] || []) : [];
+    // Screen-specific columns (hidden in history mode — St_History only has common columns)
+    const specificCols = (!isHistoryMode && currentScreen !== 'ALL') ? (SCREEN_COLS[currentScreen] || []) : [];
     cols.push(...specificCols);
 
     // Entry基準 columns (always show if data exists)
     const hasEntry = data.some(r =>
         r['ADR%'] != null || r['ADR%(20D)'] != null ||
         r['R×21E'] != null || r['ATR_21EMA'] != null ||
-        r['E21L%'] != null || r['Dist_21EMA%'] != null ||
-        r['R×50S'] != null || r['ATR_50SMA'] != null
+        r['E21L%'] != null || r['Dist_21EMA%'] != null
     );
-    const entryCols = hasEntry ? ['ADR%', 'R×21E', 'E21L%', 'R×50S', '基準'] : [];
+    const entryCols = hasEntry ? ['ADR%', 'R×21E', 'E21L%', '基準'] : [];
     cols.push(...entryCols);
-
-    // ER_Days at the very end
-    cols.push(TAIL_COL);
 
     const allCols = [...cols];
 
     // SCREEN column for all tabs (after Name)
     allCols.splice(2, 0, 'Screens');
+
+    const screenCfg = currentScreen !== 'ALL' ? SCREENS.find(c => c.key === currentScreen) : null;
 
     const thead = tableEl.querySelector('thead');
     thead.innerHTML = '<tr>' + allCols.map(h => {
@@ -332,7 +342,9 @@ function renderScreenTable(tableEl, searchText, sortKey) {
         const color = isEntry ? '#FFD60A' : isActive ? 'var(--accent)' : '';
         const style = color ? ` style="color:${color}"` : '';
         const colCls = h === 'Ticker' ? ' col-ticker' : '';
-        return `<th class="sortable-th${cls}${colCls}" data-col="${h}"${style}>${label}${arrow}</th>`;
+        const hlDesc = screenCfg?.highlights?.[h]?.desc || '';
+        const titleAttr = hlDesc ? ` title="${escapeHtml(hlDesc)}"` : '';
+        return `<th class="sortable-th${cls}${colCls}" data-col="${h}"${style}${titleAttr}>${label}${arrow}</th>`;
     }).join('') + '</tr>';
 
     // Attach click-to-sort on each <th>
@@ -397,8 +409,30 @@ function renderScreenTable(tableEl, searchText, sortKey) {
             if (h === 'ADR%') { const { adr } = getEntry(row); return entryCell(adr, adr_ok, '%'); }
             if (h === 'R×21E') { const { atr21e } = getEntry(row); return entryCell(atr21e, r21_ok); }
             if (h === 'E21L%') { const { e21p } = getEntry(row); return entryCell(e21p, e21_ok, '%'); }
-            if (h === 'R×50S') { const { atr50s } = getEntry(row); return entryCell(atr50s, r50_ok); }
             if (h === '基準') return scoreBadge(score);
+
+            // Check highlight conditions (screen-specific)
+            const hl = screenCfg?.highlights?.[h];
+            if (hl) {
+                // Badge type (for string values like Match)
+                if (hl.badge) {
+                    const mv = String(v || '');
+                    const bc = hl.badge[mv];
+                    if (bc) return `<td><span style="background:${bc}18;color:${bc};padding:2px 8px;border-radius:4px;font-weight:600;font-size:0.85em">${escapeHtml(mv)}</span></td>`;
+                    return `<td>${escapeHtml(mv || '--')}</td>`;
+                }
+                // Numeric highlight (red takes priority over green)
+                const nv = parseFloat(v);
+                if (!isNaN(nv)) {
+                    const isRed = matchRange(nv, hl.red);
+                    const isGreen = !isRed && matchRange(nv, hl.green);
+                    if (isRed || isGreen) {
+                        const bg = isRed ? 'rgba(255,69,58,0.12)' : 'rgba(48,209,88,0.12)';
+                        const clr = isRed ? '#FF453A' : '#30D158';
+                        return `<td style="background:${bg};color:${clr};font-weight:600">${formatVal(v)}</td>`;
+                    }
+                }
+            }
 
             // Signed numeric columns
             const cls = isSignedCol(h) ? colorClass(v) : '';
@@ -421,7 +455,7 @@ function entryCell(val, okFn, unit = '') {
 function scoreBadge(score) {
     const bg = score >= 3 ? 'var(--green-bg)' : score >= 2 ? 'var(--yellow-bg)' : 'transparent';
     const color = score >= 3 ? 'var(--green)' : score >= 2 ? 'var(--yellow)' : 'var(--text-muted)';
-    return `<td><span class="score-badge" style="background:${bg};color:${color}">${score}/4</span></td>`;
+    return `<td><span class="score-badge" style="background:${bg};color:${color}">${score}/3</span></td>`;
 }
 
 // ── Sector Filter ──
@@ -511,9 +545,9 @@ function formatVal(val) {
 function isSignedCol(h) {
     return [
         'DAY%', '1W%', '1M%', 'RS_1W%', 'RS_1M%', 'Chg%',
-        'ER_1W(vsSec)', 'SP_Dist%',
-        'EPS_G%', 'Sales_G%', 'Fcst_EPS_G%', 'EPS_Surp%',
-        'RS_ROC(21D)', 'Pullback',
+        'ER_1W(vsSec)', 'ER_1M(vsSec)',
+        'EPS_G%', 'Sales_G%', 'EPS_Surp%',
+        'Change%_Day', 'Vol_Chg_1W%',
     ].includes(h);
 }
 

@@ -100,7 +100,7 @@ function parseCsv(text) {
                 // Preserve 5-digit date serial numbers in Date columns as strings
                 obj[h.trim()] = trimmed;
             } else {
-                const num = parseFloat(trimmed);
+                const num = Number(trimmed);
                 obj[h.trim()] = !isNaN(num) ? num : trimmed;
             }
         });

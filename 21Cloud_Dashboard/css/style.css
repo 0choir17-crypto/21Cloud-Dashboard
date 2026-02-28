@@ -1702,7 +1702,7 @@ body.sidebar-collapsed .loading-overlay {
 }
 
 .ob-ticker {
-    color: var(--text-muted);
+    color: #FFFFFF;
     font-size: 12px;
     text-decoration: none;
 }
