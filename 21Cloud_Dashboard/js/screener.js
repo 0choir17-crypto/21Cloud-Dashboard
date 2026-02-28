@@ -322,7 +322,7 @@ function renderScreenTable(tableEl, searchText, sortKey) {
         r['R×21E'] != null || r['ATR_21EMA'] != null ||
         r['E21L%'] != null || r['Dist_21EMA%'] != null
     );
-    const entryCols = hasEntry ? ['ADR%', 'R×21E', 'E21L%', '基準'] : [];
+    const entryCols = hasEntry ? ['Pct_52WH', 'ADR%', 'R×21E', 'E21L%', '基準'] : [];
     cols.push(...entryCols);
 
     const allCols = [...cols];
@@ -548,6 +548,7 @@ function isSignedCol(h) {
         'ER_1W(vsSec)', 'ER_1M(vsSec)',
         'EPS_G%', 'Sales_G%', 'EPS_Surp%',
         'Change%_Day', 'Vol_Chg_1W%',
+        'Pct_52WH',
     ].includes(h);
 }
 
