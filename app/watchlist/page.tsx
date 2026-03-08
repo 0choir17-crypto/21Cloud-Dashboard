@@ -1,0 +1,285 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
+import { WatchlistItem } from '@/types/portfolio'
+import { Position } from '@/types/portfolio'
+import WatchlistModal from '@/components/watchlist/WatchlistModal'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import PositionModal from '@/components/portfolio/PositionModal'
+
+type SortKey = 'watch_date' | 'ticker' | 'screen_tag'
+
+function ScreenTagBadge({ tag }: { tag: string | null }) {
+  if (!tag) return <span className="text-gray-400 text-xs">—</span>
+  return (
+    <span className="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+      {tag}
+    </span>
+  )
+}
+
+function fmt(v: number | null | undefined, d = 0): string {
+  if (v == null) return '—'
+  return v.toLocaleString('ja-JP', { minimumFractionDigits: d, maximumFractionDigits: d })
+}
+
+export default function WatchlistPage() {
+  const [items, setItems] = useState<WatchlistItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [sortKey, setSortKey] = useState<SortKey>('watch_date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  // Modal states
+  const [addOpen, setAddOpen] = useState(false)
+  const [editItem, setEditItem] = useState<WatchlistItem | null>(null)
+  const [deleteItem, setDeleteItem] = useState<WatchlistItem | null>(null)
+  const [promoteItem, setPromoteItem] = useState<WatchlistItem | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('watchlist')
+      .select('*')
+      .order('watch_date', { ascending: false })
+    setItems((data ?? []) as WatchlistItem[])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDir('desc') }
+  }
+
+  const sorted = [...items].sort((a, b) => {
+    const av = a[sortKey] ?? ''
+    const bv = b[sortKey] ?? ''
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  async function handleDelete() {
+    if (!deleteItem) return
+    await supabase.from('watchlist').delete().eq('id', deleteItem.id)
+    setDeleteItem(null)
+    load()
+  }
+
+  // Build prefill for PositionModal from watchlist item
+  const promotePrefill: Partial<Position> | undefined = promoteItem ? {
+    ticker: promoteItem.ticker,
+    company_name: promoteItem.company_name,
+    entry_price: promoteItem.entry_price ?? 0,
+    stop_price: promoteItem.stop_price,
+    target_r: promoteItem.target_r,
+    memo: promoteItem.memo,
+  } : undefined
+
+  const thClass = (key: SortKey) =>
+    `px-3 py-2.5 text-xs font-semibold uppercase tracking-wide cursor-pointer select-none whitespace-nowrap hover:bg-gray-100 transition-colors ${sortKey === key ? 'text-blue-600' : 'text-gray-500'}`
+
+  const indicator = (key: SortKey) =>
+    sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕'
+
+  return (
+    <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Header */}
+      <header className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Watchlist</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            21 Cloud — スクリーニング候補管理
+          </p>
+        </div>
+        <button
+          onClick={() => setAddOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors min-h-[44px]"
+        >
+          <span className="text-lg leading-none">+</span> ウォッチ追加
+        </button>
+      </header>
+
+      {/* Desktop Table */}
+      <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm overflow-x-auto hidden sm:block">
+        <div className="px-4 pt-4 pb-2 text-xs text-gray-400">{items.length} 件</div>
+        <table className="w-full min-w-[900px] text-sm">
+          <thead>
+            <tr className="bg-gray-50 border-b border-t border-[#e8eaed]">
+              <th className={`${thClass('ticker')} text-left`} onClick={() => handleSort('ticker')}>
+                Ticker{indicator('ticker')}
+              </th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">銘柄名</th>
+              <th className={`${thClass('watch_date')} text-left`} onClick={() => handleSort('watch_date')}>
+                ウォッチ日{indicator('watch_date')}
+              </th>
+              <th className={`${thClass('screen_tag')} text-left`} onClick={() => handleSort('screen_tag')}>
+                スクリーン{indicator('screen_tag')}
+              </th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">買い候補値</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">ストップ</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">R目標</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">メモ</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((item, i) => (
+              <tr
+                key={item.id}
+                className={`border-b border-[#f0f2f4] hover:bg-gray-50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
+              >
+                <td className="px-3 py-2.5 whitespace-nowrap">
+                  <a
+                    href={`https://www.tradingview.com/chart/?symbol=TSE:${item.ticker}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono font-bold text-blue-600 hover:underline text-xs"
+                  >
+                    {item.ticker}
+                  </a>
+                </td>
+                <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-700">
+                  {item.company_name ? (
+                    <a
+                      href={`https://shikiho.toyokeizai.net/stocks/${item.ticker}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:underline"
+                    >
+                      {item.company_name}
+                    </a>
+                  ) : '—'}
+                </td>
+                <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600 font-mono">{item.watch_date}</td>
+                <td className="px-3 py-2.5 whitespace-nowrap"><ScreenTagBadge tag={item.screen_tag} /></td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(item.entry_price)}</td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(item.stop_price)}</td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">
+                  {item.target_r != null ? `${item.target_r}R` : '—'}
+                </td>
+                <td className="px-3 py-2.5 text-xs text-gray-500 max-w-[160px]">
+                  <span className="block truncate">{item.memo ?? '—'}</span>
+                </td>
+                <td className="px-3 py-2.5 whitespace-nowrap">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => setPromoteItem(item)}
+                      className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
+                      title="ポートフォリオへ昇格"
+                    >
+                      → PF
+                    </button>
+                    <button
+                      onClick={() => setEditItem(item)}
+                      className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
+                    >
+                      編集
+                    </button>
+                    <button
+                      onClick={() => setDeleteItem(item)}
+                      className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
+                    >
+                      削除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {items.length === 0 && !loading && (
+          <div className="py-12 text-center text-gray-400 text-sm">
+            ウォッチリストは空です。「ウォッチ追加」から登録してください。
+          </div>
+        )}
+        {loading && (
+          <div className="py-12 text-center text-gray-400 text-sm">読み込み中…</div>
+        )}
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="block sm:hidden space-y-3">
+        {loading && <p className="text-center text-gray-400 text-sm py-8">読み込み中…</p>}
+        {!loading && items.length === 0 && (
+          <p className="text-center text-gray-400 text-sm py-8">ウォッチリストは空です。</p>
+        )}
+        {sorted.map(item => (
+          <div key={item.id} className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-4">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <a
+                  href={`https://www.tradingview.com/chart/?symbol=TSE:${item.ticker}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono font-bold text-blue-600 text-base hover:underline"
+                >
+                  {item.ticker}
+                </a>
+                {item.company_name && (
+                  <span className="ml-2 text-xs text-gray-600">{item.company_name}</span>
+                )}
+              </div>
+              <ScreenTagBadge tag={item.screen_tag} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
+              <div><span className="text-gray-400 block">ウォッチ日</span>{item.watch_date}</div>
+              <div><span className="text-gray-400 block">買い候補</span>{fmt(item.entry_price)}</div>
+              <div><span className="text-gray-400 block">ストップ</span>{fmt(item.stop_price)}</div>
+              <div><span className="text-gray-400 block">R目標</span>{item.target_r != null ? `${item.target_r}R` : '—'}</div>
+            </div>
+            {item.memo && <p className="text-xs text-gray-500 mb-3 truncate">{item.memo}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPromoteItem(item)}
+                className="flex-1 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
+              >
+                → ポートフォリオへ
+              </button>
+              <button
+                onClick={() => setEditItem(item)}
+                className="px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
+              >
+                編集
+              </button>
+              <button
+                onClick={() => setDeleteItem(item)}
+                className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100"
+              >
+                削除
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Modals */}
+      <WatchlistModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSaved={load}
+      />
+      <WatchlistModal
+        open={!!editItem}
+        onClose={() => setEditItem(null)}
+        onSaved={load}
+        initial={editItem ?? undefined}
+      />
+      <ConfirmDialog
+        open={!!deleteItem}
+        message={`「${deleteItem?.ticker}」をウォッチリストから削除しますか？`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteItem(null)}
+      />
+      {/* Promote to Portfolio modal */}
+      <PositionModal
+        open={!!promoteItem}
+        onClose={() => setPromoteItem(null)}
+        onSaved={() => { setPromoteItem(null) }}
+        initial={promotePrefill}
+        defaultStatus="open"
+      />
+    </main>
+  )
+}

@@ -1,0 +1,296 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import { Position } from '@/types/portfolio'
+import Modal from '@/components/shared/Modal'
+
+type Props = {
+  open: boolean
+  onClose: () => void
+  onSaved: () => void
+  initial?: Partial<Position>
+  defaultStatus?: 'open' | 'plan'
+}
+
+const today = () => new Date().toISOString().slice(0, 10)
+
+export default function PositionModal({ open, onClose, onSaved, initial, defaultStatus = 'open' }: Props) {
+  const isEdit = !!initial?.id
+  const statusMode = initial?.status ?? defaultStatus
+
+  const [ticker, setTicker] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [sector, setSector] = useState('')
+  const [entryDate, setEntryDate] = useState(today())
+  const [entryPrice, setEntryPrice] = useState('')
+  const [shares, setShares] = useState('')
+  const [costBasis, setCostBasis] = useState('')
+  const [stopPrice, setStopPrice] = useState('')
+  const [stop21l, setStop21l] = useState('')
+  const [targetR, setTargetR] = useState('')
+  const [memo, setMemo] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  // Derived: init_risk_pct
+  const ep = parseFloat(entryPrice)
+  const sp = parseFloat(stopPrice)
+  const initRiskPct = !isNaN(ep) && !isNaN(sp) && ep > 0
+    ? ((ep - sp) / ep * 100)
+    : null
+
+  useEffect(() => {
+    if (open) {
+      setTicker(initial?.ticker ?? '')
+      setCompanyName(initial?.company_name ?? '')
+      setSector(initial?.sector ?? '')
+      setEntryDate(initial?.entry_date ?? today())
+      setEntryPrice(initial?.entry_price != null ? String(initial.entry_price) : '')
+      setShares(initial?.shares != null ? String(initial.shares) : '')
+      setCostBasis(initial?.cost_basis != null ? String(initial.cost_basis) : '')
+      setStopPrice(initial?.stop_price != null ? String(initial.stop_price) : '')
+      setStop21l(initial?.stop_21l != null ? String(initial.stop_21l) : '')
+      setTargetR(initial?.target_r != null ? String(initial.target_r) : '')
+      setMemo(initial?.memo ?? '')
+      setError('')
+    }
+  }, [open, initial])
+
+  async function handleSave() {
+    if (!ticker.trim()) { setError('Ticker は必須です'); return }
+    if (statusMode === 'open' && !entryDate) { setError('取得日は必須です'); return }
+    if (entryPrice === '') { setError('Entry価格は必須です'); return }
+    if (statusMode === 'open' && shares === '') { setError('株数は必須です'); return }
+
+    setSaving(true)
+    setError('')
+
+    const ep2 = parseFloat(entryPrice)
+    const sp2 = stopPrice !== '' ? parseFloat(stopPrice) : null
+    const riskPct = sp2 != null && !isNaN(ep2) && ep2 > 0
+      ? (ep2 - sp2) / ep2 * 100
+      : null
+
+    const record = {
+      ticker: ticker.trim().toUpperCase(),
+      company_name: companyName.trim() || null,
+      sector: sector.trim() || null,
+      entry_date: entryDate || today(),
+      entry_price: ep2,
+      shares: shares !== '' ? parseInt(shares) : 1,
+      cost_basis: costBasis !== '' ? parseFloat(costBasis) : null,
+      stop_price: sp2,
+      stop_21l: stop21l !== '' ? parseFloat(stop21l) : null,
+      init_risk_pct: riskPct,
+      target_r: targetR !== '' ? parseFloat(targetR) : null,
+      memo: memo.trim() || null,
+      status: statusMode,
+      updated_at: new Date().toISOString(),
+    }
+
+    const { error: err } = isEdit
+      ? await supabase.from('positions').update(record).eq('id', initial!.id!)
+      : await supabase.from('positions').insert(record)
+
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    onSaved()
+    onClose()
+  }
+
+  const isPlan = statusMode === 'plan'
+  const title = isEdit
+    ? (isPlan ? 'エントリー計画 編集' : '保有ポジション 編集')
+    : (isPlan ? 'エントリー計画 追加' : 'ポジション追加')
+
+  return (
+    <Modal open={open} onClose={onClose} title={title}>
+      <div className="px-6 py-5 space-y-4">
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Ticker */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Ticker <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={ticker}
+              onChange={e => setTicker(e.target.value)}
+              placeholder="例: 7203"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Company Name */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">銘柄名</label>
+            <input
+              type="text"
+              value={companyName}
+              onChange={e => setCompanyName(e.target.value)}
+              placeholder="例: トヨタ自動車"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Sector */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">セクター</label>
+            <input
+              type="text"
+              value={sector}
+              onChange={e => setSector(e.target.value)}
+              placeholder="例: 自動車・輸送機"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Entry Date */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              {isPlan ? '想定Entry日' : '取得日'} {!isPlan && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="date"
+              value={entryDate}
+              onChange={e => setEntryDate(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Entry Price */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              {isPlan ? '想定Entry価格' : 'Entry価格'} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={entryPrice}
+              onChange={e => setEntryPrice(e.target.value)}
+              placeholder="例: 2500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Shares */}
+          {!isPlan && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                株数 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={shares}
+                onChange={e => setShares(e.target.value)}
+                placeholder="例: 100"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          {/* Cost Basis */}
+          {!isPlan && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">取得コスト（手数料込み・任意）</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={costBasis}
+                onChange={e => setCostBasis(e.target.value)}
+                placeholder="例: 250500"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          {/* Stop Price */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">ストップ値段</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={stopPrice}
+              onChange={e => setStopPrice(e.target.value)}
+              placeholder="例: 2350"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Stop 21L */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Stop(21L)（任意）</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={stop21l}
+              onChange={e => setStop21l(e.target.value)}
+              placeholder="過去21日安値"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Target R */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Rターゲット</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={targetR}
+              onChange={e => setTargetR(e.target.value)}
+              placeholder="例: 3.0"
+              step="0.1"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Init Risk% (calculated, read-only) */}
+          {initRiskPct != null && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Init Risk%（自動計算）</label>
+              <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2.5 text-base font-mono text-gray-700">
+                {initRiskPct.toFixed(2)}%
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Memo */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {isPlan ? 'メモ' : '買い理由メモ'}
+          </label>
+          <textarea
+            value={memo}
+            onChange={e => setMemo(e.target.value)}
+            rows={3}
+            placeholder="エントリー理由・注意点など"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] disabled:opacity-50"
+          >
+            {saving ? '保存中…' : '保存'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
