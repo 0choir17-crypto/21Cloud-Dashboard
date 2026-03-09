@@ -53,7 +53,14 @@ export default async function SignalsPage() {
     .limit(1)
     .single()
 
-  const signals = rawSignals ?? []
+  // 最新日付のシグナルのみに絞る
+  const allSignals = rawSignals ?? []
+  const latestDate = allSignals.length > 0
+    ? allSignals.reduce((max, s) => (s.date > max ? s.date : max), allSignals[0].date)
+    : null
+  const signals = latestDate
+    ? allSignals.filter(s => s.date === latestDate)
+    : allSignals
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>

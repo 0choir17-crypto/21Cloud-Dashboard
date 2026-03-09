@@ -7,6 +7,22 @@ import Tooltip from '@/components/shared/Tooltip'
 import WatchlistModal from '@/components/watchlist/WatchlistModal'
 import { WatchlistItem } from '@/types/portfolio'
 
+// ── Badge display name mapping ────────────────────────────────────────────────
+const BADGE_DISPLAY_NAMES: Record<string, string> = {
+  'SMA50 1R以内':      '50MA≤1R',
+  'SMA50 2R以内':      '50MA≤2R',
+  'EMA21 0.5R以内':    '21E≤0.5R',
+  'EMA21 1R以内':      '21E≤1R',
+  'SMA10 0.5R以内':    '10W≤0.5R',
+  'SMA10 1R以内':      '10W≤1R',
+  '出来高収縮':         'VolC',
+  '出来高収縮 0.8以下': 'VolC≤0.8',
+  'RS ≥ 70':          'RS≥70',
+  'ADR ≤ 2%':         'ADR≤2',
+  'ADR ≤ 3%':         'ADR≤3',
+  'ADR ≤ 4%':         'ADR≤4',
+}
+
 // ── Column tooltips ───────────────────────────────────────────────────────────
 const COLUMN_TOOLTIPS: Record<string, string> = {
   entry_score:  'バックテスト検証済みエントリー適性スコア（★1〜3）',
@@ -60,7 +76,7 @@ function EntryScoreBadge({ score, stars, badgesJson }: {
         <div className="flex flex-wrap gap-1">
           {badges.map((b, i) => (
             <span key={i} className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 whitespace-nowrap">
-              {b}
+              {BADGE_DISPLAY_NAMES[b] ?? b}
             </span>
           ))}
         </div>
@@ -238,6 +254,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
             <SortTh label="52W高値%"  sortKey="high_52w_pct" tooltip={COLUMN_TOOLTIPS.high_52w_pct} {...sp} />
             <SortTh label="Stop%"     sortKey="stop_pct"     tooltip={COLUMN_TOOLTIPS.stop_pct}     {...sp} />
             <SortTh label="HIT"       sortKey="hit_count"    tooltip={COLUMN_TOOLTIPS.hit_count}    {...sp} />
+            <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">WL</th>
           </tr>
         </thead>
         <tbody>
@@ -268,16 +285,6 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                   >
                     {sig.company_name ?? '—'}
                   </a>
-                  <button
-                    onClick={() => setWatchTarget({
-                      ticker: sig.code,
-                      company_name: sig.company_name ?? undefined,
-                      screen_tag: sig.screen_name ?? undefined,
-                    })}
-                    className="mt-1 text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
-                  >
-                    + Watch
-                  </button>
                 </td>
                 {/* エントリースコア */}
                 <td className="px-3 py-2.5">
@@ -318,6 +325,19 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                     screenName={sig.screen_name}
                     recommended={recommended}
                   />
+                </td>
+                {/* WL (Watch) */}
+                <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                  <button
+                    onClick={() => setWatchTarget({
+                      ticker: sig.code,
+                      company_name: sig.company_name ?? undefined,
+                      screen_tag: sig.screen_name ?? undefined,
+                    })}
+                    className="text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
+                  >
+                    + Watch
+                  </button>
                 </td>
               </tr>
             )
