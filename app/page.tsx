@@ -1,25 +1,30 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { MarketConditions } from '@/types/market'
 import ScoreGauge from '@/components/market/ScoreGauge'
 import FactorGrid from '@/components/market/FactorGrid'
 import IndexCard from '@/components/market/IndexCard'
 import BreadthPanel from '@/components/market/BreadthPanel'
-import RefreshButton from '@/components/market/RefreshButton'
 
-export const revalidate = 3600
+export default function Page() {
+  const [market, setMarket] = useState<MarketConditions | null>(null)
+  const [loading, setLoading] = useState(true)
 
-async function getData(): Promise<MarketConditions | null> {
-  const { data } = await supabase
-    .from('market_conditions')
-    .select('*')
-    .order('date', { ascending: false })
-    .limit(1)
-    .single()
-  return data
-}
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('market_conditions')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(1)
+      .single()
+    setMarket(data)
+    setLoading(false)
+  }, [])
 
-export default async function Page() {
-  const market = await getData()
+  useEffect(() => { fetchData() }, [fetchData])
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -43,12 +48,39 @@ export default async function Page() {
               Updated: {market.date}
             </span>
           )}
-          <RefreshButton />
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-[var(--border)] bg-white hover:bg-[var(--bg-card-hover)] transition-colors disabled:opacity-50"
+            style={{ color: 'var(--accent)' }}
+          >
+            <svg
+              className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {loading ? '更新中...' : 'Refresh'}
+          </button>
         </div>
       </header>
 
+      {/* ローディング */}
+      {loading && !market && (
+        <div className="card p-8 text-center" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-lg font-medium">読み込み中…</p>
+        </div>
+      )}
+
       {/* データなし */}
-      {!market && (
+      {!loading && !market && (
         <div className="card p-8 text-center" style={{ color: 'var(--text-muted)' }}>
           <p className="text-lg font-medium mb-2">データが見つかりません</p>
           <p className="text-sm">Supabase の market_conditions テーブルにデータを挿入してください。</p>

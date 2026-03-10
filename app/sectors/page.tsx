@@ -1,11 +1,11 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { SectorData } from '@/types/sectors'
 import SectorBarChart from '@/components/sectors/SectorBarChart'
 import SectorRRG from '@/components/sectors/SectorRRG'
 import SectorQuadrantTable from '@/components/sectors/SectorQuadrantTable'
-import RefreshButton from '@/components/market/RefreshButton'
-
-export const revalidate = 3600
 
 const SECTOR_SELECT_BASE = `
   date, sector_name,
@@ -18,57 +18,70 @@ const SECTOR_SELECT_WITH_RS = `
   rs_1d, rs_1w, rs_1m, rs_chg_1w, rs_chg_1m
 `
 
-export default async function SectorsPage() {
-  // ── 最新日データ（テーブル用）— RS列が存在しない場合はフォールバック ───
-  const { data: rawFull, error: fullErr } = await supabase
-    .from('sector_index_prices')
-    .select(SECTOR_SELECT_WITH_RS)
-    .order('date', { ascending: false })
-    .limit(200)
+export default function SectorsPage() {
+  const [latest, setLatest] = useState<SectorData[]>([])
+  const [rsHistory, setRsHistory] = useState<{ date: string; sector_name: string; rs_1d: number }[]>([])
+  const [isRRGReady, setIsRRGReady] = useState(false)
+  const [latestDate, setLatestDate] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  let rawData: any[] | null = rawFull
+  const fetchData = useCallback(async () => {
+    setLoading(true)
 
-  if (fullErr) {
-    // RS columns not yet added → fall back to base columns
-    const { data: rawBase } = await supabase
+    // ── 最新日データ（テーブル用）— RS列が存在しない場合はフォールバック ───
+    const { data: rawFull, error: fullErr } = await supabase
       .from('sector_index_prices')
-      .select(SECTOR_SELECT_BASE)
+      .select(SECTOR_SELECT_WITH_RS)
       .order('date', { ascending: false })
       .limit(200)
-    rawData = rawBase
-  }
 
-  const sectors: SectorData[] = (rawData ?? []) as SectorData[]
+    let rawData: any[] | null = rawFull
 
-  // 最新日付の行だけに絞る
-  const latestDate = sectors[0]?.date ?? null
-  const latest = latestDate
-    ? sectors.filter(s => s.date === latestDate)
-    : []
+    if (fullErr) {
+      const { data: rawBase } = await supabase
+        .from('sector_index_prices')
+        .select(SECTOR_SELECT_BASE)
+        .order('date', { ascending: false })
+        .limit(200)
+      rawData = rawBase
+    }
 
-  // ── RS履歴（ラインチャート用: 最大30日 × 17セクター） ──────────────────
-  // rsHistoryクエリはRS列が存在しない場合にエラーになる可能性があるため、
-  // エラー時は空配列にフォールバック
-  const { data: rsRaw } = await supabase
-    .from('sector_index_prices')
-    .select('date, sector_name, rs_1d')
-    .order('date', { ascending: true })
-    .not('rs_1d', 'is', null)
-    .limit(17 * 30)
+    const sectors: SectorData[] = (rawData ?? []) as SectorData[]
 
-  const rsHistory = (rsRaw ?? []).filter((r: any) => r.rs_1d !== null) as {
-    date: string
-    sector_name: string
-    rs_1d: number
-  }[]
+    // 最新日付の行だけに絞る
+    const date = sectors[0]?.date ?? null
+    const latestSectors = date ? sectors.filter(s => s.date === date) : []
 
-  // ── RRG用: 各セクターの日付ユニーク数が20以上あるか確認 ────────────────
-  const sectorDays: Record<string, Set<string>> = {}
-  for (const s of sectors) {
-    if (!sectorDays[s.sector_name]) sectorDays[s.sector_name] = new Set()
-    sectorDays[s.sector_name].add(s.date)
-  }
-  const isRRGReady = latest.every(s => (sectorDays[s.sector_name]?.size ?? 0) >= 20)
+    // ── RS履歴（ラインチャート用: 最大30日 × 17セクター） ──────────────────
+    const { data: rsRaw } = await supabase
+      .from('sector_index_prices')
+      .select('date, sector_name, rs_1d')
+      .order('date', { ascending: true })
+      .not('rs_1d', 'is', null)
+      .limit(17 * 30)
+
+    const history = (rsRaw ?? []).filter((r: any) => r.rs_1d !== null) as {
+      date: string
+      sector_name: string
+      rs_1d: number
+    }[]
+
+    // ── RRG用: 各セクターの日付ユニーク数が20以上あるか確認 ────────────────
+    const sectorDays: Record<string, Set<string>> = {}
+    for (const s of sectors) {
+      if (!sectorDays[s.sector_name]) sectorDays[s.sector_name] = new Set()
+      sectorDays[s.sector_name].add(s.date)
+    }
+    const rrgReady = latestSectors.every(s => (sectorDays[s.sector_name]?.size ?? 0) >= 20)
+
+    setLatest(latestSectors)
+    setRsHistory(history)
+    setIsRRGReady(rrgReady)
+    setLatestDate(date)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -92,11 +105,41 @@ export default async function SectorsPage() {
               Updated: {latestDate}
             </span>
           )}
-          <RefreshButton />
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-[var(--border)] bg-white hover:bg-[var(--bg-card-hover)] transition-colors disabled:opacity-50"
+            style={{ color: 'var(--accent)' }}
+          >
+            <svg
+              className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {loading ? '更新中...' : 'Refresh'}
+          </button>
         </div>
       </header>
 
-      {latest.length === 0 ? (
+      {/* ローディング */}
+      {loading && latest.length === 0 && (
+        <div
+          className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-8 text-center"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <p className="text-lg font-medium">読み込み中…</p>
+        </div>
+      )}
+
+      {!loading && latest.length === 0 ? (
         <div
           className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-8 text-center"
           style={{ color: 'var(--text-muted)' }}
@@ -104,7 +147,7 @@ export default async function SectorsPage() {
           <p className="text-lg font-medium mb-2">データが見つかりません</p>
           <p className="text-sm">Supabase の sector_index_prices テーブルにデータを挿入してください。</p>
         </div>
-      ) : (
+      ) : !loading && (
         <>
           {/* Phase 1: RSチャート + 象限テーブル */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
