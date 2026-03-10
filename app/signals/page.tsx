@@ -1,10 +1,10 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DailySignal } from '@/types/signals'
 import SignalsHeader from '@/components/signals/SignalsHeader'
 import SignalsFilter from '@/components/signals/SignalsFilter'
-import RefreshButton from '@/components/market/RefreshButton'
-
-export const revalidate = 3600
 
 // エントリースコアカラムを含むクエリ（カラム未追加時はフォールバック）
 const COLUMNS_WITH_ENTRY = `
@@ -22,45 +22,64 @@ const COLUMNS_BASE = `
   high_52w_pct, stop_pct, hit_count
 `
 
-export default async function SignalsPage() {
-  // entry_score カラムが存在しない場合はフォールバック
-  let rawSignals: DailySignal[] | null = null
+export default function SignalsPage() {
+  const [signals, setSignals] = useState<DailySignal[]>([])
+  const [market, setMarket] = useState<{
+    date: string
+    market_regime: string
+    breadth_regime: string
+    scorecard_regime: string
+    positive_count: number
+    total_count: number
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const { data, error } = await supabase
-    .from('daily_signals')
-    .select(COLUMNS_WITH_ENTRY)
-    .order('date', { ascending: false })
-    .order('hit_count', { ascending: false })
-    .limit(100)
+  const fetchData = useCallback(async () => {
+    setLoading(true)
 
-  if (error && error.message?.includes('entry_score')) {
-    // カラム未追加 → エントリースコアなしで再取得
-    const { data: fallback } = await supabase
+    // entry_score カラムが存在しない場合はフォールバック
+    let rawSignals: DailySignal[] = []
+
+    const { data, error } = await supabase
       .from('daily_signals')
-      .select(COLUMNS_BASE)
+      .select(COLUMNS_WITH_ENTRY)
       .order('date', { ascending: false })
       .order('hit_count', { ascending: false })
       .limit(100)
-    rawSignals = (fallback ?? []) as DailySignal[]
-  } else {
-    rawSignals = (data ?? []) as DailySignal[]
-  }
 
-  const { data: market } = await supabase
-    .from('market_conditions')
-    .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count')
-    .order('date', { ascending: false })
-    .limit(1)
-    .single()
+    if (error && error.message?.includes('entry_score')) {
+      const { data: fallback } = await supabase
+        .from('daily_signals')
+        .select(COLUMNS_BASE)
+        .order('date', { ascending: false })
+        .order('hit_count', { ascending: false })
+        .limit(100)
+      rawSignals = (fallback ?? []) as DailySignal[]
+    } else {
+      rawSignals = (data ?? []) as DailySignal[]
+    }
 
-  // 最新日付のシグナルのみに絞る
-  const allSignals = rawSignals ?? []
-  const latestDate = allSignals.length > 0
-    ? allSignals.reduce((max, s) => (s.date > max ? s.date : max), allSignals[0].date)
-    : null
-  const signals = latestDate
-    ? allSignals.filter(s => s.date === latestDate)
-    : allSignals
+    const { data: marketData } = await supabase
+      .from('market_conditions')
+      .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count')
+      .order('date', { ascending: false })
+      .limit(1)
+      .single()
+
+    // 最新日付のシグナルのみに絞る
+    const latestDate = rawSignals.length > 0
+      ? rawSignals.reduce((max, s) => (s.date > max ? s.date : max), rawSignals[0].date)
+      : null
+    const filtered = latestDate
+      ? rawSignals.filter(s => s.date === latestDate)
+      : rawSignals
+
+    setSignals(filtered)
+    setMarket(marketData)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -84,7 +103,27 @@ export default async function SignalsPage() {
               Updated: {market.date}
             </span>
           )}
-          <RefreshButton />
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-[var(--border)] bg-white hover:bg-[var(--bg-card-hover)] transition-colors disabled:opacity-50"
+            style={{ color: 'var(--accent)' }}
+          >
+            <svg
+              className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {loading ? '更新中...' : 'Refresh'}
+          </button>
         </div>
       </header>
 
@@ -97,8 +136,18 @@ export default async function SignalsPage() {
         totalCount={market?.total_count}
       />
 
+      {/* ローディング */}
+      {loading && signals.length === 0 && (
+        <div
+          className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-8 text-center"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          <p className="text-lg font-medium">読み込み中…</p>
+        </div>
+      )}
+
       {/* フィルター + テーブル */}
-      {signals.length === 0 ? (
+      {!loading && signals.length === 0 ? (
         <div
           className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-8 text-center"
           style={{ color: 'var(--text-muted)' }}
@@ -106,7 +155,7 @@ export default async function SignalsPage() {
           <p className="text-lg font-medium mb-2">シグナルが見つかりません</p>
           <p className="text-sm">Supabase の daily_signals テーブルにデータを挿入してください。</p>
         </div>
-      ) : (
+      ) : !loading && (
         <SignalsFilter
           signals={signals}
           marketRegime={market?.market_regime}
