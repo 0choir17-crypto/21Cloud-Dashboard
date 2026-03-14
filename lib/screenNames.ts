@@ -1,32 +1,19 @@
 export const SCREEN_NAME_MAP: Record<string, string> = {
-  // --- Factor screens (screens.json由来) ---
-  'rs126d_epsactual_PF52whigh':           'RS+EPS+Hi',
-  'PF52wlow_epsactual_PF52whigh':         'Lo↑+EPS+Hi',
-  'ret126d_epsactual_PF52whigh':          'R6m+EPS+Hi',
-  'rs126d_BookValuePer_PF52whigh':        'RS+BPS+Hi',
-  'epsactual_slopesma50_PF52whigh':       'EPS+Slp+Hi',
-  'epsactual_PF52whigh_ret63d':           'EPS+Hi+R3m',
-  'rs126d_epsactual_slopesma50':          'RS+EPS+Slp',
-  'rs126d_BookValuePer':                  'RS+BPS',
-  'ret126d_rs126d_BookValuePer':          'R6m+RS+BPS',
-  'PF52wlow_rs126d_BookValuePer':         'Lo↑+RS+BPS',
-  // --- Named screens (daily_screener.py _SCREEN_ENTRY_FILTERS由来) ---
-  'PF52whigh_BookValuePer_epsactual_BullOnly':          'HiddenLdr',
-  'BookValuePer_epsactual_distsma200_BullOnly':         'CANSLIM_MA',
-  'BookValuePer_epsactual_clouddaysabo_BullOnly':       'CANSLIM_Cloud',
-  'BookValuePer_epsactual_rscomposite_BullOnly':        'CANSLIM_RS',
-  'EVT_VCP_BPS_BullOnly':                              'VCP',
-  'EVT_Brk20d_52wh_EPS_BullOnly':                      'PEAD',
-  'epsactual_epsgrowthyoy_BearOnly':                    'DeepRecov',
-  'BookValuePer_epsgrowthyoy_BearOnly':                 'ValueRecov',
-  'epsactual_BookValuePer_epsgrowthyoy_BearOnly':       'DeepValue',
-  'EVT_GapUp3_EPS_EpsGr_BearOnly':                     'GapUp',
-  'EVT_RVOL2x_BPS_EpsGr_BearOnly':                     'RVOL',
-  'EVT_CWH_BPS_EPS':                                   'CWH',
+  // STRONG（環境非依存エッジ確認済み）
+  'EVT_RVOL2x_BPS_EpsGr':   'RVOL2x+BPS',
+  'EVT_RVOL15_EpsGr':        'RVOL1.5+EpsGr',
+  'EVT_HighVolPrev_EpsGr':   'HighVol翌日+EpsGr',
+  'EVT_GapUp3_EPS80':        'GapUp3%+EPS',
+  // GOOD（条件付きエッジ）
+  'EVT_HighVolPrev_BPS':     'HighVol翌日+BPS',
+  'EVT_GapUp3_EPS95':        'GapUp3%+EPS95',
+  'EVT_CloudBreak_RS_EPS':   'CloudBrk+RS',
+  // CWH（既存維持）
+  'EVT_CWH_BPS_EPS':         'CWH',
 }
 
 // screen_name は | で複数連結されている場合がある
-// 例: "CANSLIM_MA|CANSLIM_RS|HiddenLdr"
+// 例: "EVT_RVOL2x_BPS_EpsGr|EVT_GapUp3_EPS80"
 export function formatScreenName(raw: string): string {
   return raw
     .split('|')
@@ -34,15 +21,16 @@ export function formatScreenName(raw: string): string {
     .join(' · ')
 }
 
-// market_regime × scorecard_regime による推奨スクリーン（短縮名）
+// 全スクリーンが regime="both" のため推奨はstability別に定義
+// STRONG screens は全環境で推奨、GOOD は補助的
 const RECOMMENDED_SCREENS: Record<string, string[]> = {
-  'bull_strong_bull': ['HiddenLdr', 'CANSLIM_MA', 'CANSLIM_Cloud', 'CANSLIM_RS', 'VCP', 'PEAD'],
-  'bull_bull':        ['HiddenLdr', 'CANSLIM_RS', 'CANSLIM_MA', 'VCP', 'PEAD'],
-  'bull_neutral':     ['HiddenLdr', 'PEAD', 'VCP'],
-  'bull_bear':        ['PEAD'],
-  'neutral_neutral':  ['PEAD', 'DeepRecov'],
-  'bear_bear':        ['DeepRecov', 'ValueRecov', 'DeepValue', 'GapUp', 'RVOL'],
-  'bear_strong_bear': ['DeepRecov', 'ValueRecov', 'DeepValue'],
+  'bull_strong_bull': ['RVOL2x+BPS', 'RVOL1.5+EpsGr', 'HighVol翌日+EpsGr', 'GapUp3%+EPS', 'HighVol翌日+BPS', 'GapUp3%+EPS95', 'CloudBrk+RS', 'CWH'],
+  'bull_bull':        ['RVOL2x+BPS', 'RVOL1.5+EpsGr', 'HighVol翌日+EpsGr', 'GapUp3%+EPS', 'CWH'],
+  'bull_neutral':     ['RVOL2x+BPS', 'HighVol翌日+EpsGr', 'GapUp3%+EPS', 'CWH'],
+  'bull_bear':        ['RVOL2x+BPS', 'CWH'],
+  'neutral_neutral':  ['RVOL2x+BPS', 'RVOL1.5+EpsGr', 'HighVol翌日+EpsGr', 'CWH'],
+  'bear_bear':        ['RVOL2x+BPS', 'HighVol翌日+EpsGr', 'CWH', 'CloudBrk+RS'],
+  'bear_strong_bear': ['RVOL2x+BPS', 'CWH', 'CloudBrk+RS'],
 }
 
 export function getRecommendedScreens(
