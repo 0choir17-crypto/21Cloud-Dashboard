@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { DailySignal } from '@/types/signals'
-import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
+import { SCREEN_NAME_MAP, SCREEN_RANK, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
 import SignalsTable from './SignalsTable'
 
 type Props = {
@@ -17,12 +17,21 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
 
   const recommended = getRecommendedScreens(marketRegime, scorecardRegime)
 
-  // | で分割して個別スクリーン一覧（重複排除・ソート）
-  const allScreens = Array.from(
-    new Set(
-      signals.flatMap(s => s.screen_name.split('|').map(n => n.trim()))
+  // OOS PF 降順（成績順）で全スクリーンを固定表示
+  const allScreens = Object.keys(SCREEN_RANK).sort(
+    (a, b) => SCREEN_RANK[a] - SCREEN_RANK[b]
+  )
+
+  // 各スクリーンのヒット数を事前計算
+  const screenCounts = new Map<string, number>()
+  for (const name of allScreens) {
+    screenCounts.set(
+      name,
+      signals.filter(s =>
+        s.screen_name.split('|').map(n => n.trim()).includes(name)
+      ).length
     )
-  ).sort()
+  }
 
   // フィルター条件: 選択中スクリーンが screen_name に含まれるか
   let filtered = activeScreen === 'all'
@@ -36,8 +45,11 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
     filtered = filtered.filter(s => (s.entry_score ?? 1) >= entryFilter)
   }
 
-  const btnClass = (name: string, rec: boolean) => {
+  const btnClass = (name: string, rec: boolean, disabled: boolean) => {
     const isActive = name === activeScreen
+    if (disabled) {
+      return 'px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed transition-colors'
+    }
     if (isActive) {
       return 'px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white border border-blue-600 transition-colors'
     }
@@ -51,22 +63,22 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
     <>
       {/* Filter buttons */}
       <div className="flex flex-wrap gap-2 mb-4">
-        <button className={btnClass('all', false)} onClick={() => setActiveScreen('all')}>
+        <button className={btnClass('all', false, false)} onClick={() => setActiveScreen('all')}>
           全て（{signals.length}）
         </button>
         {allScreens.map(name => {
-          const count = signals.filter(s =>
-            s.screen_name.split('|').map(n => n.trim()).includes(name)
-          ).length
+          const count     = screenCounts.get(name) ?? 0
           const rec       = isRecommended(name, recommended)
           const shortName = SCREEN_NAME_MAP[name] ?? name
+          const disabled  = count === 0
           return (
             <button
               key={name}
-              className={btnClass(name, rec)}
-              onClick={() => setActiveScreen(name)}
+              className={btnClass(name, rec, disabled)}
+              onClick={() => !disabled && setActiveScreen(name)}
+              disabled={disabled}
             >
-              {rec && <span className="mr-1">★</span>}
+              {rec && !disabled && <span className="mr-1">★</span>}
               {shortName}（{count}）
             </button>
           )

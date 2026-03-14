@@ -12,6 +12,18 @@ export const SCREEN_NAME_MAP: Record<string, string> = {
   'EVT_CWH_BPS_EPS':         'CWH',
 }
 
+// 成績順ランク（小さいほど上位）: STRONG → GOOD → CWH
+export const SCREEN_RANK: Record<string, number> = {
+  'EVT_RVOL2x_BPS_EpsGr':   1,
+  'EVT_RVOL15_EpsGr':        2,
+  'EVT_HighVolPrev_EpsGr':   3,
+  'EVT_GapUp3_EPS80':        4,
+  'EVT_HighVolPrev_BPS':     5,
+  'EVT_GapUp3_EPS95':        6,
+  'EVT_CloudBreak_RS_EPS':   7,
+  'EVT_CWH_BPS_EPS':         8,
+}
+
 // screen_name は | で複数連結されている場合がある
 // 例: "EVT_RVOL2x_BPS_EpsGr|EVT_GapUp3_EPS80"
 export function formatScreenName(raw: string): string {
