@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { DailySignal } from '@/types/signals'
-import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
+import { SCREEN_NAME_MAP, SCREEN_RANK, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
 import SignalsTable from './SignalsTable'
 
 type Props = {
@@ -17,12 +17,12 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
 
   const recommended = getRecommendedScreens(marketRegime, scorecardRegime)
 
-  // | で分割して個別スクリーン一覧（重複排除・ソート）
+  // | で分割して個別スクリーン一覧（重複排除・成績順ソート）
   const allScreens = Array.from(
     new Set(
       signals.flatMap(s => s.screen_name.split('|').map(n => n.trim()))
     )
-  ).sort()
+  ).sort((a, b) => (SCREEN_RANK[a] ?? 99) - (SCREEN_RANK[b] ?? 99))
 
   // フィルター条件: 選択中スクリーンが screen_name に含まれるか
   let filtered = activeScreen === 'all'
