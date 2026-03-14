@@ -26,12 +26,14 @@ const BADGE_DISPLAY_NAMES: Record<string, string> = {
   'ADR ≤ 5%':         'ADR≤5',
   'ADR<=2':            'ADR≤2',
   'ADR<=5':            'ADR≤5',
+  'ADR>=2.5':          'ADR≥2.5',
+  'RVOL>=0.8':         'RVOL≥0.8',
   '出来高収縮<=0.8':    'VolC≤0.8',
 }
 
 // ── Column tooltips ───────────────────────────────────────────────────────────
 const COLUMN_TOOLTIPS: Record<string, string> = {
-  entry_score:  'バックテスト検証済みエントリー適性スコア（★1〜3）',
+  entry_score:  'バックテスト検証済みエントリー適性スコア（★★★ or 無星）',
   price_chg_1d: '昨日比変化率（%）',
   price_chg_5d: '直近5日間の変化率（%）',
   rs_composite: '相対強度スコア（複合指標）',
@@ -67,15 +69,14 @@ function EntryScoreBadge({ score, stars, badgesJson }: {
 
   const colorMap: Record<number, string> = {
     3: 'bg-emerald-500 text-white',
-    2: 'bg-yellow-400 text-gray-900',
-    1: 'bg-gray-200 text-gray-500',
+    0: 'bg-gray-200 text-gray-500',
   }
 
   return (
     <div className="flex flex-col gap-1">
       {/* ★バッジ */}
-      <span className={`inline-flex items-center px-2 py-0.5 rounded text-sm font-bold ${colorMap[score] ?? colorMap[1]}`}>
-        {stars}
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-sm font-bold ${colorMap[score] ?? colorMap[0]}`}>
+        {stars || '—'}
       </span>
       {/* 満たした条件ラベル */}
       {badges.length > 0 && (
@@ -295,8 +296,8 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                 {/* エントリースコア */}
                 <td className="px-3 py-2.5">
                   <EntryScoreBadge
-                    score={sig.entry_score ?? 1}
-                    stars={sig.entry_stars ?? '★'}
+                    score={sig.entry_score ?? 0}
+                    stars={sig.entry_stars ?? ''}
                     badgesJson={sig.entry_badges ?? '[]'}
                   />
                 </td>

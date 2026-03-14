@@ -40,9 +40,9 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
         s.screen_name.split('|').map(n => n.trim()).includes(activeScreen)
       )
 
-  // エントリースコアフィルター
+  // エントリースコアフィルター（2段階制: 0=無星, 3=★★★）
   if (entryFilter !== null) {
-    filtered = filtered.filter(s => (s.entry_score ?? 1) >= entryFilter)
+    filtered = filtered.filter(s => (s.entry_score ?? 0) >= entryFilter)
   }
 
   const btnClass = (name: string, rec: boolean, disabled: boolean) => {
