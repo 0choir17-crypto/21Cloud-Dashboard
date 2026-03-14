@@ -187,18 +187,16 @@ export default function SectorQuadrantTable({ sectors }: { sectors: SectorData[]
           <tr className="bg-gray-50 border-b border-[#e8eaed] border-t border-t-[#e8eaed]">
             <SortTh label="Sector"      tooltip={COLUMN_TOOLTIPS.sector_name}    sortKey="sector_name"    {...sp} align="left" />
             <SortTh label="Phase"       tooltip={COLUMN_TOOLTIPS.quadrant}       sortKey="quadrant"       {...sp} align="left" />
-            <SortTh label="1D%"         tooltip={COLUMN_TOOLTIPS.chg_1d_pct}     sortKey="chg_1d_pct"     {...sp} />
-            <SortTh label="5D%"         tooltip={COLUMN_TOOLTIPS.chg_5d_pct}     sortKey="chg_5d_pct"     {...sp} />
-            <SortTh label="21D%"        tooltip={COLUMN_TOOLTIPS.chg_21d_pct}    sortKey="chg_21d_pct"    {...sp} />
-            <SortTh label="52W High%"   tooltip={COLUMN_TOOLTIPS.pct_from_52wh}  sortKey="pct_from_52wh"  {...sp} />
-            <SortTh label="SMA25%"      tooltip={COLUMN_TOOLTIPS.dist_sma25_pct} sortKey="dist_sma25_pct" {...sp} />
-            <SortTh label="SMA50%"      tooltip={COLUMN_TOOLTIPS.dist_sma50_pct} sortKey="dist_sma50_pct" {...sp} />
-            <SortTh label="EMA21%"      tooltip={COLUMN_TOOLTIPS.dist_ema21_pct} sortKey="dist_ema21_pct" {...sp} />
             <SortTh label="RS"          tooltip={COLUMN_TOOLTIPS.rs_1d}          sortKey="rs_1d"          {...sp} />
             <SortTh label="RS(1W)"      tooltip={COLUMN_TOOLTIPS.rs_1w}          sortKey="rs_1w"          {...sp} />
             <SortTh label="RS(1M)"      tooltip={COLUMN_TOOLTIPS.rs_1m}          sortKey="rs_1m"          {...sp} />
             <SortTh label="RS Δ1W"     tooltip={COLUMN_TOOLTIPS.rs_chg_1w}      sortKey="rs_chg_1w"      {...sp} />
             <SortTh label="RS Δ1M"     tooltip={COLUMN_TOOLTIPS.rs_chg_1m}      sortKey="rs_chg_1m"      {...sp} />
+            <SortTh label="5D%"         tooltip={COLUMN_TOOLTIPS.chg_5d_pct}     sortKey="chg_5d_pct"     {...sp} />
+            <SortTh label="21D%"        tooltip={COLUMN_TOOLTIPS.chg_21d_pct}    sortKey="chg_21d_pct"    {...sp} />
+            <SortTh label="52W High%"   tooltip={COLUMN_TOOLTIPS.pct_from_52wh}  sortKey="pct_from_52wh"  {...sp} />
+            <SortTh label="SMA50%"      tooltip={COLUMN_TOOLTIPS.dist_sma50_pct} sortKey="dist_sma50_pct" {...sp} />
+            <SortTh label="EMA21%"      tooltip={COLUMN_TOOLTIPS.dist_ema21_pct} sortKey="dist_ema21_pct" {...sp} />
           </tr>
         </thead>
         <tbody>
@@ -211,18 +209,16 @@ export default function SectorQuadrantTable({ sectors }: { sectors: SectorData[]
             >
               <td className="px-3 py-2.5 whitespace-nowrap text-xs font-medium text-gray-800">{s.sector_name}</td>
               <td className="px-3 py-2.5 whitespace-nowrap"><QuadrantBadge q={s._q} /></td>
-              <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={s.chg_1d_pct} /></td>
-              <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={s.chg_5d_pct} /></td>
-              <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={s.chg_21d_pct} /></td>
-              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.pct_from_52wh)}</td>
-              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.dist_sma25_pct)}</td>
-              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.dist_sma50_pct)}</td>
-              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.dist_ema21_pct)}</td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap"><RSCell value={s.rs_1d} /></td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap"><RSCell value={s.rs_1w} /></td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap"><RSCell value={s.rs_1m} /></td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap"><RSChangeCell value={s.rs_chg_1w} /></td>
               <td className="px-3 py-2.5 text-right whitespace-nowrap"><RSChangeCell value={s.rs_chg_1m} /></td>
+              <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={s.chg_5d_pct} /></td>
+              <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={s.chg_21d_pct} /></td>
+              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.pct_from_52wh)}</td>
+              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.dist_sma50_pct)}</td>
+              <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(s.dist_ema21_pct)}</td>
             </tr>
           ))}
         </tbody>
