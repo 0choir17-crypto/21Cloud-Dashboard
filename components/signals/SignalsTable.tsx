@@ -18,10 +18,15 @@ const BADGE_DISPLAY_NAMES: Record<string, string> = {
   '出来高収縮':         'VolC',
   '出来高収縮 0.8以下': 'VolC≤0.8',
   'RS ≥ 70':          'RS≥70',
+  'RS>=60':            'RS≥60',
+  'RS>=50':            'RS≥50',
   'ADR ≤ 2%':         'ADR≤2',
   'ADR ≤ 3%':         'ADR≤3',
   'ADR ≤ 4%':         'ADR≤4',
   'ADR ≤ 5%':         'ADR≤5',
+  'ADR<=2':            'ADR≤2',
+  'ADR<=5':            'ADR≤5',
+  '出来高収縮<=0.8':    'VolC≤0.8',
 }
 
 // ── Column tooltips ───────────────────────────────────────────────────────────
