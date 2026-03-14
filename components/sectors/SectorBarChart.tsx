@@ -1,10 +1,5 @@
 'use client'
 
-import {
-  LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip,
-  ReferenceLine, ResponsiveContainer,
-  BarChart, Bar, Cell,
-} from 'recharts'
 import { SectorData } from '@/types/sectors'
 
 type RSPoint = { date: string; sector_name: string; rs_1d: number }
@@ -14,202 +9,180 @@ type Props = {
   sectors: SectorData[]
 }
 
-// ── 21D バーチャート フォールバック ─────────────────────────────────────────
-function BarTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) return null
-  const val  = payload[0]?.value as number
-  const name = payload[0]?.payload?.name as string
-  return (
-    <div className="bg-white border border-[#e8eaed] rounded-lg px-3 py-2 shadow-sm text-xs">
-      <p className="font-medium text-gray-700 mb-1">{name}</p>
-      <p style={{ color: val >= 0 ? '#16a34a' : '#dc2626' }}>
-        {val >= 0 ? '+' : ''}{val}%
-      </p>
-    </div>
-  )
+// ── フェーズ色 ───────────────────────────────────────────────────────────────
+function phaseColor(rs: number): string {
+  if (rs >= 70) return '#22c55e'
+  if (rs >= 40) return '#eab308'
+  return '#ef4444'
 }
 
-function SectorBarChartFallback({ sectors }: { sectors: SectorData[] }) {
-  const data = [...sectors]
-    .sort((a, b) => (b.chg_21d_pct ?? 0) - (a.chg_21d_pct ?? 0))
-    .map(s => ({ name: s.sector_name, value: +(s.chg_21d_pct ?? 0).toFixed(2) }))
-
-  return (
-    <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
-      <p className="text-sm font-semibold text-gray-500 mb-4">21日パフォーマンス（%）</p>
-      <ResponsiveContainer width="100%" height={500}>
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 48, bottom: 4, left: 4 }}>
-          <XAxis
-            type="number"
-            tick={{ fontSize: 11 }}
-            tickFormatter={v => `${v}%`}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            type="category"
-            dataKey="name"
-            width={155}
-            tick={{ fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <RechartsTooltip content={<BarTooltip />} cursor={{ fill: '#f9fafb' }} />
-          <ReferenceLine x={0} stroke="#9ca3af" strokeWidth={1} />
-          <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={22}>
-            {data.map((entry, i) => (
-              <Cell key={i} fill={entry.value >= 0 ? '#16a34a' : '#dc2626'} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  )
+function phaseBorder(rs: number): string {
+  if (rs >= 70) return '#16a34a'
+  if (rs >= 40) return '#ca8a04'
+  return '#dc2626'
 }
 
-// ── RS 推移ライングラフ ──────────────────────────────────────────────────────
-const TOP_COLORS = ['#2563eb', '#7c3aed', '#16a34a']
-
-function LineTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
-  const sorted = [...payload]
-    .filter((p: any) => p.value != null)
-    .sort((a: any, b: any) => (b.value ?? 0) - (a.value ?? 0))
-  return (
-    <div className="bg-white border border-[#e8eaed] rounded-lg px-3 py-2 shadow-sm text-xs max-w-[220px]">
-      <p className="font-semibold text-gray-500 mb-1.5">{label}</p>
-      {sorted.slice(0, 6).map((p: any) => (
-        <div key={p.name} className="flex justify-between gap-3">
-          <span className="text-gray-700 truncate">{p.name}</span>
-          <span className="font-mono font-semibold" style={{ color: p.stroke }}>
-            {(p.value as number).toFixed(0)}
-          </span>
-        </div>
-      ))}
-      {sorted.length > 6 && (
-        <p className="text-gray-400 mt-1 text-[10px]">他 {sorted.length - 6} セクター</p>
-      )}
-    </div>
-  )
+type SectorTimeSeries = {
+  sectorName: string
+  points: { date: string; rs: number }[]
+  latestRS: number
+  change5d: number | null
 }
 
 export default function SectorBarChart({ rsHistory, sectors }: Props) {
-  const uniqueDays = new Set(rsHistory.map(r => r.date)).size
+  // ── セクターごとに時系列データを構築 ──────────────────────────────────────
+  const bySector = new Map<string, Map<string, number>>()
 
-  // RSデータが5日未満 → バーチャートにフォールバック
-  if (uniqueDays < 5) {
-    return <SectorBarChartFallback sectors={sectors} />
+  for (const r of rsHistory) {
+    if (r.rs_1d == null) continue
+    if (!bySector.has(r.sector_name)) bySector.set(r.sector_name, new Map())
+    bySector.get(r.sector_name)!.set(r.date, r.rs_1d)
   }
 
-  // ── データ変換: 縦長 → 横長（recharts LineChart 形式） ─────────────────
-  const allDates     = [...new Set(rsHistory.map(r => r.date))].sort()
-  const allSectors   = [...new Set(rsHistory.map(r => r.sector_name))]
-
-  const chartData = allDates.map(date => {
-    const entry: Record<string, string | number> = { date: date.slice(5) } // MM-DD
-    rsHistory.filter(r => r.date === date).forEach(r => {
-      entry[r.sector_name] = r.rs_1d
-    })
-    return entry
-  })
-
-  // ── 当日RS ランク付け ───────────────────────────────────────────────────
-  const sortedByRS = [...sectors]
-    .filter(s => s.rs_1d !== null)
-    .sort((a, b) => (b.rs_1d ?? 0) - (a.rs_1d ?? 0))
-
-  const topSectors    = sortedByRS.slice(0, 3).map(s => s.sector_name)
-  const bottomSectors = new Set(sortedByRS.slice(-3).map(s => s.sector_name))
-
-  function getLineProps(sector: string) {
-    const topIdx = topSectors.indexOf(sector)
-    if (topIdx >= 0)          return { stroke: TOP_COLORS[topIdx], strokeWidth: 2.5, opacity: 1 }
-    if (bottomSectors.has(sector)) return { stroke: '#fca5a5',     strokeWidth: 1,   opacity: 0.7 }
-    return                           { stroke: '#cbd5e1',           strokeWidth: 1,   opacity: 0.8 }
+  // sectors props から最新日データを補完
+  for (const s of sectors) {
+    if (s.rs_1d == null) continue
+    if (!bySector.has(s.sector_name)) bySector.set(s.sector_name, new Map())
+    const map = bySector.get(s.sector_name)!
+    if (!map.has(s.date)) {
+      map.set(s.date, s.rs_1d)
+    }
   }
 
-  const lastIdx = chartData.length - 1
+  // 時系列に変換
+  const seriesList: SectorTimeSeries[] = []
+
+  for (const [sectorName, dateMap] of bySector) {
+    const points = [...dateMap.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, rs]) => ({ date, rs }))
+
+    if (points.length === 0) continue
+
+    const latestRS = points[points.length - 1].rs
+    let change5d: number | null = null
+    if (points.length >= 6) {
+      change5d = +(latestRS - points[points.length - 6].rs).toFixed(1)
+    } else if (points.length >= 2) {
+      change5d = +(latestRS - points[0].rs).toFixed(1)
+    }
+
+    seriesList.push({ sectorName, points, latestRS, change5d })
+  }
+
+  // 最新RS降順ソート
+  seriesList.sort((a, b) => b.latestRS - a.latestRS)
+
+  const CHART_H = 48
 
   return (
-    <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
-      {/* タイトル + 上位3凡例 */}
-      <div className="flex items-start justify-between mb-4 gap-4">
-        <p className="text-sm font-semibold text-gray-500 whitespace-nowrap">
-          RS推移（過去{uniqueDays}日）
-        </p>
-        <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
-          {topSectors.map((s, i) => (
-            <span key={s} className="flex items-center gap-1 text-xs">
-              <span
-                className="inline-block w-5 h-0.5 rounded"
-                style={{ backgroundColor: TOP_COLORS[i] }}
-              />
-              <span className="font-medium" style={{ color: TOP_COLORS[i] }}>
-                {s}
-              </span>
-            </span>
-          ))}
-        </div>
+    <div>
+      {/* グリッド */}
+      <div
+        className="grid gap-3"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+      >
+        {seriesList.map(({ sectorName, points, latestRS, change5d }) => {
+          const borderColor = phaseBorder(latestRS)
+          const rsColor = phaseColor(latestRS)
+          const dayCount = points.length
+
+          return (
+            <div
+              key={sectorName}
+              className="bg-white rounded-lg border border-[#e8eaed] shadow-sm px-3 py-2.5 flex flex-col gap-1.5"
+              style={{ borderTop: `3px solid ${borderColor}` }}
+            >
+              {/* ヘッダー: セクター名 + RS値 */}
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-xs font-medium truncate"
+                  style={{ color: 'var(--text-primary)' }}
+                  title={sectorName}
+                >
+                  {sectorName}
+                </span>
+                <span
+                  className="text-sm font-bold font-mono tabular-nums ml-1 shrink-0"
+                  style={{ color: rsColor }}
+                >
+                  {latestRS.toFixed(0)}
+                </span>
+              </div>
+
+              {/* ミニ棒グラフ */}
+              <div
+                className="flex items-end gap-px"
+                style={{ height: CHART_H }}
+              >
+                {points.map((p, i) => {
+                  const h = (p.rs / 100) * CHART_H
+                  const isRecent = i >= points.length - 5
+                  return (
+                    <div
+                      key={p.date}
+                      className="flex-1 rounded-t-sm"
+                      style={{
+                        height: Math.max(h, 1),
+                        backgroundColor: phaseColor(p.rs),
+                        opacity: isRecent ? 1 : 0.5,
+                      }}
+                      title={`${p.date}: ${p.rs.toFixed(0)}`}
+                    />
+                  )
+                })}
+              </div>
+
+              {/* フッター: 期間 + 5日変化 */}
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-[10px] font-mono"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {dayCount}d
+                </span>
+                <span
+                  className="text-[10px] font-mono font-semibold"
+                  style={{
+                    color:
+                      change5d == null
+                        ? 'var(--text-muted)'
+                        : change5d > 0
+                          ? '#16a34a'
+                          : change5d < 0
+                            ? '#dc2626'
+                            : 'var(--text-muted)',
+                  }}
+                >
+                  {change5d == null
+                    ? '—'
+                    : change5d > 0
+                      ? `▲${change5d}pt`
+                      : change5d < 0
+                        ? `▼${Math.abs(change5d)}pt`
+                        : '— 0pt'}
+                </span>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
-      <ResponsiveContainer width="100%" height={500}>
-        <LineChart data={chartData} margin={{ top: 4, right: 110, bottom: 4, left: 0 }}>
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            domain={[0, 100]}
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            width={28}
-          />
-          <RechartsTooltip content={<LineTooltip />} />
-          <ReferenceLine y={50} stroke="#9ca3af" strokeDasharray="4 2" strokeWidth={1} />
-
-          {allSectors.map(sector => {
-            const { stroke, strokeWidth, opacity } = getLineProps(sector)
-            const isTop   = topSectors.includes(sector)
-            const topIdx  = topSectors.indexOf(sector)
-            const shortName = sector.length > 10 ? sector.slice(0, 10) + '…' : sector
-
-            return (
-              <Line
-                key={sector}
-                type="monotone"
-                dataKey={sector}
-                stroke={stroke}
-                strokeWidth={strokeWidth}
-                opacity={opacity}
-                dot={false}
-                activeDot={isTop ? { r: 4, fill: stroke } : false}
-                isAnimationActive={false}
-                label={isTop
-                  ? ((props: any) => {
-                      if (props.index !== lastIdx) return null
-                      return (
-                        <text
-                          x={props.x + 5}
-                          y={props.y + 4}
-                          fontSize={10}
-                          fill={TOP_COLORS[topIdx]}
-                          fontWeight="bold"
-                        >
-                          {shortName}
-                        </text>
-                      )
-                    }) as any
-                  : false
-                }
-              />
-            )
-          })}
-        </LineChart>
-      </ResponsiveContainer>
+      {/* フェーズ凡例 */}
+      <div className="flex items-center justify-center gap-5 mt-3 text-[11px]">
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#22c55e' }} />
+          <span style={{ color: 'var(--text-secondary)' }}>Leader (≥70)</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#eab308' }} />
+          <span style={{ color: 'var(--text-secondary)' }}>Neutral (40–70)</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#ef4444' }} />
+          <span style={{ color: 'var(--text-secondary)' }}>Lagging (&lt;40)</span>
+        </span>
+      </div>
     </div>
   )
 }

@@ -24,3 +24,5 @@ nul
 # debug
 npm-debug.log*
 .claude/
+
+.vercel
