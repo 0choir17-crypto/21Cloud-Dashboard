@@ -25,6 +25,7 @@ export default function NavBar() {
       <Link href="/signals" className={linkClass('/signals')}>Signals</Link>
       <Link href="/guide" className={linkClass('/guide')}>Guide</Link>
       <Link href="/watchlist" className={linkClass('/watchlist')}>Watchlist</Link>
+      <Link href="/journal" className={linkClass('/journal')}>Journal</Link>
       <Link href="/portfolio" className={linkClass('/portfolio')}>Portfolio</Link>
     </nav>
   )

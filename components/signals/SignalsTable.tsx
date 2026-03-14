@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DailySignal } from '@/types/signals'
 import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
 import Tooltip from '@/components/shared/Tooltip'
 import WatchlistModal from '@/components/watchlist/WatchlistModal'
+import TradeModal from '@/components/journal/TradeModal'
 import { WatchlistItem } from '@/types/portfolio'
+import { supabase } from '@/lib/supabase'
 
 // ── Badge display name mapping ────────────────────────────────────────────────
 const BADGE_DISPLAY_NAMES: Record<string, string> = {
@@ -50,6 +52,12 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
 // ── Types ────────────────────────────────────────────────────────────────────
 type SortKey = keyof DailySignal
 type SortDir = 'asc' | 'desc'
+
+type EntryTarget = {
+  ticker: string
+  company_name?: string
+  screen_name?: string
+}
 
 type Props = {
   signals: DailySignal[]
@@ -204,6 +212,22 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
   const [sortKey, setSortKey] = useState<SortKey>('entry_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [watchTarget, setWatchTarget] = useState<Partial<WatchlistItem> | null>(null)
+  const [entryTarget, setEntryTarget] = useState<EntryTarget | null>(null)
+  const [openTickers, setOpenTickers] = useState<Set<string>>(new Set())
+
+  // OPENポジションの銘柄を取得
+  useEffect(() => {
+    async function fetchOpen() {
+      const { data } = await supabase
+        .from('trades')
+        .select('ticker')
+        .eq('status', 'OPEN')
+      if (data) {
+        setOpenTickers(new Set(data.map(d => d.ticker)))
+      }
+    }
+    fetchOpen()
+  }, [entryTarget]) // entryTarget変更時（保存後）にリフレッシュ
 
   const recommended = getRecommendedScreens(marketRegime, scorecardRegime)
 
@@ -262,6 +286,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
             <SortTh label="Stop%"     sortKey="stop_pct"     tooltip={COLUMN_TOOLTIPS.stop_pct}     {...sp} />
             <SortTh label="HIT"       sortKey="hit_count"    tooltip={COLUMN_TOOLTIPS.hit_count}    {...sp} />
             <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">WL</th>
+            <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Entry</th>
           </tr>
         </thead>
         <tbody>
@@ -346,6 +371,23 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                     + Watch
                   </button>
                 </td>
+                {/* Entry */}
+                <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                  {openTickers.has(sig.code) ? (
+                    <span className="text-[10px] font-medium text-gray-400">保有中</span>
+                  ) : (
+                    <button
+                      onClick={() => setEntryTarget({
+                        ticker: sig.code,
+                        company_name: sig.company_name ?? undefined,
+                        screen_name: sig.screen_name ?? undefined,
+                      })}
+                      className="text-[10px] font-medium text-emerald-600 hover:text-emerald-800 hover:underline leading-none"
+                    >
+                      Entry
+                    </button>
+                  )}
+                </td>
               </tr>
             )
           })}
@@ -358,6 +400,14 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
         onClose={() => setWatchTarget(null)}
         onSaved={() => setWatchTarget(null)}
         initial={watchTarget ?? undefined}
+      />
+
+      {/* TradeModal: Entry button からの新規トレード */}
+      <TradeModal
+        open={entryTarget !== null}
+        onClose={() => setEntryTarget(null)}
+        onSaved={() => setEntryTarget(null)}
+        initial={entryTarget ?? undefined}
       />
     </div>
   )
