@@ -1,31 +1,23 @@
 export const SCREEN_NAME_MAP: Record<string, string> = {
-  // STRONG（環境非依存エッジ確認済み）
-  'EVT_RVOL2x_BPS_EpsGr':   'RVOL2x+BPS',
-  'EVT_RVOL15_EpsGr':        'RVOL1.5+EpsGr',
-  'EVT_HighVolPrev_EpsGr':   'HighVol翌日+EpsGr',
-  'EVT_GapUp3_EPS80':        'GapUp3%+EPS',
-  // GOOD（条件付きエッジ）
-  'EVT_HighVolPrev_BPS':     'HighVol翌日+BPS',
-  'EVT_GapUp3_EPS95':        'GapUp3%+EPS95',
-  'EVT_CloudBreak_RS_EPS':   'CloudBrk+RS',
-  // CWH（既存維持）
-  'EVT_CWH_BPS_EPS':         'CWH',
+  // screens_v3 構成（5本）
+  'FCT_SMA10_SMA50_RS70':  'SMA10+50押目',
+  'FCT_EMA21_SMA10_RS70':  'EMA21押目',
+  'EVT_SMA10_ADR_Gap3':    'Gap反発',
+  'EVT_RVOL2x_BPS_EpsGr':  'RVOL2x',
+  'EVT_CWH_BPS_EPS':       'CWH',
 }
 
-// 成績順ランク（小さいほど上位）: STRONG → GOOD → CWH
+// screens_v3 成績順ランク（小さいほど上位）
 export const SCREEN_RANK: Record<string, number> = {
-  'EVT_RVOL2x_BPS_EpsGr':   1,
-  'EVT_RVOL15_EpsGr':        2,
-  'EVT_HighVolPrev_EpsGr':   3,
-  'EVT_GapUp3_EPS80':        4,
-  'EVT_HighVolPrev_BPS':     5,
-  'EVT_GapUp3_EPS95':        6,
-  'EVT_CloudBreak_RS_EPS':   7,
-  'EVT_CWH_BPS_EPS':         8,
+  'FCT_SMA10_SMA50_RS70':  1,
+  'FCT_EMA21_SMA10_RS70':  2,
+  'EVT_SMA10_ADR_Gap3':    3,
+  'EVT_RVOL2x_BPS_EpsGr':  4,
+  'EVT_CWH_BPS_EPS':        5,
 }
 
 // screen_name は | で複数連結されている場合がある
-// 例: "EVT_RVOL2x_BPS_EpsGr|EVT_GapUp3_EPS80"
+// 例: "EVT_RVOL2x_BPS_EpsGr|EVT_CWH_BPS_EPS"
 export function formatScreenName(raw: string): string {
   return raw
     .split('|')
@@ -33,16 +25,16 @@ export function formatScreenName(raw: string): string {
     .join(' · ')
 }
 
-// 全スクリーンが regime="both" のため推奨はstability別に定義
-// STRONG screens は全環境で推奨、GOOD は補助的
+// v3 は全スクリーン regime="both" のため、全環境で全スクリーン推奨
+// scorecardRegime による優先度差なし
 const RECOMMENDED_SCREENS: Record<string, string[]> = {
-  'bull_strong_bull': ['RVOL2x+BPS', 'RVOL1.5+EpsGr', 'HighVol翌日+EpsGr', 'GapUp3%+EPS', 'HighVol翌日+BPS', 'GapUp3%+EPS95', 'CloudBrk+RS', 'CWH'],
-  'bull_bull':        ['RVOL2x+BPS', 'RVOL1.5+EpsGr', 'HighVol翌日+EpsGr', 'GapUp3%+EPS', 'CWH'],
-  'bull_neutral':     ['RVOL2x+BPS', 'HighVol翌日+EpsGr', 'GapUp3%+EPS', 'CWH'],
-  'bull_bear':        ['RVOL2x+BPS', 'CWH'],
-  'neutral_neutral':  ['RVOL2x+BPS', 'RVOL1.5+EpsGr', 'HighVol翌日+EpsGr', 'CWH'],
-  'bear_bear':        ['RVOL2x+BPS', 'HighVol翌日+EpsGr', 'CWH', 'CloudBrk+RS'],
-  'bear_strong_bear': ['RVOL2x+BPS', 'CWH', 'CloudBrk+RS'],
+  'bull_strong_bull': ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
+  'bull_bull':        ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
+  'bull_neutral':     ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
+  'bull_bear':        ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
+  'neutral_neutral':  ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
+  'bear_bear':        ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
+  'bear_strong_bear': ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH'],
 }
 
 export function getRecommendedScreens(

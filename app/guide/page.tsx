@@ -2,144 +2,112 @@
 
 import { useState } from 'react'
 
-// ── Screen Guide Data ─────────────────────────────────────────────────────────
+// ── Screen Guide Data (v3) ───────────────────────────────────────────────────
 type ScreenGuideEntry = {
   rank: number
   name: string
   dbName: string
   type: 'bull' | 'bear' | 'both' | 'unknown'
   kind: 'factor' | 'event'
+  holdDays: number
   conditions: string
   role: string
-  oos_pf: number | null
-  oos_wr: number | null
-  stability: 'STRONG' | 'GOOD'
-  star3: string
-  star3_note: string
+  backtest: {
+    oos_pf: number
+    oos_wr: number
+    oos_n?: number
+    spd: number
+    wf: string
+    regime_note: string
+  }
+  star3?: string
 }
 
-const SCREEN_GUIDE: ScreenGuideEntry[] = [
-  // STRONG
+const SCREEN_GUIDE_V3: ScreenGuideEntry[] = [
   {
     rank: 1,
-    name: 'RVOL2x+BPS',
-    dbName: 'EVT_RVOL2x_BPS_EpsGr',
+    name: 'SMA10+50押目',
+    dbName: 'FCT_SMA10_SMA50_RS70',
     type: 'both',
-    kind: 'event',
-    conditions: 'RVOL≥2.0, BPS≥2240, EPS成長≥25%',
-    role: '出来高2倍急増+財務健全+業績成長。全環境で唯一のリフト確認済みスクリーン',
-    oos_pf: 2.25,
-    oos_wr: 58.1,
-    stability: 'STRONG',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: 'EMA21接触+低ボラ = 初動エントリー',
+    kind: 'factor',
+    holdDays: 40,
+    conditions: 'SMA10から-1R以下 & SMA50から-1R以下 & RS\u226570 & ADR\u22645%',
+    role: '深い調整後の反発狙い \u2014 両MAを大幅に下回ったRS上位銘柄を40日保有',
+    backtest: {
+      oos_pf: 7.60, oos_wr: 78.5, oos_n: 2584, spd: 5.3,
+      wf: 'STABLE 5/5',
+      regime_note: 'bear PF=8.02 / bull PF=1.00',
+    },
   },
   {
     rank: 2,
-    name: 'RVOL1.5+EpsGr',
-    dbName: 'EVT_RVOL15_EpsGr',
+    name: 'EMA21押目',
+    dbName: 'FCT_EMA21_SMA10_RS70',
     type: 'both',
-    kind: 'event',
-    conditions: 'RVOL≥1.5, EPS成長≥25%',
-    role: 'RVOL2xの閾値緩和版。ヒット数40倍でカバレッジ大',
-    oos_pf: 1.23,
-    oos_wr: 49.2,
-    stability: 'STRONG',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: '',
+    kind: 'factor',
+    holdDays: 20,
+    conditions: 'EMA21から-1.5R以下 & SMA10から-1R以下 & RS\u226570',
+    role: '浅い押し目\u301C中程度の調整 \u2014 EMA21ベースでより幅広く検出、20日保有',
+    backtest: {
+      oos_pf: 8.03, oos_wr: 79.3, oos_n: 2716, spd: 5.7,
+      wf: 'STABLE 5/5',
+      regime_note: 'bear PF=5.06 / bull PF=1.19',
+    },
   },
   {
     rank: 3,
-    name: 'HighVol翌日+EpsGr',
-    dbName: 'EVT_HighVolPrev_EpsGr',
+    name: 'Gap反発',
+    dbName: 'EVT_SMA10_ADR_Gap3',
     type: 'both',
     kind: 'event',
-    conditions: '前日RVOL≥2.0, EPS成長≥25%',
-    role: '前日の出来高急増を検出→翌朝寄りでエントリー可能。最も実用的',
-    oos_pf: 1.23,
-    oos_wr: 49.0,
-    stability: 'STRONG',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: '',
+    holdDays: 20,
+    conditions: 'SMA10から-1R以下 & ADR\u22642.5% & ギャップアップ\u22653%',
+    role: 'MA下の低ボラ銘柄が材料で急反発 \u2014 ギャップアップがトリガー',
+    backtest: {
+      oos_pf: 23.31, oos_wr: 88.2, oos_n: 1432, spd: 3.1,
+      wf: 'STABLE 4/5',
+      regime_note: 'bear PF=21.29 / bull PF=1.93',
+    },
   },
   {
     rank: 4,
-    name: 'GapUp3%+EPS',
-    dbName: 'EVT_GapUp3_EPS80',
+    name: 'RVOL2x',
+    dbName: 'EVT_RVOL2x_BPS_EpsGr',
     type: 'both',
     kind: 'event',
-    conditions: 'ギャップアップ≥3%, EPS≥80',
-    role: '材料ドリブン。ギャップアップ+好業績の組み合わせ',
-    oos_pf: 1.23,
-    oos_wr: 49.7,
-    stability: 'STRONG',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: '',
+    holdDays: 15,
+    conditions: '出来高\u22652倍 & BPS\u22652240 & EPS成長\u226525% & SMA10から1R以内',
+    role: '出来高急増 \u00d7 好業績 \u00d7 財務健全 \u2014 機関投資家の参入を示唆',
+    backtest: {
+      oos_pf: 2.63, oos_wr: 61.2, spd: 5.0,
+      wf: 'STRONG',
+      regime_note: '',
+    },
+    star3: 'EMA21\u22640.5R & ADR\u22645 & RS\u226560 \u2192 PF3.50',
   },
-  // GOOD
   {
     rank: 5,
-    name: 'HighVol翌日+BPS',
-    dbName: 'EVT_HighVolPrev_BPS',
-    type: 'both',
-    kind: 'event',
-    conditions: '前日RVOL≥2.0, BPS≥2240',
-    role: '#3のBPS版。財務健全フィルタ',
-    oos_pf: 1.21,
-    oos_wr: 50.1,
-    stability: 'GOOD',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: '',
-  },
-  {
-    rank: 6,
-    name: 'GapUp3%+EPS95',
-    dbName: 'EVT_GapUp3_EPS95',
-    type: 'both',
-    kind: 'event',
-    conditions: 'ギャップアップ≥3%, EPS≥95',
-    role: '#4のEPS厳格版',
-    oos_pf: 1.19,
-    oos_wr: 49.4,
-    stability: 'GOOD',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: '',
-  },
-  {
-    rank: 7,
-    name: 'CloudBrk+RS',
-    dbName: 'EVT_CloudBreak_RS_EPS',
-    type: 'both',
-    kind: 'event',
-    conditions: '21EMA Cloud上抜け, RS≥60, EPS≥80',
-    role: '他スクリーンが全滅するpct_above_sma50>40%帯で有効',
-    oos_pf: 1.05,
-    oos_wr: 48.0,
-    stability: 'GOOD',
-    star3: 'dist_ema21_r≤0.5 + ADR≤5%',
-    star3_note: '',
-  },
-  {
-    rank: 8,
     name: 'CWH',
     dbName: 'EVT_CWH_BPS_EPS',
     type: 'both',
     kind: 'event',
-    conditions: 'カップ-40〜-8%, ハンドル≤12%, 出来高収縮≤0.8, 52w高値-10%以内, BPS≥2240, EPS≥95',
-    role: 'カップウィズハンドル。pct_above_sma50 20-40%帯でlift 1.4x',
-    oos_pf: 9.75,
-    oos_wr: 78.2,
-    stability: 'GOOD',
-    star3: 'dist_50sma_r≤1.0 + dist_ema21_r≤0.5',
-    star3_note: '★★★: WR85.5% PF18.66 N=242',
+    holdDays: 40,
+    conditions: 'カップ深さ-40\u301C-8% & 出来高収縮\u22640.6 & 52W高値-10%以内 & BPS\u22652240 & EPS\u226595',
+    role: 'カップウィズハンドル \u2014 典型的なMinerviniパターン',
+    backtest: {
+      oos_pf: 2.77, oos_wr: 58.4, spd: 6.0,
+      wf: '',
+      regime_note: '',
+    },
+    star3: 'SMA50\u22641R & EMA21\u22640.5R \u2192 PF18.66',
   },
 ]
 
 // ── Sort logic ────────────────────────────────────────────────────────────────
-type SortKey = 'rank' | 'name' | 'type' | 'kind' | 'stability' | 'oos_pf' | 'oos_wr'
+type SortKey = 'rank' | 'name' | 'type' | 'kind' | 'holdDays' | 'oos_pf' | 'oos_wr' | 'spd'
 type SortDir = 'asc' | 'desc'
 
-// ── Type / Kind / Stability badge colors ─────────────────────────────────────
+// ── Type / Kind badge colors ─────────────────────────────────────────────────
 const TYPE_BADGE: Record<string, string> = {
   bull:    'bg-green-100 text-green-700 border-green-300',
   bear:    'bg-red-100 text-red-700 border-red-300',
@@ -152,18 +120,13 @@ const KIND_BADGE: Record<string, string> = {
   event:  'bg-orange-100 text-orange-700 border-orange-300',
 }
 
-const STABILITY_BADGE: Record<string, string> = {
-  STRONG: 'bg-green-100 text-green-700 border-green-300',
-  GOOD:   'bg-yellow-100 text-yellow-700 border-yellow-300',
-}
-
-function fmtNum(v: number | null): string {
-  if (v === null) return '—'
+function fmtNum(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '\u2014'
   return v.toFixed(2)
 }
 
-function fmtPct(v: number | null): string {
-  if (v === null) return '—'
+function fmtPct(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '\u2014'
   return v.toFixed(1) + '%'
 }
 
@@ -184,7 +147,7 @@ function GuideSortTh({
   align?: 'left' | 'right'
 }) {
   const active = currentKey === key
-  const indicator = active ? (currentDir === 'asc' ? ' ↑' : ' ↓') : ' ↕'
+  const indicator = active ? (currentDir === 'asc' ? ' \u2191' : ' \u2193') : ' \u2195'
   return (
     <th
       onClick={() => onSort(key)}
@@ -215,14 +178,15 @@ export default function GuidePage() {
     return [...entries].sort((a, b) => {
       const getVal = (e: ScreenGuideEntry): string | number => {
         switch (sortKey) {
-          case 'rank':      return e.rank
-          case 'name':      return e.name
-          case 'type':      return e.type
-          case 'kind':      return e.kind
-          case 'stability': return e.stability
-          case 'oos_pf':    return e.oos_pf ?? -Infinity
-          case 'oos_wr':    return e.oos_wr ?? -Infinity
-          default:          return e.rank
+          case 'rank':     return e.rank
+          case 'name':     return e.name
+          case 'type':     return e.type
+          case 'kind':     return e.kind
+          case 'holdDays': return e.holdDays
+          case 'oos_pf':   return e.backtest.oos_pf ?? -Infinity
+          case 'oos_wr':   return e.backtest.oos_wr ?? -Infinity
+          case 'spd':      return e.backtest.spd ?? -Infinity
+          default:         return e.rank
         }
       }
       const av = getVal(a)
@@ -237,7 +201,7 @@ export default function GuidePage() {
 
   const sp = { currentKey: sortKey, currentDir: sortDir, onSort: handleSort }
 
-  const sortedMain = sortEntries(SCREEN_GUIDE)
+  const sorted = sortEntries(SCREEN_GUIDE_V3)
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -249,33 +213,31 @@ export default function GuidePage() {
           Screen Guide
         </h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          全スクリーンの条件・役割・成績一覧（Event型 8本）
+          screens_v3 \u2014 Factor\u578b 2\u672c + Event\u578b 3\u672c
         </p>
       </header>
 
       <section className="mb-8">
-        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-          Event Screens
-        </h2>
         <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-[#e8eaed]">
-                <GuideSortTh label="#"         sortKey="rank"      {...sp} />
-                <GuideSortTh label="Screen"    sortKey="name"      {...sp} />
-                <GuideSortTh label="Type"      sortKey="type"      {...sp} />
-                <GuideSortTh label="Kind"      sortKey="kind"      {...sp} />
-                <GuideSortTh label="Stability" sortKey="stability" {...sp} />
+                <GuideSortTh label="#"         sortKey="rank"     {...sp} />
+                <GuideSortTh label="Screen"    sortKey="name"     {...sp} />
+                <GuideSortTh label="Type"      sortKey="type"     {...sp} />
+                <GuideSortTh label="Kind"      sortKey="kind"     {...sp} />
+                <GuideSortTh label="Hold"      sortKey="holdDays" {...sp} align="right" />
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">条件サマリー</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">役割</th>
-                <GuideSortTh label="OOS PF"    sortKey="oos_pf"    {...sp} align="right" />
-                <GuideSortTh label="OOS WR"    sortKey="oos_wr"    {...sp} align="right" />
-                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">★★★条件</th>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">★★★成績</th>
+                <GuideSortTh label="OOS PF"    sortKey="oos_pf"   {...sp} align="right" />
+                <GuideSortTh label="OOS WR"    sortKey="oos_wr"   {...sp} align="right" />
+                <GuideSortTh label="SPD"       sortKey="spd"      {...sp} align="right" />
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">WF</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">{'\u2605\u2605\u2605'}条件</th>
               </tr>
             </thead>
             <tbody>
-              {sortedMain.map((s, i) => (
+              {sorted.map((s, i) => (
                 <tr
                   key={s.dbName}
                   className={`border-b border-[#f0f2f4] hover:bg-gray-50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
@@ -292,17 +254,14 @@ export default function GuidePage() {
                       {s.kind}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5">
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${STABILITY_BADGE[s.stability]}`}>
-                      {s.stability}
-                    </span>
-                  </td>
+                  <td className="px-3 py-2.5 text-right font-mono text-xs">{s.holdDays}d</td>
                   <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[220px]">{s.conditions}</td>
                   <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[260px]">{s.role}</td>
-                  <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold">{fmtNum(s.oos_pf)}</td>
-                  <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold">{fmtPct(s.oos_wr)}</td>
-                  <td className="px-3 py-2.5 text-[11px] text-gray-600 whitespace-nowrap">{s.star3}</td>
-                  <td className="px-3 py-2.5 text-[10px] text-gray-400 whitespace-nowrap">{s.star3_note}</td>
+                  <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold">{fmtNum(s.backtest.oos_pf)}</td>
+                  <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold">{fmtPct(s.backtest.oos_wr)}</td>
+                  <td className="px-3 py-2.5 text-right font-mono text-xs">{s.backtest.spd.toFixed(1)}</td>
+                  <td className="px-3 py-2.5 text-[11px] text-gray-600 whitespace-nowrap">{s.backtest.wf || '\u2014'}</td>
+                  <td className="px-3 py-2.5 text-[11px] text-gray-600 whitespace-nowrap">{s.star3 || '\u2014'}</td>
                 </tr>
               ))}
             </tbody>
