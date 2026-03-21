@@ -6,10 +6,6 @@ export const SCREEN_NAME_MAP: Record<string, string> = {
   'EVT_RVOL2x_BPS_EpsGr':  'RVOL2x',
   'EVT_CWH_BPS_EPS':       'CWH',
   'FCT_ValueQuality_CRS':  'バリュー品質',
-  // 旧名の後方互換（Supabaseに旧レコードが残っている場合用）
-  'FCT_SMA10_SMA50_RS70':  'SMA10+50押目',
-  'FCT_EMA21_SMA10_RS70':  'EMA21押目',
-  'FCT_EMA21_SMA10_MRS':   'EMA21押目',
 }
 
 // screens_v4 成績順ランク（PF降順）
@@ -20,10 +16,6 @@ export const SCREEN_RANK: Record<string, number> = {
   'FCT_ValueQuality_CRS':  4,  // PF 3.72
   'EVT_CWH_BPS_EPS':       5,  // PF 3.05
   'EVT_RVOL2x_BPS_EpsGr':  6,  // PF 2.28
-  // 旧名にもランクを付与（旧データ表示時に使用）
-  'FCT_SMA10_SMA50_RS70':  3,
-  'FCT_EMA21_SMA10_RS70':  2,
-  'FCT_EMA21_SMA10_MRS':   2,
 }
 
 // screen_name は | で複数連結されている場合がある
