@@ -273,9 +273,9 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
             <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">銘柄</th>
             <SortTh label="エントリー" sortKey="entry_score" tooltip={COLUMN_TOOLTIPS.entry_score} {...sp} align="left" />
             <SortTh label="セクター"  sortKey="sector_name"  {...sp} align="left" />
+            <SortTh label="RS"        sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
             <SortTh label="1D%"       sortKey="price_chg_1d" tooltip={COLUMN_TOOLTIPS.price_chg_1d} {...sp} />
             <SortTh label="5D%"       sortKey="price_chg_5d" tooltip={COLUMN_TOOLTIPS.price_chg_5d} {...sp} />
-            <SortTh label="RS"        sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
             <SortTh label="RVOL"      sortKey="rvol"         tooltip={COLUMN_TOOLTIPS.rvol}         {...sp} />
             <SortTh label="ADR%"      sortKey="adr_pct"      tooltip={COLUMN_TOOLTIPS.adr_pct}      {...sp} />
             <SortTh label="EMA21(R)"  sortKey="dist_ema21_r" tooltip={COLUMN_TOOLTIPS.dist_ema21_r} {...sp} />
@@ -329,12 +329,12 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                 <td className="px-3 py-2.5 whitespace-nowrap">
                   <span className="text-xs text-gray-500 block max-w-[120px] truncate">{sig.sector_name ?? '—'}</span>
                 </td>
+                {/* RS */}
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.rs_composite, 1)}</td>
                 {/* 1D% */}
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={sig.price_chg_1d} /></td>
                 {/* 5D% */}
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={sig.price_chg_5d} /></td>
-                {/* RS */}
-                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.rs_composite, 1)}</td>
                 {/* RVOL */}
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><RvolCell value={sig.rvol} /></td>
                 {/* ADR% */}

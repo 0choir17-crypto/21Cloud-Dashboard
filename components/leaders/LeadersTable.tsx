@@ -141,11 +141,11 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
               {/* 銘柄 (Signals と同じ: Code+Name 1セル, ソート不可) */}
               <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">銘柄</th>
               <SortTh label="セクター"   sortKey="sector"       {...sp} align="left" />
-              <SortTh label="1D%"        sortKey="daily_pct"    tooltip={COLUMN_TOOLTIPS.daily_pct}    {...sp} />
               <SortTh label="RS"         sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
-              <SortTh label="ADR%"       sortKey="adr_pct"      tooltip={COLUMN_TOOLTIPS.adr_pct}      {...sp} />
+              <SortTh label="1D%"        sortKey="daily_pct"    tooltip={COLUMN_TOOLTIPS.daily_pct}    {...sp} />
               <SortTh label="1W%"        sortKey="weekly_pct"   tooltip={COLUMN_TOOLTIPS.weekly_pct}   {...sp} />
               <SortTh label="1M%"        sortKey="monthly_pct"  tooltip={COLUMN_TOOLTIPS.monthly_pct}  {...sp} />
+              <SortTh label="ADR%"       sortKey="adr_pct"      tooltip={COLUMN_TOOLTIPS.adr_pct}      {...sp} />
               <SortTh label="EMA21(R)"   sortKey="dist_ema21_r" tooltip={COLUMN_TOOLTIPS.dist_ema21_r} {...sp} />
               <SortTh label="10WMA(R)"   sortKey="dist_wma10_r" tooltip={COLUMN_TOOLTIPS.dist_wma10_r} {...sp} />
               <SortTh label="50SMA(R)"   sortKey="dist_sma50_r" tooltip={COLUMN_TOOLTIPS.dist_sma50_r} {...sp} />
@@ -182,16 +182,16 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
                 <td className="px-3 py-2.5 whitespace-nowrap">
                   <span className="text-xs text-gray-500 block max-w-[120px] truncate">{row.sector ?? '—'}</span>
                 </td>
-                {/* 1D% */}
-                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.daily_pct} /></td>
                 {/* RS */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.rs_composite, 1)}</td>
-                {/* ADR% */}
-                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.adr_pct)}</td>
+                {/* 1D% */}
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.daily_pct} /></td>
                 {/* 1W% */}
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.weekly_pct} /></td>
                 {/* 1M% */}
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.monthly_pct} /></td>
+                {/* ADR% */}
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.adr_pct)}</td>
                 {/* EMA21(R) */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.dist_ema21_r)}</td>
                 {/* 10WMA(R) */}
