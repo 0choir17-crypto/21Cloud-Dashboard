@@ -10,21 +10,22 @@ type SortDir = 'asc' | 'desc'
 
 // ── Column tooltips ──────────────────────────────────────────────────────────
 const COLUMN_TOOLTIPS: Record<string, string> = {
-  rs_composite: '相対強度パーセンタイル（0–100）— 上位10%のみ表示',
-  adr_pct:      '平均日次値幅（%）: 直近21日の高低差の平均',
-  weekly_pct:   '直近1週間（5営業日）のリターン（%）',
-  monthly_pct:  '直近1ヶ月（20営業日）のリターン（%）',
-  turnover_50d: '50日平均売買代金（億円）',
-  close:        '当日終値',
+  rs_composite:  '相対強度パーセンタイル（0–100）— 上位10%のみ表示',
+  daily_pct:     '当日騰落率（%）— 前営業日終値比',
+  adr_pct:       '平均日次値幅（%）: 直近21日の高低差の平均',
+  weekly_pct:    '直近1週間（5営業日）のリターン（%）',
+  monthly_pct:   '直近1ヶ月（20営業日）のリターン（%）',
+  dist_ema21_r:  '21日EMAまでの距離（ATR正規化）— 0に近いほどEMAに接近',
+  dist_wma10_r:  '週足10WMAまでの距離（ATR正規化）',
+  dist_sma50_r:  '50日SMAまでの距離（ATR正規化）',
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function fmt(val: number | null | undefined, decimals = 1): string {
-  if (val === null || val === undefined) return '—'
-  return val.toFixed(decimals)
-}
-
-function ChangePill({ value, decimals = 1 }: { value: number | null | undefined; decimals?: number }) {
+function ChangePill({ value, decimals = 1, suffix = '%' }: {
+  value: number | null | undefined
+  decimals?: number
+  suffix?: string
+}) {
   if (value === null || value === undefined) return <span className="text-gray-400">—</span>
   const pos = value >= 0
   return (
@@ -32,7 +33,7 @@ function ChangePill({ value, decimals = 1 }: { value: number | null | undefined;
       className="font-mono text-xs font-semibold"
       style={{ color: pos ? 'var(--positive)' : 'var(--negative)' }}
     >
-      {pos ? '+' : ''}{value.toFixed(decimals)}%
+      {pos ? '+' : ''}{value.toFixed(decimals)}{suffix}
     </span>
   )
 }
@@ -140,115 +141,111 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
         <table className="w-full text-xs" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
           <thead>
             <tr className="border-b border-[var(--border)]">
-              <SortTh label="コード" sortKey="code" align="left" {...thProps} />
-              <SortTh label="銘柄名" sortKey="name" align="left" {...thProps} />
-              <SortTh label="セクター" sortKey="sector" align="left" {...thProps} />
+              <SortTh label="Code" sortKey="code" align="left" {...thProps} />
+              <SortTh label="Name" sortKey="name" align="left" {...thProps} />
+              <SortTh label="Sector" sortKey="sector" align="left" {...thProps} />
               <SortTh label="RS" tooltip={COLUMN_TOOLTIPS.rs_composite} sortKey="rs_composite" {...thProps} />
+              <SortTh label="1D%" tooltip={COLUMN_TOOLTIPS.daily_pct} sortKey="daily_pct" {...thProps} />
               <SortTh label="ADR%" tooltip={COLUMN_TOOLTIPS.adr_pct} sortKey="adr_pct" {...thProps} />
               <SortTh label="1W%" tooltip={COLUMN_TOOLTIPS.weekly_pct} sortKey="weekly_pct" {...thProps} />
               <SortTh label="1M%" tooltip={COLUMN_TOOLTIPS.monthly_pct} sortKey="monthly_pct" {...thProps} />
-              <SortTh label="終値" tooltip={COLUMN_TOOLTIPS.close} sortKey="close" {...thProps} />
-              <SortTh label="売買代金" tooltip={COLUMN_TOOLTIPS.turnover_50d} sortKey="turnover_50d" {...thProps} />
-              <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-gray-500 text-center whitespace-nowrap">
-                リンク
-              </th>
+              <SortTh label="EMA21" tooltip={COLUMN_TOOLTIPS.dist_ema21_r} sortKey="dist_ema21_r" {...thProps} />
+              <SortTh label="WMA10" tooltip={COLUMN_TOOLTIPS.dist_wma10_r} sortKey="dist_wma10_r" {...thProps} />
+              <SortTh label="SMA50" tooltip={COLUMN_TOOLTIPS.dist_sma50_r} sortKey="dist_sma50_r" {...thProps} />
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row, i) => {
-              const code4 = row.code
-              return (
-                <tr
-                  key={`${row.code}-${i}`}
-                  className={`border-b border-[var(--border)] hover:bg-[var(--bg-card-hover)] transition-colors ${
-                    i % 2 === 0 ? 'bg-white' : 'bg-[#fafbfc]'
-                  }`}
-                >
-                  {/* コード */}
-                  <td className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {code4}
-                  </td>
+            {sorted.map((row, i) => (
+              <tr
+                key={`${row.code}-${i}`}
+                className={`border-b border-[var(--border)] hover:bg-[var(--bg-card-hover)] transition-colors ${
+                  i % 2 === 0 ? 'bg-white' : 'bg-[#fafbfc]'
+                }`}
+              >
+                {/* Code → TradingView link */}
+                <td className="px-3 py-2 text-left font-semibold">
+                  <a
+                    href={`https://jp.tradingview.com/chart/?symbol=TSE:${row.code}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    {row.code}
+                  </a>
+                </td>
 
-                  {/* 銘柄名 */}
-                  <td
-                    className="px-3 py-2 text-left max-w-[160px] truncate"
-                    style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-jp, sans-serif)' }}
-                    title={row.name ?? ''}
+                {/* Name → 四季報 link */}
+                <td
+                  className="px-3 py-2 text-left max-w-[160px] truncate"
+                  style={{ fontFamily: 'var(--font-jp, sans-serif)' }}
+                  title={row.name ?? ''}
+                >
+                  <a
+                    href={`https://shikiho.toyokeizai.net/stocks/${row.code}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                    style={{ color: 'var(--text-primary)' }}
                   >
                     {row.name ?? '—'}
-                  </td>
+                  </a>
+                </td>
 
-                  {/* セクター */}
-                  <td
-                    className="px-3 py-2 text-left max-w-[120px] truncate"
-                    style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-jp, sans-serif)' }}
-                    title={row.sector ?? ''}
-                  >
-                    {row.sector ?? '—'}
-                  </td>
+                {/* Sector */}
+                <td
+                  className="px-3 py-2 text-left max-w-[120px] truncate"
+                  style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-jp, sans-serif)' }}
+                  title={row.sector ?? ''}
+                >
+                  {row.sector ?? '—'}
+                </td>
 
-                  {/* RS */}
-                  <td className="px-3 py-2 text-right font-semibold" style={{
-                    color: (row.rs_composite ?? 0) >= 95 ? 'var(--positive)' : 'var(--text-primary)',
-                  }}>
-                    {fmt(row.rs_composite)}
-                  </td>
+                {/* RS */}
+                <td className="px-3 py-2 text-right font-semibold" style={{
+                  color: (row.rs_composite ?? 0) >= 95 ? 'var(--positive)' : 'var(--text-primary)',
+                }}>
+                  {row.rs_composite !== null && row.rs_composite !== undefined
+                    ? row.rs_composite.toFixed(1) : '—'}
+                </td>
 
-                  {/* ADR% */}
-                  <td className="px-3 py-2 text-right" style={{ color: 'var(--text-primary)' }}>
-                    {fmt(row.adr_pct)}%
-                  </td>
+                {/* 1D% */}
+                <td className="px-3 py-2 text-right">
+                  <ChangePill value={row.daily_pct} decimals={2} />
+                </td>
 
-                  {/* 1W% */}
-                  <td className="px-3 py-2 text-right">
-                    <ChangePill value={row.weekly_pct} />
-                  </td>
+                {/* ADR% */}
+                <td className="px-3 py-2 text-right" style={{ color: 'var(--text-primary)' }}>
+                  {row.adr_pct !== null && row.adr_pct !== undefined
+                    ? `${row.adr_pct.toFixed(1)}%` : '—'}
+                </td>
 
-                  {/* 1M% */}
-                  <td className="px-3 py-2 text-right">
-                    <ChangePill value={row.monthly_pct} />
-                  </td>
+                {/* 1W% */}
+                <td className="px-3 py-2 text-right">
+                  <ChangePill value={row.weekly_pct} />
+                </td>
 
-                  {/* 終値 */}
-                  <td className="px-3 py-2 text-right" style={{ color: 'var(--text-primary)' }}>
-                    {row.close !== null && row.close !== undefined
-                      ? Math.round(row.close).toLocaleString()
-                      : '—'}
-                  </td>
+                {/* 1M% */}
+                <td className="px-3 py-2 text-right">
+                  <ChangePill value={row.monthly_pct} />
+                </td>
 
-                  {/* 売買代金 */}
-                  <td className="px-3 py-2 text-right" style={{ color: 'var(--text-secondary)' }}>
-                    {fmt(row.turnover_50d)}億
-                  </td>
+                {/* EMA21 (R) */}
+                <td className="px-3 py-2 text-right">
+                  <ChangePill value={row.dist_ema21_r} suffix="R" />
+                </td>
 
-                  {/* 外部リンク */}
-                  <td className="px-3 py-2 text-center whitespace-nowrap">
-                    <a
-                      href={`https://jp.tradingview.com/chart/?symbol=TSE:${code4}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 transition-colors"
-                      title="TradingView"
-                    >
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                    </a>
-                    <a
-                      href={`https://shikiho.toyokeizai.net/stocks/${code4}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-100 transition-colors ml-1"
-                      title="四季報オンライン"
-                    >
-                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                    </a>
-                  </td>
-                </tr>
-              )
-            })}
+                {/* WMA10 (R) */}
+                <td className="px-3 py-2 text-right">
+                  <ChangePill value={row.dist_wma10_r} suffix="R" />
+                </td>
+
+                {/* SMA50 (R) */}
+                <td className="px-3 py-2 text-right">
+                  <ChangePill value={row.dist_sma50_r} suffix="R" />
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
 

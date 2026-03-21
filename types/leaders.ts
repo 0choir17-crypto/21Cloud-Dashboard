@@ -4,13 +4,11 @@ export type DailyLeader = {
   name: string | null
   sector: string | null
   rs_composite: number | null
+  daily_pct: number | null
   adr_pct: number | null
-  turnover_50d: number | null
   weekly_pct: number | null
   monthly_pct: number | null
-  close: number | null
-  volume: number | null
-  wma10: number | null
-  wma30: number | null
-  sma50: number | null
+  dist_ema21_r: number | null
+  dist_wma10_r: number | null
+  dist_sma50_r: number | null
 }

@@ -7,9 +7,9 @@ import LeadersTable from '@/components/leaders/LeadersTable'
 
 const COLUMNS = `
   date, code, name, sector,
-  rs_composite, adr_pct, turnover_50d,
+  rs_composite, daily_pct, adr_pct,
   weekly_pct, monthly_pct,
-  close, volume, wma10, wma30, sma50
+  dist_ema21_r, dist_wma10_r, dist_sma50_r
 `
 
 export default function LeadersPage() {
