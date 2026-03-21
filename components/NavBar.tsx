@@ -23,6 +23,7 @@ export default function NavBar() {
       <Link href="/" className={linkClass('/')}>Market</Link>
       <Link href="/sectors" className={linkClass('/sectors')}>Sectors</Link>
       <Link href="/signals" className={linkClass('/signals')}>Signals</Link>
+      <Link href="/leaders" className={linkClass('/leaders')}>Leaders</Link>
       <Link href="/guide" className={linkClass('/guide')}>Guide</Link>
       <Link href="/watchlist" className={linkClass('/watchlist')}>Watchlist</Link>
       <Link href="/journal" className={linkClass('/journal')}>Journal</Link>
