@@ -12,14 +12,18 @@ const COLUMNS_WITH_ENTRY = `
   price_chg_1d, price_chg_5d, rs_composite, rvol, adr_pct,
   dist_ema21_r, dist_10wma_r, dist_50sma_r,
   high_52w_pct, stop_pct, hit_count,
-  entry_score, entry_stars, entry_badges
+  entry_score, entry_stars, entry_badges,
+  cockpit_rs, mansfield_rs,
+  short_interest_ratio, short_position_change
 `
 
 const COLUMNS_BASE = `
   date, code, company_name, screen_name, sector_name,
   price_chg_1d, price_chg_5d, rs_composite, rvol, adr_pct,
   dist_ema21_r, dist_10wma_r, dist_50sma_r,
-  high_52w_pct, stop_pct, hit_count
+  high_52w_pct, stop_pct, hit_count,
+  cockpit_rs, mansfield_rs,
+  short_interest_ratio, short_position_change
 `
 
 export default function SignalsPage() {

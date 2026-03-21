@@ -130,19 +130,30 @@ function HitTooltip({
   recommended: string[]
 }) {
   const count = value ?? 0
+  const isOverlap = count >= 2
   const isHigh = count >= 3
   return (
-    <div className="relative group inline-block">
+    <div className="relative group inline-flex items-center gap-1">
       {/* バッジ */}
       <span
         className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold cursor-default ${
           isHigh
             ? 'bg-amber-100 text-amber-700 border border-amber-400'
+            : isOverlap
+            ? 'bg-amber-50 text-amber-600 border border-amber-300'
             : 'bg-gray-100 text-gray-600'
         }`}
       >
         {value ?? '—'}
       </span>
+      {isOverlap && (
+        <span
+          className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-amber-100 text-amber-700 border-amber-300 cursor-help"
+          title="複数スクリーンで検出 — 高確度シグナル（バックテスト: PF 16.5, WR 83%）"
+        >
+          {count}x重複
+        </span>
+      )}
       {/* ツールチップ */}
       <div className="absolute z-10 right-0 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
         <p className="font-semibold mb-1">ヒットスクリーン</p>

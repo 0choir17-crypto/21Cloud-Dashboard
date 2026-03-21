@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-// ── Screen Guide Data (v3) ───────────────────────────────────────────────────
+// ── Screen Guide Data (v4) ───────────────────────────────────────────────────
 type ScreenGuideEntry = {
   rank: number
   name: string
@@ -23,67 +23,66 @@ type ScreenGuideEntry = {
   star3?: string
 }
 
-const SCREEN_GUIDE_V3: ScreenGuideEntry[] = [
+const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
   {
     rank: 1,
-    name: 'SMA10+50押目',
-    dbName: 'FCT_SMA10_SMA50_RS70',
-    type: 'both',
-    kind: 'factor',
-    holdDays: 40,
-    conditions: 'SMA10から-1R以下 & SMA50から-1R以下 & RS\u226570 & ADR\u22645%',
-    role: '深い調整後の反発狙い \u2014 両MAを大幅に下回ったRS上位銘柄を40日保有',
+    name: 'Gap反発',
+    dbName: 'EVT_SMA10_ADR_Gap3',
+    type: 'bear',
+    kind: 'event',
+    holdDays: 20,
+    conditions: 'SMA10から-1R以下 & ADR\u22642.5% & ギャップアップ\u22653% & Cockpit RS\u226560',
+    role: 'MA下の低ボラ銘柄が材料で急反発 \u2014 TOPIX相対強度フィルタ付き',
     backtest: {
-      oos_pf: 7.60, oos_wr: 78.5, oos_n: 2584, spd: 5.3,
-      wf: 'STABLE 5/5',
-      regime_note: 'bear PF=8.02 / bull PF=1.00',
+      oos_pf: 25.35, oos_wr: 89.4, oos_n: 564, spd: 0.4,
+      wf: '5/5',
+      regime_note: 'bear PF=26.37 / bull PF\u22480',
     },
   },
   {
     rank: 2,
     name: 'EMA21押目',
-    dbName: 'FCT_EMA21_SMA10_RS70',
-    type: 'both',
+    dbName: 'FCT_EMA21_SMA10_CRS',
+    type: 'bear',
     kind: 'factor',
     holdDays: 20,
-    conditions: 'EMA21から-1.5R以下 & SMA10から-1R以下 & RS\u226570',
-    role: '浅い押し目\u301C中程度の調整 \u2014 EMA21ベースでより幅広く検出、20日保有',
+    conditions: 'EMA21から-1.5R以下 & SMA10から-1R以下 & Cockpit RS\u226570 & 空売り比率\u22645',
+    role: 'TOPIX相対で強い銘柄の押し目買い \u2014 需給フィルタ付き',
     backtest: {
-      oos_pf: 8.03, oos_wr: 79.3, oos_n: 2716, spd: 5.7,
-      wf: 'STABLE 5/5',
-      regime_note: 'bear PF=5.06 / bull PF=1.19',
+      oos_pf: 21.56, oos_wr: 85.8, oos_n: 5285, spd: 4.2,
+      wf: '5/5',
+      regime_note: 'bear PF=21.56 / bull PF\u22480',
     },
   },
   {
     rank: 3,
-    name: 'Gap反発',
-    dbName: 'EVT_SMA10_ADR_Gap3',
-    type: 'both',
-    kind: 'event',
-    holdDays: 20,
-    conditions: 'SMA10から-1R以下 & ADR\u22642.5% & ギャップアップ\u22653%',
-    role: 'MA下の低ボラ銘柄が材料で急反発 \u2014 ギャップアップがトリガー',
+    name: 'SMA10+50押目',
+    dbName: 'FCT_SMA10_SMA50_CRS',
+    type: 'bear',
+    kind: 'factor',
+    holdDays: 40,
+    conditions: 'SMA10から-1R以下 & SMA50から-1R以下 & Cockpit RS\u226570 & ADR\u22645% & 空売り残変化\u22640',
+    role: '深い調整後の反発狙い \u2014 需給改善確認付き',
     backtest: {
-      oos_pf: 23.31, oos_wr: 88.2, oos_n: 1432, spd: 3.1,
-      wf: 'STABLE 4/5',
-      regime_note: 'bear PF=21.29 / bull PF=1.93',
+      oos_pf: 12.34, oos_wr: 81.2, oos_n: 5013, spd: 4.0,
+      wf: '5/5',
+      regime_note: 'bear PF=12.34 / bull PF\u22480',
     },
   },
   {
     rank: 4,
-    name: 'RVOL2x',
-    dbName: 'EVT_RVOL2x_BPS_EpsGr',
-    type: 'both',
-    kind: 'event',
-    holdDays: 15,
-    conditions: '出来高\u22652倍 & BPS\u22652240 & EPS成長\u226525% & SMA10から1R以内',
-    role: '出来高急増 \u00d7 好業績 \u00d7 財務健全 \u2014 機関投資家の参入を示唆',
+    name: 'バリュー品質',
+    dbName: 'FCT_ValueQuality_CRS',
+    type: 'bull',
+    kind: 'factor',
+    holdDays: 40,
+    conditions: 'PBR\u22640.6 & EPS\u2265150 & ADR\u22643% & Cockpit RS\u226570',
+    role: 'bull相場用 \u2014 割安\u00d7高収益\u00d7低ボラ\u00d7TOPIX相対強度',
     backtest: {
-      oos_pf: 2.63, oos_wr: 61.2, spd: 5.0,
-      wf: 'STRONG',
-      regime_note: '',
+      oos_pf: 3.72, oos_wr: 66.0, oos_n: 24942, spd: 20.0,
+      wf: '4/5',
+      regime_note: 'bull PF=4.86 / bear PF=3.84',
     },
-    star3: 'EMA21\u22640.5R & ADR\u22645 & RS\u226560 \u2192 PF3.50',
   },
   {
     rank: 5,
@@ -95,11 +94,27 @@ const SCREEN_GUIDE_V3: ScreenGuideEntry[] = [
     conditions: 'カップ深さ-40\u301C-8% & 出来高収縮\u22640.6 & 52W高値-10%以内 & BPS\u22652240 & EPS\u226595',
     role: 'カップウィズハンドル \u2014 典型的なMinerviniパターン',
     backtest: {
-      oos_pf: 2.77, oos_wr: 58.4, spd: 6.0,
-      wf: '',
-      regime_note: '',
+      oos_pf: 3.05, oos_wr: 63.4, oos_n: 4637, spd: 3.7,
+      wf: '4/5',
+      regime_note: 'bull PF=3.55 / bear PF=2.88',
     },
     star3: 'SMA50\u22641R & EMA21\u22640.5R \u2192 PF18.66',
+  },
+  {
+    rank: 6,
+    name: 'RVOL2x',
+    dbName: 'EVT_RVOL2x_BPS_EpsGr',
+    type: 'both',
+    kind: 'event',
+    holdDays: 15,
+    conditions: '出来高\u22652倍 & BPS\u22652240 & EPS成長\u226525% & SMA10から1R以内',
+    role: '出来高急増 \u00d7 好業績 \u00d7 財務健全 \u2014 機関投資家の参入を示唆',
+    backtest: {
+      oos_pf: 2.28, oos_wr: 59.1, oos_n: 4205, spd: 3.3,
+      wf: '4/5',
+      regime_note: 'bear PF=5.34 / bull PF=1.79',
+    },
+    star3: 'EMA21\u22640.5R & ADR\u22645 & RS\u226560 \u2192 PF3.50',
   },
 ]
 
@@ -201,7 +216,7 @@ export default function GuidePage() {
 
   const sp = { currentKey: sortKey, currentDir: sortDir, onSort: handleSort }
 
-  const sorted = sortEntries(SCREEN_GUIDE_V3)
+  const sorted = sortEntries(SCREEN_GUIDE_V4)
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -213,7 +228,7 @@ export default function GuidePage() {
           Screen Guide
         </h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          screens_v3 \u2014 Factor\u578b 2\u672c + Event\u578b 3\u672c
+          screens_v4 \u2014 Factor\u578b 3\u672c + Event\u578b 3\u672c\uff08Cockpit RS + \u9700\u7d66\u30d5\u30a3\u30eb\u30bf\uff09
         </p>
       </header>
 

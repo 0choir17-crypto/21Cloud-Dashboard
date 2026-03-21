@@ -20,4 +20,9 @@ export type DailySignal = {
   entry_score?: number    // 0 | 3
   entry_stars?: string    // "" | "★★★"
   entry_badges?: string   // JSON文字列 例: '["EMA21 0.5R以内", "RS>=60"]'
+  // Cockpit RS / Mansfield RS / 需給
+  cockpit_rs?: number | null
+  mansfield_rs?: number | null
+  short_interest_ratio?: number | null
+  short_position_change?: number | null
 }
