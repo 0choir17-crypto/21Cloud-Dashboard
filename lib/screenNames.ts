@@ -1,16 +1,16 @@
+// screens_v4: 8スクリーン構成 — 英語統一表示名
 export const SCREEN_NAME_MAP: Record<string, string> = {
-  // screens_v4 構成（8本）— RS再最適化 + 新規2スクリーン
-  'FCT_SMA10_SMA50_CRS':   'SMA10+50押目',
-  'FCT_EMA21_SMA10_CRS':   'EMA21押目',
-  'EVT_SMA10_ADR_Gap3':    'Gap反発',
-  'EVT_RVOL2x_BPS_EpsGr':  'RVOL2x',
+  'EVT_SMA10_ADR_Gap3':    'Gap Up',
+  'FCT_RS_Divergence':     'RS Dip',
+  'FCT_EMA21_SMA10_CRS':   '21EMA Pullback',
+  'FCT_SMA10_SMA50_CRS':   '10/50SMA Pullback',
   'EVT_CWH_BPS_EPS':       'CWH',
-  'FCT_ValueQuality_CRS':  'バリュー品質',
-  'FCT_RS_Divergence':     'RS乖離反発',
-  'FCT_RS_VCS_Coil':       'RS×VCSコイル',
+  'EVT_RVOL2x_BPS_EpsGr':  'RVOL 2x',
+  'FCT_ValueQuality_CRS':  'Value',
+  'FCT_RS_VCS_Coil':       'VCS Coil',
 }
 
-// screens_v4 成績順ランク（PF降順）
+// screens_v4 成績順ランク（PF降順）— フィルタータブの表示順
 export const SCREEN_RANK: Record<string, number> = {
   'EVT_SMA10_ADR_Gap3':    1,  // PF 55.49
   'FCT_RS_Divergence':     2,  // PF 36.82
@@ -33,13 +33,13 @@ export function formatScreenName(raw: string): string {
 
 // 全スクリーン regime="both" のため、全環境で全スクリーン推奨
 const RECOMMENDED_SCREENS: Record<string, string[]> = {
-  'bull_strong_bull': ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
-  'bull_bull':        ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
-  'bull_neutral':     ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
-  'bull_bear':        ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
-  'neutral_neutral':  ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
-  'bear_bear':        ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
-  'bear_strong_bear': ['SMA10+50押目', 'EMA21押目', 'Gap反発', 'RVOL2x', 'CWH', 'バリュー品質', 'RS乖離反発', 'RS×VCSコイル'],
+  'bull_strong_bull': ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
+  'bull_bull':        ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
+  'bull_neutral':     ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
+  'bull_bear':        ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
+  'neutral_neutral':  ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
+  'bear_bear':        ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
+  'bear_strong_bear': ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
 }
 
 export function getRecommendedScreens(
