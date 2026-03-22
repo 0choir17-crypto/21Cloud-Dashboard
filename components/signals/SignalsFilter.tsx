@@ -13,7 +13,6 @@ type Props = {
 
 export default function SignalsFilter({ signals, marketRegime, scorecardRegime }: Props) {
   const [activeScreen, setActiveScreen] = useState<string>('all')
-  const [entryFilter, setEntryFilter] = useState<number | null>(null)
 
   const recommended = getRecommendedScreens(marketRegime, scorecardRegime)
 
@@ -34,16 +33,11 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
   }
 
   // フィルター条件: 選択中スクリーンが screen_name に含まれるか
-  let filtered = activeScreen === 'all'
+  const filtered = activeScreen === 'all'
     ? signals
     : signals.filter(s =>
         s.screen_name.split('|').map(n => n.trim()).includes(activeScreen)
       )
-
-  // エントリースコアフィルター（2段階制: 0=無星, 3=★★★）
-  if (entryFilter !== null) {
-    filtered = filtered.filter(s => (s.entry_score ?? 0) >= entryFilter)
-  }
 
   const btnClass = (name: string, rec: boolean, disabled: boolean) => {
     const isActive = name === activeScreen
@@ -83,18 +77,6 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
             </button>
           )
         })}
-
-        {/* ★★★フィルター */}
-        <button
-          onClick={() => setEntryFilter(entryFilter === 3 ? null : 3)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-            entryFilter === 3
-              ? 'bg-emerald-500 text-white border-emerald-500'
-              : 'bg-white text-gray-700 border-gray-300 hover:border-emerald-400'
-          }`}
-        >
-          ★★★のみ
-        </button>
       </div>
 
       {/* Filtered table */}

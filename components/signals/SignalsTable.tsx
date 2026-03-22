@@ -9,29 +9,16 @@ import TradeModal from '@/components/journal/TradeModal'
 import { WatchlistItem } from '@/types/portfolio'
 import { supabase } from '@/lib/supabase'
 
-// ── Badge display name mapping (screens_v3) ──────────────────────────────────
-const BADGE_DISPLAY_NAMES: Record<string, string> = {
-  // RVOL2x の entry_filters
-  'EMA21 0.5R以内':    '21E≤0.5R',
-  'ADR<=5':            'ADR≤5',
-  'RS>=60':            'RS≥60',
-  'ADR>=2.5':          'ADR≥2.5',
-  'RVOL>=0.8':         'RVOL≥0.8',
-  // CWH の entry_filters
-  'SMA50 1R以内':      '50MA≤1R',
-}
-
 // ── Column tooltips ───────────────────────────────────────────────────────────
 const COLUMN_TOOLTIPS: Record<string, string> = {
-  entry_score:  'バックテスト検証済みエントリー適性スコア（★★★ or 無星）',
   price_chg_1d: '昨日比変化率（%）',
   price_chg_5d: '直近5日間の変化率（%）',
   rs_composite: '相対強度スコア（複合指標）',
   rvol:         '相対出来高: 当日出来高 ÷ 20日平均出来高',
   adr_pct:      '平均日次値幅（%）: 直近20日の高低差の平均',
-  dist_ema21_r: '21日EMAからの乖離率（%）— ライジングEMAを基準',
-  dist_10wma_r: '10週WMAからの乖離率（%）— ライジングWMAを基準',
-  dist_50sma_r: '50日SMAからの乖離率（%）— ライジングSMAを基準',
+  dist_ema21_r: '21日EMAからの乖離率（ATR倍率）',
+  dist_10wma_r: '10週WMAからの乖離率（ATR倍率）',
+  dist_50sma_r: '50日SMAからの乖離率（ATR倍率）',
   high_52w_pct: '52週高値からの下落率（%）— 0に近いほど高値圏',
   stop_pct:     '推定ストップロス幅（%）— ATRベース',
   hit_count:    'ヒットしたスクリーン数（バッジにホバーで詳細表示）',
@@ -51,41 +38,6 @@ type Props = {
   signals: DailySignal[]
   marketRegime?: string | null
   scorecardRegime?: string | null
-}
-
-// ── EntryScoreBadge ─────────────────────────────────────────────────────────
-function EntryScoreBadge({ score, stars, badgesJson }: {
-  score: number
-  stars: string
-  badgesJson: string
-}) {
-  const badges: string[] = (() => {
-    try { return JSON.parse(badgesJson) } catch { return [] }
-  })()
-
-  const colorMap: Record<number, string> = {
-    3: 'bg-emerald-500 text-white',
-    0: 'bg-gray-200 text-gray-500',
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      {/* ★バッジ */}
-      <span className={`inline-flex items-center px-2 py-0.5 rounded text-sm font-bold ${colorMap[score] ?? colorMap[0]}`}>
-        {stars || '—'}
-      </span>
-      {/* 満たした条件ラベル */}
-      {badges.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {badges.map((b, i) => (
-            <span key={i} className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 whitespace-nowrap">
-              {BADGE_DISPLAY_NAMES[b] ?? b}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  )
 }
 
 // ── Helper cells ─────────────────────────────────────────────────────────────
@@ -149,7 +101,7 @@ function HitTooltip({
       {isOverlap && (
         <span
           className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-amber-100 text-amber-700 border-amber-300 cursor-help"
-          title="複数スクリーンで検出 — 高確度シグナル（バックテスト: PF 16.5, WR 83%）"
+          title="複数スクリーンで検出 — 高確度シグナル"
         >
           {count}x重複
         </span>
@@ -208,7 +160,7 @@ function SortTh({
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function SignalsTable({ signals, marketRegime, scorecardRegime }: Props) {
-  const [sortKey, setSortKey] = useState<SortKey>('entry_score')
+  const [sortKey, setSortKey] = useState<SortKey>('hit_count')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [watchTarget, setWatchTarget] = useState<Partial<WatchlistItem> | null>(null)
   const [entryTarget, setEntryTarget] = useState<EntryTarget | null>(null)
@@ -271,7 +223,6 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
         <thead>
           <tr className="bg-gray-50 border-b border-[#e8eaed]">
             <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">銘柄</th>
-            <SortTh label="エントリー" sortKey="entry_score" tooltip={COLUMN_TOOLTIPS.entry_score} {...sp} align="left" />
             <SortTh label="セクター"  sortKey="sector_name"  {...sp} align="left" />
             <SortTh label="RS"        sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
             <SortTh label="1D%"       sortKey="price_chg_1d" tooltip={COLUMN_TOOLTIPS.price_chg_1d} {...sp} />
@@ -316,14 +267,6 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                   >
                     {sig.company_name ?? '—'}
                   </a>
-                </td>
-                {/* エントリースコア */}
-                <td className="px-3 py-2.5">
-                  <EntryScoreBadge
-                    score={sig.entry_score ?? 0}
-                    stars={sig.entry_stars ?? ''}
-                    badgesJson={sig.entry_badges ?? '[]'}
-                  />
                 </td>
                 {/* セクター */}
                 <td className="px-3 py-2.5 whitespace-nowrap">

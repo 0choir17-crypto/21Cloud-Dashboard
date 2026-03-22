@@ -6,18 +6,7 @@ import { DailySignal } from '@/types/signals'
 import SignalsHeader from '@/components/signals/SignalsHeader'
 import SignalsFilter from '@/components/signals/SignalsFilter'
 
-// エントリースコアカラムを含むクエリ（カラム未追加時はフォールバック）
-const COLUMNS_WITH_ENTRY = `
-  date, code, company_name, screen_name, sector_name,
-  price_chg_1d, price_chg_5d, rs_composite, rvol, adr_pct,
-  dist_ema21_r, dist_10wma_r, dist_50sma_r,
-  high_52w_pct, stop_pct, hit_count,
-  entry_score, entry_stars, entry_badges,
-  cockpit_rs, mansfield_rs,
-  short_interest_ratio, short_position_change
-`
-
-const COLUMNS_BASE = `
+const COLUMNS = `
   date, code, company_name, screen_name, sector_name,
   price_chg_1d, price_chg_5d, rs_composite, rvol, adr_pct,
   dist_ema21_r, dist_10wma_r, dist_50sma_r,
@@ -41,27 +30,14 @@ export default function SignalsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
 
-    // entry_score カラムが存在しない場合はフォールバック
-    let rawSignals: DailySignal[] = []
-
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('daily_signals')
-      .select(COLUMNS_WITH_ENTRY)
+      .select(COLUMNS)
       .order('date', { ascending: false })
       .order('hit_count', { ascending: false })
       .limit(100)
 
-    if (error && error.message?.includes('entry_score')) {
-      const { data: fallback } = await supabase
-        .from('daily_signals')
-        .select(COLUMNS_BASE)
-        .order('date', { ascending: false })
-        .order('hit_count', { ascending: false })
-        .limit(100)
-      rawSignals = (fallback ?? []) as DailySignal[]
-    } else {
-      rawSignals = (data ?? []) as DailySignal[]
-    }
+    const rawSignals = (data ?? []) as DailySignal[]
 
     const { data: marketData } = await supabase
       .from('market_conditions')

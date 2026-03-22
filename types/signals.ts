@@ -16,10 +16,6 @@ export type DailySignal = {
   high_52w_pct: number | null
   stop_pct: number | null
   hit_count: number | null
-  // エントリースコア（2段階制: 0=無星 or 3=★★★）
-  entry_score?: number    // 0 | 3
-  entry_stars?: string    // "" | "★★★"
-  entry_badges?: string   // JSON文字列 例: '["EMA21 0.5R以内", "RS>=60"]'
   // Cockpit RS / Mansfield RS / 需給
   cockpit_rs?: number | null
   mansfield_rs?: number | null
