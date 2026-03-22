@@ -10,14 +10,14 @@ type SortDir = 'asc' | 'desc'
 
 // ── Column tooltips (Signals と同じ表現) ─────────────────────────────────────
 const COLUMN_TOOLTIPS: Record<string, string> = {
-  rs_composite:  '相対強度スコア（複合指標）',
+  rs_composite:  'Cockpit RS — TOPIX相対強度（0–100パーセンタイル）',
   daily_pct:     '昨日比変化率（%）',
   adr_pct:       '平均日次値幅（%）: 直近20日の高低差の平均',
   weekly_pct:    '直近1週間（5営業日）のリターン（%）',
   monthly_pct:   '直近1ヶ月（20営業日）のリターン（%）',
-  dist_ema21_r:  '21日EMAからの乖離率（%）— ライジングEMAを基準',
-  dist_wma10_r:  '10週WMAからの乖離率（%）— ライジングWMAを基準',
-  dist_sma50_r:  '50日SMAからの乖離率（%）— ライジングSMAを基準',
+  dist_ema21_r:  '21日EMAまでのATR正規化距離（R倍率）',
+  dist_wma10_r:  '週足10WMAまでのATR正規化距離（R倍率）',
+  dist_sma50_r:  '50日SMAまでのATR正規化距離（R倍率）',
 }
 
 // ── Helpers (Signals と同じスタイル) ──────────────────────────────────────────
@@ -26,7 +26,7 @@ function fmt(val: number | null | undefined, decimals = 2): string {
   return val.toFixed(decimals)
 }
 
-function ChangePill({ value }: { value: number | null | undefined }) {
+function ChangePill({ value, decimals = 2 }: { value: number | null | undefined; decimals?: number }) {
   if (value === null || value === undefined) return <span className="text-gray-400">—</span>
   const pos = value >= 0
   return (
@@ -34,7 +34,20 @@ function ChangePill({ value }: { value: number | null | undefined }) {
       className="font-mono text-xs font-semibold"
       style={{ color: pos ? 'var(--positive)' : 'var(--negative)' }}
     >
-      {pos ? '+' : ''}{value.toFixed(2)}%
+      {pos ? '+' : ''}{value.toFixed(decimals)}%
+    </span>
+  )
+}
+
+function AtrDistCell({ value }: { value: number | null | undefined }) {
+  if (value === null || value === undefined) return <span className="text-gray-400">—</span>
+  const pos = value >= 0
+  return (
+    <span
+      className="font-mono text-xs font-semibold"
+      style={{ color: pos ? 'var(--positive)' : 'var(--negative)' }}
+    >
+      {pos ? '+' : ''}{value.toFixed(1)}R
     </span>
   )
 }
@@ -185,19 +198,19 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
                 {/* RS */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.rs_composite, 1)}</td>
                 {/* 1D% */}
-                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.daily_pct} /></td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.daily_pct} decimals={2} /></td>
                 {/* 1W% */}
-                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.weekly_pct} /></td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.weekly_pct} decimals={1} /></td>
                 {/* 1M% */}
-                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.monthly_pct} /></td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><ChangePill value={row.monthly_pct} decimals={1} /></td>
                 {/* ADR% */}
-                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.adr_pct)}</td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.adr_pct, 1)}%</td>
                 {/* EMA21(R) */}
-                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.dist_ema21_r)}</td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><AtrDistCell value={row.dist_ema21_r} /></td>
                 {/* 10WMA(R) */}
-                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.dist_wma10_r)}</td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><AtrDistCell value={row.dist_wma10_r} /></td>
                 {/* 50SMA(R) */}
-                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(row.dist_sma50_r)}</td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><AtrDistCell value={row.dist_sma50_r} /></td>
               </tr>
             ))}
           </tbody>
