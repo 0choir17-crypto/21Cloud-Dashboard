@@ -65,15 +65,20 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
           const rec       = isRecommended(name, recommended)
           const shortName = SCREEN_NAME_MAP[name] ?? name
           const disabled  = count === 0
+          const isBearRS  = name === 'BearRS_Leader'
           return (
             <button
               key={name}
               className={btnClass(name, rec, disabled)}
               onClick={() => !disabled && setActiveScreen(name)}
               disabled={disabled}
+              title={isBearRS && disabled ? 'MC Score > 3 のため本日は非発動' : undefined}
             >
               {rec && !disabled && <span className="mr-1">★</span>}
               {shortName}（{count}）
+              {isBearRS && disabled && (
+                <span className="ml-1 text-[10px] text-red-400">MC&gt;3</span>
+              )}
             </button>
           )
         })}

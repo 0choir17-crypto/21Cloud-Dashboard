@@ -143,6 +143,21 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
       regime_note: 'v4新規: 既存スクリーンと直交する新コンセプト',
     },
   },
+  {
+    rank: 9,
+    name: 'BearRS',
+    dbName: 'BearRS_Leader',
+    type: 'bear',
+    kind: 'factor',
+    holdDays: 30,
+    conditions: 'MC Score≤3 & RS≥70 & Low≤21EMA',
+    role: 'Bear環境(MC≤3)で相対強度の高い銘柄を、21EMAへの押し目で拾うスクリーン。MC>3の日はシグナル0件',
+    backtest: {
+      oos_pf: 3.06, oos_wr: 63.1, oos_n: 53522, spd: 42.5,
+      wf: '4/5',
+      regime_note: 'MC Score≤3のみ発動。固定30日保有',
+    },
+  },
 ]
 
 // ── Sort logic ────────────────────────────────────────────────────────────────
