@@ -6,14 +6,15 @@ import { DailySignal } from '@/types/signals'
 import SignalsHeader from '@/components/signals/SignalsHeader'
 import SignalsFilter from '@/components/signals/SignalsFilter'
 
+// mc_met, mc_condition はカラム追加後に有効化
+// Supabase に未追加の場合はクエリエラーになるため、* で取得しフロント側でフォールバック
 const COLUMNS = `
   date, code, company_name, screen_name, sector_name,
   price_chg_1d, price_chg_5d, rs_composite, rvol, adr_pct,
   dist_ema21_r, dist_10wma_r, dist_50sma_r,
   high_52w_pct, stop_pct, hit_count,
   cockpit_rs, mansfield_rs,
-  short_interest_ratio, short_position_change,
-  mc_met, mc_condition
+  short_interest_ratio, short_position_change
 `
 
 export default function SignalsPage() {
