@@ -12,7 +12,8 @@ const COLUMNS = `
   dist_ema21_r, dist_10wma_r, dist_50sma_r,
   high_52w_pct, stop_pct, hit_count,
   cockpit_rs, mansfield_rs,
-  short_interest_ratio, short_position_change
+  short_interest_ratio, short_position_change,
+  mc_met, mc_condition
 `
 
 export default function SignalsPage() {

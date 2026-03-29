@@ -242,12 +242,15 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
         <tbody>
           {sorted.map((sig, i) => {
             const rec = isRecommended(sig.screen_name, recommended)
+            const mcNotMet = sig.mc_met === false
             return (
               <tr
                 key={`${sig.code}-${sig.screen_name}-${i}`}
                 className={`border-b border-[#f0f2f4] hover:bg-gray-50 transition-colors ${
                   rec ? 'border-l-2 border-l-amber-400' : ''
-                } ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
+                } ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'} ${
+                  mcNotMet ? 'opacity-50' : ''
+                }`}
               >
                 {/* 銘柄 + Watch button */}
                 <td className="px-3 py-2.5 whitespace-nowrap">
@@ -292,13 +295,24 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.high_52w_pct)}</td>
                 {/* Stop% */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.stop_pct)}</td>
-                {/* HIT + tooltip */}
+                {/* HIT + tooltip + MC badge */}
                 <td className="px-3 py-3 text-right">
-                  <HitTooltip
-                    value={sig.hit_count}
-                    screenName={sig.screen_name}
-                    recommended={recommended}
-                  />
+                  <div className="flex items-center justify-end gap-1">
+                    <HitTooltip
+                      value={sig.hit_count}
+                      screenName={sig.screen_name}
+                      recommended={recommended}
+                    />
+                    {sig.mc_condition && (
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${
+                        mcNotMet
+                          ? 'bg-gray-100 text-gray-400 border-gray-200'
+                          : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                      }`}>
+                        {sig.mc_condition}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 {/* WL (Watch) */}
                 <td className="px-3 py-2.5 text-center whitespace-nowrap">

@@ -21,4 +21,7 @@ export type DailySignal = {
   mansfield_rs?: number | null
   short_interest_ratio?: number | null
   short_position_change?: number | null
+  // MC Score ソフトフィルター
+  mc_met?: boolean | null
+  mc_condition?: string | null
 }
