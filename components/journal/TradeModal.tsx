@@ -74,14 +74,16 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       // entry_date 以前の最新データを取得
       const { data } = await supabase
         .from('market_conditions')
-        .select('positive_pct, scorecard_regime')
+        .select('positive_pct, scorecard_regime, mc_score')
         .lte('date', entryDate)
         .order('date', { ascending: false })
         .limit(1)
         .single()
 
       if (!cancelled && data) {
-        setMcScore(data.positive_pct ?? null)
+        // v3: use mc_score (0-21) as percentage equivalent, fallback to positive_pct
+        const v3Score = (data as Record<string, unknown>).mc_score as number | null | undefined
+        setMcScore(v3Score != null ? (v3Score / 21) * 100 : (data.positive_pct ?? null))
         setMcRegime(data.scorecard_regime ?? null)
       } else if (!cancelled) {
         setMcScore(null)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DailySignal } from '@/types/signals'
-import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
+import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended, isPremiumScreen } from '@/lib/screenNames'
 import Tooltip from '@/components/shared/Tooltip'
 import WatchlistModal from '@/components/watchlist/WatchlistModal'
 import TradeModal from '@/components/journal/TradeModal'
@@ -313,13 +313,18 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                       screenName={sig.screen_name}
                       recommended={recommended}
                     />
-                    {sig.mc_condition && (
+                    {sig.mc_condition && sig.mc_condition !== 'always_on' && (
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${
                         mcNotMet
                           ? 'bg-gray-100 text-gray-400 border-gray-200'
                           : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                       }`}>
                         {sig.mc_condition}
+                      </span>
+                    )}
+                    {isPremiumScreen(sig.screen_name) && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border bg-[#EEEDFE] text-[#3C3489] border-[#D4D1F7]">
+                        Premium
                       </span>
                     )}
                   </div>

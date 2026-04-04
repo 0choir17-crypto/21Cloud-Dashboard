@@ -29,29 +29,41 @@ type Props = {
   positivePct?: number
   marketRegime?: string
   breadthRegime?: string
+  // MC Score v3
+  mcScore?: number | null
+  mcScoreV1?: number | null
+  divergenceFlag?: number | null
 }
 
-export default function ScoreGauge({ regime, positiveCount, totalCount, positivePct, marketRegime, breadthRegime }: Props) {
-  const config = regime ? REGIME_CONFIG[regime] : { color: '#9ca3af', label: '—' }
-  const pct = positivePct ?? 0
+export default function ScoreGauge({
+  regime, positiveCount, totalCount, positivePct,
+  marketRegime, breadthRegime,
+  mcScore, mcScoreV1, divergenceFlag,
+}: Props) {
+  const config = regime ? REGIME_CONFIG[regime] : { color: '#9ca3af', label: '\u2014' }
+
+  // v3 available: use mc_score (0-21), else fallback to v1 positive_pct (0-100)
+  const isV3 = mcScore != null
+  const scoreDisplay = isV3 ? mcScore : (positiveCount ?? null)
+  const maxScore = isV3 ? 21 : (totalCount ?? 12)
+  const pct = isV3
+    ? (mcScore / 21) * 100
+    : (positivePct ?? 0)
 
   const trendCfg   = marketRegime  ? MARKET_REGIME_CONFIG[marketRegime]   : null
   const breadthCfg = breadthRegime ? BREADTH_REGIME_CONFIG[breadthRegime] : null
 
   const trendColor        = trendCfg?.color   ?? '#9ca3af'
-  const marketRegimeLabel = trendCfg?.label   ?? '—'
+  const marketRegimeLabel = trendCfg?.label   ?? '\u2014'
   const breadthColor      = breadthCfg?.color ?? '#9ca3af'
-  const breadthRegimeLabel = breadthCfg?.label ?? '—'
+  const breadthRegimeLabel = breadthCfg?.label ?? '\u2014'
 
   // SVG semi-circle gauge
-  // Viewbox: 200x110, center at (100, 100), radius 80
   const cx = 100
   const cy = 100
   const r = 80
   const strokeWidth = 14
 
-  // Arc from 180° to 0° (left to right, half circle on top)
-  // progress arc: fraction of the semicircle
   const toRad = (deg: number) => (deg * Math.PI) / 180
   const startAngle = 180
   const endAngle = startAngle + (pct / 100) * 180
@@ -104,7 +116,7 @@ export default function ScoreGauge({ regime, positiveCount, totalCount, positive
           {config.label}
         </text>
 
-        {/* Count label */}
+        {/* Score label */}
         <text
           x={cx}
           y={cy + 16}
@@ -113,7 +125,7 @@ export default function ScoreGauge({ regime, positiveCount, totalCount, positive
           fill="#6b7280"
           fontFamily="var(--font-mono, monospace)"
         >
-          {positiveCount ?? '—'} / {totalCount ?? '—'}
+          {scoreDisplay ?? '\u2014'} / {maxScore}
         </text>
 
         {/* Pct label */}
@@ -138,21 +150,33 @@ export default function ScoreGauge({ regime, positiveCount, totalCount, positive
           border: `1px solid ${config.color}40`,
         }}
       >
-        {config.label}
+        {isV3 ? `MC v3: ${mcScore}/21` : config.label}
       </span>
+
+      {/* Divergence warning */}
+      {divergenceFlag === 1 && (
+        <div className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+          style={{ backgroundColor: '#FAEEDA', color: '#633806', border: '1px solid #F0D9A8' }}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1L15 14H1L8 1Z" fill="#EF9F27" />
+            <text x="8" y="12" textAnchor="middle" fontSize="9" fill="white" fontWeight="bold">!</text>
+          </svg>
+          Divergence
+        </div>
+      )}
 
       {/* Trend / Breadth mini panel */}
       <div className="mt-4 w-full rounded-lg border border-[#e8eaed] overflow-hidden text-sm">
         <div className="flex items-center justify-between px-4 py-2 border-b border-[#e8eaed]">
           <span className="text-gray-500 font-medium">Trend</span>
           <span className="flex items-center gap-1.5 font-semibold" style={{ color: trendColor }}>
-            ● {marketRegimeLabel}
+            {'\u25CF'} {marketRegimeLabel}
           </span>
         </div>
         <div className="flex items-center justify-between px-4 py-2">
           <span className="text-gray-500 font-medium">Breadth</span>
           <span className="flex items-center gap-1.5 font-semibold" style={{ color: breadthColor }}>
-            ● {breadthRegimeLabel}
+            {'\u25CF'} {breadthRegimeLabel}
           </span>
         </div>
       </div>

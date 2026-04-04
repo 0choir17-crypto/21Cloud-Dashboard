@@ -119,6 +119,9 @@ export default function Page() {
                 positivePct={market.positive_pct}
                 marketRegime={market.market_regime}
                 breadthRegime={market.breadth_regime}
+                mcScore={market.mc_score}
+                mcScoreV1={market.mc_score_v1}
+                divergenceFlag={market.divergence_flag}
               />
               <hr className="my-4 border-[#e8eaed]" />
               <FactorGrid market={market} />

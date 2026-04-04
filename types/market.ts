@@ -50,7 +50,7 @@ export type MarketConditions = {
   nh_nl_diff: number | null
   pct_above_sma50: number | null
   pct_above_sma200: number | null
-  // 12要因
+  // 12要因 (v1)
   f01_idx_perf_1w: boolean | null
   f02_idx_perf_1m: boolean | null
   f03_idx_perf_ytd: boolean | null
@@ -63,4 +63,18 @@ export type MarketConditions = {
   f10_breadth_adv_pct: boolean | null
   f11_breadth_sma50: boolean | null
   f12_vix_condition: boolean | null
+  // MC Score v3 (0-21, 7ファクター × 0-3点)
+  mc_score?: number | null
+  mc_score_v1?: number | null
+  mc_score_v3?: number | null
+  mc_regime_v3?: 'strong_bull' | 'bull' | 'neutral' | 'bear' | 'strong_bear' | null
+  divergence_flag?: number | null
+  // v3 個別ファクター (0-3)
+  f1_idx_momentum?: number | null
+  f2_idx_trend?: number | null
+  f3_idx_long_trend?: number | null
+  f4_ema21_slope?: number | null
+  f5_sell_pressure?: number | null
+  f6_foreign_flow?: number | null
+  f7_idx_52wh_distance?: number | null
 }

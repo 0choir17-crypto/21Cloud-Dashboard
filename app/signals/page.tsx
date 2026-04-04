@@ -14,7 +14,8 @@ const COLUMNS = `
   high_52w_pct, stop_pct, hit_count,
   cockpit_rs, mansfield_rs,
   short_interest_ratio, short_position_change,
-  mc_met, mc_condition
+  mc_met, mc_condition,
+  mc_score, mc_score_v1, divergence_flag
 `
 
 export default function SignalsPage() {
@@ -27,6 +28,9 @@ export default function SignalsPage() {
     scorecard_regime: string
     positive_count: number
     total_count: number
+    mc_score?: number | null
+    mc_score_v1?: number | null
+    divergence_flag?: number | null
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -45,7 +49,7 @@ export default function SignalsPage() {
     // market_conditions: selectedDate に一致、なければ最新
     let marketQuery = supabase
       .from('market_conditions')
-      .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count')
+      .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count, mc_score, mc_score_v1, divergence_flag')
 
     if (isLatest) {
       marketQuery = marketQuery.order('date', { ascending: false }).limit(1)
@@ -121,6 +125,8 @@ export default function SignalsPage() {
         scorecardRegime={market?.scorecard_regime}
         positiveCount={market?.positive_count}
         totalCount={market?.total_count}
+        mcScore={market?.mc_score}
+        divergenceFlag={market?.divergence_flag}
       />
 
       {/* ローディング */}

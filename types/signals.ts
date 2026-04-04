@@ -24,4 +24,8 @@ export type DailySignal = {
   // MC Score ソフトフィルター
   mc_met?: boolean | null
   mc_condition?: string | null
+  // MC Score v3
+  mc_score?: number | null
+  mc_score_v1?: number | null
+  divergence_flag?: number | null
 }

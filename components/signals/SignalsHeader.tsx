@@ -28,7 +28,7 @@ type BadgeProps = {
 
 function RegimeBadge({ label, value, suffix }: BadgeProps) {
   const color   = value ? (REGIME_COLOR[value] ?? '#9ca3af') : '#9ca3af'
-  const display = value ? (REGIME_LABEL[value] ?? value)     : '—'
+  const display = value ? (REGIME_LABEL[value] ?? value)     : '\u2014'
 
   return (
     <span
@@ -40,7 +40,7 @@ function RegimeBadge({ label, value, suffix }: BadgeProps) {
       }}
     >
       <span className="text-gray-500 font-normal text-xs">{label}</span>
-      ● {display}{suffix}
+      {'\u25CF'} {display}{suffix}
     </span>
   )
 }
@@ -51,6 +51,8 @@ type Props = {
   scorecardRegime?: string | null
   positiveCount?:   number | null
   totalCount?:      number | null
+  mcScore?:         number | null
+  divergenceFlag?:  number | null
 }
 
 export default function SignalsHeader({
@@ -59,17 +61,34 @@ export default function SignalsHeader({
   scorecardRegime,
   positiveCount,
   totalCount,
+  mcScore,
+  divergenceFlag,
 }: Props) {
-  const scorecardSuffix =
-    positiveCount != null && totalCount != null
-      ? ` ${positiveCount}/${totalCount}`
-      : undefined
+  // v3: show mc_score/21, fallback to v1 positive_count/total_count
+  const isV3 = mcScore != null
+  const scorecardSuffix = isV3
+    ? ` ${mcScore}/21`
+    : (positiveCount != null && totalCount != null
+        ? ` ${positiveCount}/${totalCount}`
+        : undefined)
 
   return (
     <div className="flex flex-wrap gap-3 mb-6">
       <RegimeBadge label="Trend"     value={marketRegime} />
       <RegimeBadge label="Scorecard" value={scorecardRegime} suffix={scorecardSuffix} />
       <RegimeBadge label="Breadth"   value={breadthRegime} />
+      {divergenceFlag === 1 && (
+        <span
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border"
+          style={{ backgroundColor: '#FAEEDA', color: '#633806', borderColor: '#F0D9A8' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1L15 14H1L8 1Z" fill="#EF9F27" />
+            <text x="8" y="12" textAnchor="middle" fontSize="9" fill="white" fontWeight="bold">!</text>
+          </svg>
+          Divergence
+        </span>
+      )}
     </div>
   )
 }
