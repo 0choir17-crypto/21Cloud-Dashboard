@@ -87,6 +87,17 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
       memo: memo.trim() || null,
       status: statusMode,
       updated_at: new Date().toISOString(),
+      // シグナルスナップショット（新規作成時のみ、Watchlist昇格等で渡された場合）
+      ...(isEdit ? {} : {
+        signal_price: initial?.signal_price ?? null,
+        rs_at_entry: initial?.rs_at_entry ?? null,
+        rvol_at_entry: initial?.rvol_at_entry ?? null,
+        adr_at_entry: initial?.adr_at_entry ?? null,
+        dist_ema21_at_entry: initial?.dist_ema21_at_entry ?? null,
+        stop_pct_at_entry: initial?.stop_pct_at_entry ?? null,
+        mc_met_at_entry: initial?.mc_met_at_entry ?? null,
+        mc_condition_at_entry: initial?.mc_condition_at_entry ?? null,
+      }),
     }
 
     const { error: err } = isEdit
