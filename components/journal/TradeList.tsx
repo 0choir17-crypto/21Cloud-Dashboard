@@ -24,6 +24,24 @@ function RegimeBadge({ regime }: { regime: string | null }) {
   )
 }
 
+function SignalSnapshotLine({ t }: { t: Trade }) {
+  if (t.rs_at_entry == null) return null
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-400 mt-0.5">
+      <span>RS: <strong className="text-gray-600">{t.rs_at_entry.toFixed(1)}</strong></span>
+      <span>RVOL: <strong className={(t.rvol_at_entry ?? 0) >= 2 ? 'text-emerald-600 font-bold' : 'text-gray-600'}>{t.rvol_at_entry?.toFixed(2)}</strong></span>
+      <span>ADR: <strong className="text-gray-600">{t.adr_at_entry?.toFixed(2)}%</strong></span>
+      <span>EMA21: <strong className="text-gray-600">{t.dist_ema21_at_entry?.toFixed(2)}R</strong></span>
+      {t.stop_pct_at_entry != null && <span>Stop: <strong className="text-gray-600">{t.stop_pct_at_entry.toFixed(2)}%</strong></span>}
+      {t.sector && <span>Sector: <strong className="text-gray-600">{t.sector}</strong></span>}
+      {t.signal_price != null && <span>Price: <strong className="text-gray-600">&yen;{t.signal_price.toLocaleString()}</strong></span>}
+      {t.mc_condition_at_entry && (
+        <span>MC: <strong className={t.mc_met_at_entry ? 'text-emerald-600' : 'text-gray-400'}>{t.mc_condition_at_entry} {t.mc_met_at_entry ? '\u2705' : '\u274c'}</strong></span>
+      )}
+    </div>
+  )
+}
+
 function McBadge({ score, regime }: { score: number | null; regime: string | null }) {
   if (score == null) return <span className="text-xs text-gray-400">MC: —</span>
   return (
@@ -70,6 +88,7 @@ export default function TradeList({ trades, onClose }: Props) {
                     <span>&yen;{t.entry_price.toLocaleString()} &times; {t.shares}株</span>
                     <McBadge score={t.mc_score} regime={t.mc_regime} />
                   </div>
+                  <SignalSnapshotLine t={t} />
                 </div>
                 <button
                   onClick={() => onClose(t)}
@@ -121,6 +140,7 @@ export default function TradeList({ trades, onClose }: Props) {
                       </span>
                       <McBadge score={t.mc_score} regime={t.mc_regime} />
                     </div>
+                    <SignalSnapshotLine t={t} />
                   </div>
                 </div>
               )
