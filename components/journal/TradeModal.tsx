@@ -13,6 +13,16 @@ type Props = {
     ticker?: string
     company_name?: string
     screen_name?: string
+    // シグナルスナップショット
+    sector?: string
+    signal_price?: number
+    rs_at_entry?: number
+    rvol_at_entry?: number
+    adr_at_entry?: number
+    dist_ema21_at_entry?: number
+    stop_pct_at_entry?: number
+    mc_met_at_entry?: boolean
+    mc_condition_at_entry?: string
   }
 }
 
@@ -102,7 +112,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       strong_bear: 'Strong Bear',
     }
 
-    const record = {
+    const record: Record<string, unknown> = {
       ticker: ticker.trim(),
       company_name: companyName.trim() || null,
       screen_name: screenName || null,
@@ -113,6 +123,16 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       mc_regime: mcRegime ? (regimeMap[mcRegime] ?? mcRegime) : null,
       memo: memo.trim() || null,
       status: 'OPEN',
+      // シグナルスナップショット（Signalsページから渡された場合のみ値が入る）
+      sector: initial?.sector ?? null,
+      signal_price: initial?.signal_price ?? null,
+      rs_at_entry: initial?.rs_at_entry ?? null,
+      rvol_at_entry: initial?.rvol_at_entry ?? null,
+      adr_at_entry: initial?.adr_at_entry ?? null,
+      dist_ema21_at_entry: initial?.dist_ema21_at_entry ?? null,
+      stop_pct_at_entry: initial?.stop_pct_at_entry ?? null,
+      mc_met_at_entry: initial?.mc_met_at_entry ?? null,
+      mc_condition_at_entry: initial?.mc_condition_at_entry ?? null,
     }
 
     const { error: err } = await supabase.from('trades').insert(record)
@@ -224,6 +244,25 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
             />
           </div>
         </div>
+
+        {/* シグナル情報パネル（Signalsページからの場合のみ表示） */}
+        {initial?.rs_at_entry != null && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">シグナル情報（自動取得）</p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+              <span className="text-gray-500">RS: <strong className="text-gray-800">{initial.rs_at_entry?.toFixed(1)}</strong></span>
+              <span className="text-gray-500">RVOL: <strong className={`${(initial.rvol_at_entry ?? 0) >= 2 ? 'text-emerald-600' : 'text-gray-800'}`}>{initial.rvol_at_entry?.toFixed(2)}</strong></span>
+              <span className="text-gray-500">ADR%: <strong className="text-gray-800">{initial.adr_at_entry?.toFixed(1)}</strong></span>
+              <span className="text-gray-500">EMA21(R): <strong className="text-gray-800">{initial.dist_ema21_at_entry?.toFixed(2)}</strong></span>
+              <span className="text-gray-500">Stop%: <strong className="text-gray-800">{initial.stop_pct_at_entry?.toFixed(1)}</strong></span>
+              {initial.sector && <span className="text-gray-500">Sector: <strong className="text-gray-800">{initial.sector}</strong></span>}
+              {initial.signal_price != null && <span className="text-gray-500">Price: <strong className="text-gray-800">&yen;{initial.signal_price.toLocaleString()}</strong></span>}
+              {initial.mc_condition_at_entry && (
+                <span className="text-gray-500">MC: <strong className={initial.mc_met_at_entry ? 'text-emerald-600' : 'text-gray-400'}>{initial.mc_condition_at_entry} {initial.mc_met_at_entry ? '\u2705' : '\u274c'}</strong></span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* MC Score 表示 */}
         <div className="bg-gray-50 rounded-lg px-4 py-3">

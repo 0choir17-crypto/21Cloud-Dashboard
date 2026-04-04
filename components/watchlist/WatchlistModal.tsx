@@ -48,7 +48,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
     setSaving(true)
     setError('')
 
-    const record = {
+    const record: Record<string, unknown> = {
       ticker: ticker.trim().toUpperCase(),
       company_name: companyName.trim() || null,
       watch_date: watchDate,
@@ -58,6 +58,16 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
       target_r: targetR !== '' ? parseFloat(targetR) : null,
       memo: memo.trim() || null,
       updated_at: new Date().toISOString(),
+      // シグナルスナップショット（Signalsページから渡された場合のみ値が入る）
+      rs_composite: initial?.rs_composite ?? null,
+      rvol: initial?.rvol ?? null,
+      adr_pct: initial?.adr_pct ?? null,
+      dist_ema21_r: initial?.dist_ema21_r ?? null,
+      stop_pct: initial?.stop_pct ?? null,
+      mc_met: initial?.mc_met ?? null,
+      mc_condition: initial?.mc_condition ?? null,
+      sector_name: initial?.sector_name ?? null,
+      signal_price: initial?.signal_price ?? null,
     }
 
     const { error: err } = isEdit
@@ -75,6 +85,25 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
       <div className="px-6 py-5 space-y-4">
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+        )}
+
+        {/* シグナル情報パネル（Signalsページからの場合のみ表示） */}
+        {initial?.rs_composite != null && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">シグナル情報（自動取得）</p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+              <span className="text-gray-500">RS: <strong className="text-gray-800">{initial.rs_composite?.toFixed(1)}</strong></span>
+              <span className="text-gray-500">RVOL: <strong className={`${(initial.rvol ?? 0) >= 2 ? 'text-emerald-600' : 'text-gray-800'}`}>{initial.rvol?.toFixed(2)}</strong></span>
+              <span className="text-gray-500">ADR%: <strong className="text-gray-800">{initial.adr_pct?.toFixed(1)}</strong></span>
+              <span className="text-gray-500">EMA21(R): <strong className="text-gray-800">{initial.dist_ema21_r?.toFixed(2)}</strong></span>
+              <span className="text-gray-500">Stop%: <strong className="text-gray-800">{initial.stop_pct?.toFixed(1)}</strong></span>
+              {initial.sector_name && <span className="text-gray-500">Sector: <strong className="text-gray-800">{initial.sector_name}</strong></span>}
+              {initial.signal_price != null && <span className="text-gray-500">Price: <strong className="text-gray-800">&yen;{initial.signal_price.toLocaleString()}</strong></span>}
+              {initial.mc_condition && (
+                <span className="text-gray-500">MC: <strong className={initial.mc_met ? 'text-emerald-600' : 'text-gray-400'}>{initial.mc_condition} {initial.mc_met ? '\u2705' : '\u274c'}</strong></span>
+              )}
+            </div>
+          </div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

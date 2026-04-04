@@ -17,4 +17,21 @@ export interface Trade {
   status: 'OPEN' | 'CLOSED'
   created_at: string
   updated_at: string
+
+  // Portfolio統合用（Step C準備）
+  sector: string | null
+  stop_price: number | null
+  target_r: number | null
+  exit_reason: string | null
+  r_multiple: number | null
+
+  // シグナルスナップショット
+  signal_price: number | null
+  rs_at_entry: number | null
+  rvol_at_entry: number | null
+  adr_at_entry: number | null
+  dist_ema21_at_entry: number | null
+  stop_pct_at_entry: number | null
+  mc_met_at_entry: boolean | null
+  mc_condition_at_entry: string | null
 }

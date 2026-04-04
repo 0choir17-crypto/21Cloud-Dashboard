@@ -104,7 +104,7 @@ export default function WatchlistPage() {
       {/* Desktop Table */}
       <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm overflow-x-auto hidden sm:block">
         <div className="px-4 pt-4 pb-2 text-xs text-gray-400">{items.length} 件</div>
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1200px] text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-t border-[#e8eaed]">
               <th className={`${thClass('ticker')} text-left`} onClick={() => handleSort('ticker')}>
@@ -120,6 +120,11 @@ export default function WatchlistPage() {
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">買い候補値</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">ストップ</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">R目標</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">RS</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">RVOL</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">ADR%</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">EMA21(R)</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">Sector</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">メモ</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">操作</th>
             </tr>
@@ -159,6 +164,15 @@ export default function WatchlistPage() {
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">
                   {item.target_r != null ? `${item.target_r}R` : '—'}
                 </td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{item.rs_composite != null ? item.rs_composite.toFixed(1) : '—'}</td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">
+                  {item.rvol != null ? (
+                    <span className={item.rvol >= 2 ? 'font-bold text-emerald-600' : ''}>{item.rvol.toFixed(2)}</span>
+                  ) : '—'}
+                </td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{item.adr_pct != null ? item.adr_pct.toFixed(1) : '—'}</td>
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{item.dist_ema21_r != null ? item.dist_ema21_r.toFixed(2) : '—'}</td>
+                <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{item.sector_name ?? '—'}</td>
                 <td className="px-3 py-2.5 text-xs text-gray-500 max-w-[160px]">
                   <span className="block truncate">{item.memo ?? '—'}</span>
                 </td>
@@ -223,12 +237,19 @@ export default function WatchlistPage() {
               </div>
               <ScreenTagBadge tag={item.screen_tag} />
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-2">
               <div><span className="text-gray-400 block">ウォッチ日</span>{item.watch_date}</div>
               <div><span className="text-gray-400 block">買い候補</span>{fmt(item.entry_price)}</div>
               <div><span className="text-gray-400 block">ストップ</span>{fmt(item.stop_price)}</div>
               <div><span className="text-gray-400 block">R目標</span>{item.target_r != null ? `${item.target_r}R` : '—'}</div>
             </div>
+            {item.rs_composite != null && (
+              <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
+                <div><span className="text-gray-400 block">RS</span>{item.rs_composite.toFixed(1)}</div>
+                <div><span className="text-gray-400 block">RVOL</span><span className={item.rvol != null && item.rvol >= 2 ? 'font-bold text-emerald-600' : ''}>{item.rvol?.toFixed(2) ?? '—'}</span></div>
+                <div><span className="text-gray-400 block">Sector</span>{item.sector_name ?? '—'}</div>
+              </div>
+            )}
             {item.memo && <p className="text-xs text-gray-500 mb-3 truncate">{item.memo}</p>}
             <div className="flex gap-2">
               <button

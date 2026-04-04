@@ -32,6 +32,16 @@ type EntryTarget = {
   ticker: string
   company_name?: string
   screen_name?: string
+  // シグナルスナップショット
+  sector?: string
+  signal_price?: number
+  rs_at_entry?: number
+  rvol_at_entry?: number
+  adr_at_entry?: number
+  dist_ema21_at_entry?: number
+  stop_pct_at_entry?: number
+  mc_met_at_entry?: boolean
+  mc_condition_at_entry?: string
 }
 
 type Props = {
@@ -321,7 +331,17 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                       ticker: sig.code,
                       company_name: sig.company_name ?? undefined,
                       screen_tag: sig.screen_name ?? undefined,
-                    })}
+                      // シグナルスナップショット
+                      rs_composite: sig.rs_composite ?? undefined,
+                      rvol: sig.rvol ?? undefined,
+                      adr_pct: sig.adr_pct ?? undefined,
+                      dist_ema21_r: sig.dist_ema21_r ?? undefined,
+                      stop_pct: sig.stop_pct ?? undefined,
+                      mc_met: sig.mc_met ?? undefined,
+                      mc_condition: sig.mc_condition ?? undefined,
+                      sector_name: sig.sector_name ?? undefined,
+                      signal_price: sig.close ?? undefined,
+                    } as Partial<WatchlistItem>)}
                     className="text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
                   >
                     + Watch
@@ -337,6 +357,15 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                         ticker: sig.code,
                         company_name: sig.company_name ?? undefined,
                         screen_name: sig.screen_name ?? undefined,
+                        sector: sig.sector_name ?? undefined,
+                        signal_price: sig.close ?? undefined,
+                        rs_at_entry: sig.rs_composite ?? undefined,
+                        rvol_at_entry: sig.rvol ?? undefined,
+                        adr_at_entry: sig.adr_pct ?? undefined,
+                        dist_ema21_at_entry: sig.dist_ema21_r ?? undefined,
+                        stop_pct_at_entry: sig.stop_pct ?? undefined,
+                        mc_met_at_entry: sig.mc_met ?? undefined,
+                        mc_condition_at_entry: sig.mc_condition ?? undefined,
                       })}
                       className="text-[10px] font-medium text-emerald-600 hover:text-emerald-800 hover:underline leading-none"
                     >

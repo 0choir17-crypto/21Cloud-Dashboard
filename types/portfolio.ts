@@ -8,6 +8,16 @@ export type WatchlistItem = {
   target_r: number | null
   screen_tag: string | null
   memo: string | null
+  // シグナルスナップショット
+  rs_composite: number | null
+  rvol: number | null
+  adr_pct: number | null
+  dist_ema21_r: number | null
+  stop_pct: number | null
+  mc_met: boolean | null
+  mc_condition: string | null
+  sector_name: string | null
+  signal_price: number | null
   created_at: string
   updated_at: string
 }
