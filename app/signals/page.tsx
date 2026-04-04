@@ -29,6 +29,7 @@ export default function SignalsPage() {
     positive_count: number
     total_count: number
     mc_score?: number | null
+    mc_score_v3?: number | null
     mc_score_v1?: number | null
     divergence_flag?: number | null
   } | null>(null)
@@ -49,7 +50,7 @@ export default function SignalsPage() {
     // market_conditions: selectedDate に一致、なければ最新
     let marketQuery = supabase
       .from('market_conditions')
-      .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count, mc_score, mc_score_v1, divergence_flag')
+      .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count, mc_score, mc_score_v3, mc_score_v1, divergence_flag')
 
     if (isLatest) {
       marketQuery = marketQuery.order('date', { ascending: false }).limit(1)
@@ -125,7 +126,7 @@ export default function SignalsPage() {
         scorecardRegime={market?.scorecard_regime}
         positiveCount={market?.positive_count}
         totalCount={market?.total_count}
-        mcScore={market?.mc_score}
+        mcScore={market?.mc_score ?? market?.mc_score_v3}
         divergenceFlag={market?.divergence_flag}
       />
 
