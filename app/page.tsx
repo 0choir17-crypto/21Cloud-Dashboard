@@ -3,26 +3,33 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { MarketConditions } from '@/types/market'
+import { useDate } from '@/contexts/DateContext'
 import ScoreGauge from '@/components/market/ScoreGauge'
 import FactorGrid from '@/components/market/FactorGrid'
 import IndexCard from '@/components/market/IndexCard'
 import BreadthPanel from '@/components/market/BreadthPanel'
 
 export default function Page() {
+  const { selectedDate, isLatest } = useDate()
   const [market, setMarket] = useState<MarketConditions | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
+    if (!selectedDate) return
     setLoading(true)
-    const { data } = await supabase
-      .from('market_conditions')
-      .select('*')
-      .order('date', { ascending: false })
-      .limit(1)
-      .single()
+
+    let query = supabase.from('market_conditions').select('*')
+
+    if (isLatest) {
+      query = query.order('date', { ascending: false }).limit(1)
+    } else {
+      query = query.eq('date', selectedDate).limit(1)
+    }
+
+    const { data } = await query.single()
     setMarket(data)
     setLoading(false)
-  }, [])
+  }, [selectedDate, isLatest])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -43,9 +50,9 @@ export default function Page() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          {market?.date && (
+          {(market?.date || selectedDate) && (
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Updated: {market.date}
+              {isLatest ? 'Updated' : 'Snapshot'}: {market?.date ?? selectedDate}
             </span>
           )}
           <button
@@ -72,6 +79,13 @@ export default function Page() {
         </div>
       </header>
 
+      {/* 過去日バナー */}
+      {!isLatest && selectedDate && (
+        <div className="mb-6 px-4 py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-sm font-medium">
+          {selectedDate} のスナップショットを表示中
+        </div>
+      )}
+
       {/* ローディング */}
       {loading && !market && (
         <div className="card p-8 text-center" style={{ color: 'var(--text-muted)' }}>
@@ -83,7 +97,11 @@ export default function Page() {
       {!loading && !market && (
         <div className="card p-8 text-center" style={{ color: 'var(--text-muted)' }}>
           <p className="text-lg font-medium mb-2">データが見つかりません</p>
-          <p className="text-sm">Supabase の market_conditions テーブルにデータを挿入してください。</p>
+          <p className="text-sm">
+            {isLatest
+              ? 'Supabase の market_conditions テーブルにデータを挿入してください。'
+              : `${selectedDate} のマーケットデータはありません。`}
+          </p>
         </div>
       )}
 

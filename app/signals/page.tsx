@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DailySignal } from '@/types/signals'
+import { useDate } from '@/contexts/DateContext'
 import SignalsHeader from '@/components/signals/SignalsHeader'
 import SignalsFilter from '@/components/signals/SignalsFilter'
 
@@ -17,6 +18,7 @@ const COLUMNS = `
 `
 
 export default function SignalsPage() {
+  const { selectedDate, isLatest } = useDate()
   const [signals, setSignals] = useState<DailySignal[]>([])
   const [market, setMarket] = useState<{
     date: string
@@ -29,36 +31,33 @@ export default function SignalsPage() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
+    if (!selectedDate) return
     setLoading(true)
 
     const { data } = await supabase
       .from('daily_signals')
       .select(COLUMNS)
-      .order('date', { ascending: false })
+      .eq('date', selectedDate)
       .order('hit_count', { ascending: false })
-      .limit(100)
 
     const rawSignals = (data ?? []) as DailySignal[]
 
-    const { data: marketData } = await supabase
+    // market_conditions: selectedDate に一致、なければ最新
+    let marketQuery = supabase
       .from('market_conditions')
       .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count')
-      .order('date', { ascending: false })
-      .limit(1)
-      .single()
 
-    // 最新日付のシグナルのみに絞る
-    const latestDate = rawSignals.length > 0
-      ? rawSignals.reduce((max, s) => (s.date > max ? s.date : max), rawSignals[0].date)
-      : null
-    const filtered = latestDate
-      ? rawSignals.filter(s => s.date === latestDate)
-      : rawSignals
+    if (isLatest) {
+      marketQuery = marketQuery.order('date', { ascending: false }).limit(1)
+    } else {
+      marketQuery = marketQuery.eq('date', selectedDate).limit(1)
+    }
+    const { data: marketData } = await marketQuery.single()
 
-    setSignals(filtered)
+    setSignals(rawSignals)
     setMarket(marketData)
     setLoading(false)
-  }, [])
+  }, [selectedDate, isLatest])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -79,9 +78,9 @@ export default function SignalsPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          {market?.date && (
+          {selectedDate && (
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Updated: {market.date}
+              {isLatest ? 'Updated' : 'Snapshot'}: {selectedDate}
             </span>
           )}
           <button
@@ -107,6 +106,13 @@ export default function SignalsPage() {
           </button>
         </div>
       </header>
+
+      {/* 過去日バナー */}
+      {!isLatest && selectedDate && (
+        <div className="mb-4 px-4 py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-sm font-medium">
+          {selectedDate} のスナップショットを表示中
+        </div>
+      )}
 
       {/* マーケット状況バッジ */}
       <SignalsHeader
@@ -134,7 +140,11 @@ export default function SignalsPage() {
           style={{ color: 'var(--text-muted)' }}
         >
           <p className="text-lg font-medium mb-2">シグナルが見つかりません</p>
-          <p className="text-sm">Supabase の daily_signals テーブルにデータを挿入してください。</p>
+          <p className="text-sm">
+            {isLatest
+              ? 'Supabase の daily_signals テーブルにデータを挿入してください。'
+              : `${selectedDate} のデータはありません。`}
+          </p>
         </div>
       ) : !loading && (
         <SignalsFilter

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DailyLeader } from '@/types/leaders'
+import { useDate } from '@/contexts/DateContext'
 import LeadersTable from '@/components/leaders/LeadersTable'
 
 const COLUMNS = `
@@ -13,20 +14,19 @@ const COLUMNS = `
 `
 
 export default function LeadersPage() {
+  const { selectedDate, isLatest } = useDate()
   const [leaders, setLeaders] = useState<DailyLeader[]>([])
   const [loading, setLoading] = useState(true)
-  const [latestDate, setLatestDate] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
+    if (!selectedDate) return
     setLoading(true)
 
-    // 最新日のリーダーを取得
     const { data, error } = await supabase
       .from('daily_leaders')
       .select(COLUMNS)
-      .order('date', { ascending: false })
+      .eq('date', selectedDate)
       .order('rs_composite', { ascending: false })
-      .limit(500)
 
     if (error) {
       console.error('daily_leaders fetch error:', error)
@@ -35,18 +35,9 @@ export default function LeadersPage() {
       return
     }
 
-    const raw = (data ?? []) as DailyLeader[]
-
-    // 最新日に絞る
-    const maxDate = raw.length > 0
-      ? raw.reduce((max, r) => (r.date > max ? r.date : max), raw[0].date)
-      : null
-    const filtered = maxDate ? raw.filter(r => r.date === maxDate) : raw
-
-    setLatestDate(maxDate)
-    setLeaders(filtered)
+    setLeaders((data ?? []) as DailyLeader[])
     setLoading(false)
-  }, [])
+  }, [selectedDate])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -67,9 +58,9 @@ export default function LeadersPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          {latestDate && (
+          {selectedDate && (
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {latestDate}
+              {isLatest ? '' : 'Snapshot: '}{selectedDate}
             </span>
           )}
           <button
@@ -96,6 +87,13 @@ export default function LeadersPage() {
         </div>
       </header>
 
+      {/* 過去日バナー */}
+      {!isLatest && selectedDate && (
+        <div className="mb-4 px-4 py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-800 text-sm font-medium">
+          {selectedDate} のスナップショットを表示中
+        </div>
+      )}
+
       {/* ローディング */}
       {loading && leaders.length === 0 && (
         <div
@@ -113,7 +111,11 @@ export default function LeadersPage() {
           style={{ color: 'var(--text-muted)' }}
         >
           <p className="text-lg font-medium mb-2">データがありません</p>
-          <p className="text-sm">daily_leaders テーブルにデータが挿入されるまでお待ちください。</p>
+          <p className="text-sm">
+            {isLatest
+              ? 'daily_leaders テーブルにデータが挿入されるまでお待ちください。'
+              : `${selectedDate} のデータはありません。`}
+          </p>
         </div>
       ) : !loading && (
         <LeadersTable leaders={leaders} />
