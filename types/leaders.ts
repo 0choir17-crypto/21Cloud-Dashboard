@@ -11,4 +11,5 @@ export type DailyLeader = {
   dist_ema21_r: number | null
   dist_wma10_r: number | null
   dist_sma50_r: number | null
+  turnover_50d: number | null
 }

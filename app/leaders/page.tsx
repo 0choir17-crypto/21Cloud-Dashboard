@@ -10,7 +10,8 @@ const COLUMNS = `
   date, code, name, sector,
   rs_composite, daily_pct, adr_pct,
   weekly_pct, monthly_pct,
-  dist_ema21_r, dist_wma10_r, dist_sma50_r
+  dist_ema21_r, dist_wma10_r, dist_sma50_r,
+  turnover_50d
 `
 
 export default function LeadersPage() {

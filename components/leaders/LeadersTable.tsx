@@ -18,6 +18,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   dist_ema21_r:  '21日EMAまでのATR正規化距離（R倍率）',
   dist_wma10_r:  '週足10WMAまでのATR正規化距離（R倍率）',
   dist_sma50_r:  '50日SMAまでのATR正規化距離（R倍率）',
+  turnover_50d:  '50日平均売買代金（億円）',
 }
 
 // ── Helpers (Signals と同じスタイル) ──────────────────────────────────────────
@@ -162,6 +163,7 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
               <SortTh label="EMA21(R)"   sortKey="dist_ema21_r" tooltip={COLUMN_TOOLTIPS.dist_ema21_r} {...sp} />
               <SortTh label="10WMA(R)"   sortKey="dist_wma10_r" tooltip={COLUMN_TOOLTIPS.dist_wma10_r} {...sp} />
               <SortTh label="50SMA(R)"   sortKey="dist_sma50_r" tooltip={COLUMN_TOOLTIPS.dist_sma50_r} {...sp} />
+              <SortTh label="売買代金"   sortKey="turnover_50d" tooltip={COLUMN_TOOLTIPS.turnover_50d} {...sp} />
             </tr>
           </thead>
           <tbody>
@@ -211,6 +213,10 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><AtrDistCell value={row.dist_wma10_r} /></td>
                 {/* 50SMA(R) */}
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><AtrDistCell value={row.dist_sma50_r} /></td>
+                {/* 売買代金50d */}
+                <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">
+                  {row.turnover_50d != null ? `${row.turnover_50d.toFixed(1)}億` : '—'}
+                </td>
               </tr>
             ))}
           </tbody>
