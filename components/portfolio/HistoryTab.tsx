@@ -1,9 +1,9 @@
 'use client'
 
-import { TradeHistory } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
 
 type Props = {
-  history: TradeHistory[]
+  history: Trade[]
 }
 
 function fmt(v: number | null | undefined, d = 0): string {
@@ -53,21 +53,21 @@ function holdDays(entry: string | null, exit: string | null): number | null {
 
 export default function HistoryTab({ history }: Props) {
   // Statistics
-  const trades = history.filter(h => h.realized_pnl != null)
+  const trades = history.filter(h => h.pnl != null)
   const wins = trades.filter(h => (h.r_multiple ?? 0) >= 0)
   const losses = trades.filter(h => (h.r_multiple ?? 0) < 0)
   const winRate = trades.length > 0 ? (wins.length / trades.length * 100) : null
-  const totalPnl = trades.reduce((sum, h) => sum + (h.realized_pnl ?? 0), 0)
+  const totalPnl = trades.reduce((sum, h) => sum + (h.pnl ?? 0), 0)
   const avgR = trades.length > 0
     ? trades.reduce((sum, h) => sum + (h.r_multiple ?? 0), 0) / trades.length
     : null
-  const grossWin = wins.reduce((sum, h) => sum + (h.realized_pnl ?? 0), 0)
-  const grossLoss = Math.abs(losses.reduce((sum, h) => sum + (h.realized_pnl ?? 0), 0))
+  const grossWin = wins.reduce((sum, h) => sum + (h.pnl ?? 0), 0)
+  const grossLoss = Math.abs(losses.reduce((sum, h) => sum + (h.pnl ?? 0), 0))
   const profitFactor = grossLoss > 0 ? grossWin / grossLoss : null
   const holdDaysAll = trades.map(h => holdDays(h.entry_date, h.exit_date)).filter((d): d is number => d != null)
   const avgHoldDays = holdDaysAll.length > 0 ? holdDaysAll.reduce((a, b) => a + b, 0) / holdDaysAll.length : null
-  const maxWin = wins.length > 0 ? Math.max(...wins.map(h => h.realized_pnl ?? 0)) : null
-  const maxLoss = losses.length > 0 ? Math.min(...losses.map(h => h.realized_pnl ?? 0)) : null
+  const maxWin = wins.length > 0 ? Math.max(...wins.map(h => h.pnl ?? 0)) : null
+  const maxLoss = losses.length > 0 ? Math.min(...losses.map(h => h.pnl ?? 0)) : null
 
   return (
     <div>
@@ -127,7 +127,7 @@ export default function HistoryTab({ history }: Props) {
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{h.entry_price != null ? `¥${fmt(h.entry_price)}` : '—'}</td>
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{h.exit_price != null ? `¥${fmt(h.exit_price)}` : '—'}</td>
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(h.shares)}</td>
-                <td className="px-3 py-2.5 text-right whitespace-nowrap"><PnlCell value={h.realized_pnl} /></td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap"><PnlCell value={h.pnl} /></td>
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><RCell value={h.r_multiple} /></td>
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><ExitBadge reason={h.exit_reason} /></td>
                 <td className="px-3 py-2.5 text-xs text-gray-500 max-w-[120px]">
@@ -165,7 +165,7 @@ export default function HistoryTab({ history }: Props) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-400">損益</span>
-              <PnlCell value={h.realized_pnl} />
+              <PnlCell value={h.pnl} />
             </div>
           </div>
         ))}

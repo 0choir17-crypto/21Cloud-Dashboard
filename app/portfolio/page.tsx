@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Position, TradeHistory, RiskSettings } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
+import { RiskSettings } from '@/types/portfolio'
 import PositionsTab from '@/components/portfolio/PositionsTab'
 import PlansTab from '@/components/portfolio/PlansTab'
 import HistoryTab from '@/components/portfolio/HistoryTab'
@@ -19,23 +20,17 @@ const TABS: { key: Tab; label: string }[] = [
 
 export default function PortfolioPage() {
   const [activeTab, setActiveTab] = useState<Tab>('positions')
-  const [positions, setPositions] = useState<Position[]>([])
-  const [history, setHistory] = useState<TradeHistory[]>([])
+  const [trades, setTrades] = useState<Trade[]>([])
   const [riskSettings, setRiskSettings] = useState<RiskSettings | null>(null)
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [posRes, histRes, riskRes] = await Promise.all([
+    const [tradesRes, riskRes] = await Promise.all([
       supabase
-        .from('positions')
+        .from('trades')
         .select('*')
-        .in('status', ['open', 'plan'])
         .order('entry_date', { ascending: false }),
-      supabase
-        .from('trade_history')
-        .select('*')
-        .order('exit_date', { ascending: false }),
       supabase
         .from('risk_settings')
         .select('*')
@@ -43,16 +38,16 @@ export default function PortfolioPage() {
         .maybeSingle(),
     ])
 
-    setPositions((posRes.data ?? []) as Position[])
-    setHistory((histRes.data ?? []) as TradeHistory[])
+    setTrades((tradesRes.data ?? []) as Trade[])
     setRiskSettings((riskRes.data ?? null) as RiskSettings | null)
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  const openPositions = positions.filter(p => p.status === 'open')
-  const plans = positions.filter(p => p.status === 'plan')
+  const openPositions = trades.filter(t => t.status === 'open')
+  const plans = trades.filter(t => t.status === 'plan')
+  const history = trades.filter(t => t.status === 'closed')
 
   return (
     <main className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>

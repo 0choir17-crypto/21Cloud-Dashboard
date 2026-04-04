@@ -182,7 +182,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
       const { data } = await supabase
         .from('trades')
         .select('ticker')
-        .eq('status', 'OPEN')
+        .eq('status', 'open')
       if (data) {
         setOpenTickers(new Set(data.map(d => d.ticker)))
       }

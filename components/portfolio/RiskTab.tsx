@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { RiskSettings, TradeHistory } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
+import { RiskSettings } from '@/types/portfolio'
 
 type Props = {
   riskSettings: RiskSettings | null
-  history: TradeHistory[]
+  history: Trade[]
   onRefresh: () => void
 }
 
@@ -45,8 +46,8 @@ export default function RiskTab({ riskSettings, history, onRefresh }: Props) {
   const now = new Date()
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const monthlyPnl = history
-    .filter(h => h.exit_date?.startsWith(thisMonth) && h.realized_pnl != null)
-    .reduce((sum, h) => sum + (h.realized_pnl ?? 0), 0)
+    .filter(h => h.exit_date?.startsWith(thisMonth) && h.pnl != null)
+    .reduce((sum, h) => sum + (h.pnl ?? 0), 0)
   const monthlyPnlHasData = history.some(h => h.exit_date?.startsWith(thisMonth))
 
   // Derived values

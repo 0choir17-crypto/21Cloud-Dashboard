@@ -22,6 +22,7 @@ export type WatchlistItem = {
   updated_at: string
 }
 
+/** @deprecated — trades テーブルに統合済み。Trade型を使用すること */
 export type Position = {
   id: string
   ticker: string
@@ -41,6 +42,7 @@ export type Position = {
   updated_at: string
 }
 
+/** @deprecated — trades テーブルに統合済み。Trade型を使用すること */
 export type TradeHistory = {
   id: string
   ticker: string

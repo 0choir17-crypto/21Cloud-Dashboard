@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Position } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
 import Modal from '@/components/shared/Modal'
 
 type Props = {
   open: boolean
   onClose: () => void
   onSaved: () => void
-  initial?: Partial<Position>
+  initial?: Partial<Trade>
   defaultStatus?: 'open' | 'plan'
 }
 
@@ -90,8 +90,8 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
     }
 
     const { error: err } = isEdit
-      ? await supabase.from('positions').update(record).eq('id', initial!.id!)
-      : await supabase.from('positions').insert(record)
+      ? await supabase.from('trades').update(record).eq('id', initial!.id!)
+      : await supabase.from('trades').insert(record)
 
     setSaving(false)
     if (err) { setError(err.message); return }

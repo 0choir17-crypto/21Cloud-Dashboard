@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Position, RiskSettings } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
+import { RiskSettings } from '@/types/portfolio'
 import PositionModal from './PositionModal'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 type Props = {
-  plans: Position[]
+  plans: Trade[]
   riskSettings: RiskSettings | null
   onRefresh: () => void
 }
@@ -27,8 +28,8 @@ function JudgmentBadge({ shares }: { shares: number }) {
 }
 
 export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
-  const [editPlan, setEditPlan] = useState<Position | null>(null)
-  const [deletePlan, setDeletePlan] = useState<Position | null>(null)
+  const [editPlan, setEditPlan] = useState<Trade | null>(null)
+  const [deletePlan, setDeletePlan] = useState<Trade | null>(null)
 
   const accountCapital = riskSettings?.account_capital ?? 0
   const basePct = riskSettings?.risk_pct ?? 0
@@ -38,13 +39,13 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
 
   async function handleDelete() {
     if (!deletePlan) return
-    await supabase.from('positions').delete().eq('id', deletePlan.id)
+    await supabase.from('trades').delete().eq('id', deletePlan.id)
     setDeletePlan(null)
     onRefresh()
   }
 
   // Convert plan to open position (promote)
-  async function handlePromote(plan: Position) {
+  async function handlePromote(plan: Trade) {
     await supabase
       .from('positions')
       .update({ status: 'open', updated_at: new Date().toISOString() })
@@ -68,7 +69,7 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
       <div className="flex justify-between items-center mb-4">
         <span className="text-sm text-gray-500">{plans.length} 件</span>
         <button
-          onClick={() => setEditPlan({ id: '', ticker: '', company_name: null, sector: null, entry_date: '', entry_price: 0, shares: 0, cost_basis: null, stop_price: null, stop_21l: null, init_risk_pct: null, target_r: null, memo: null, status: 'plan', created_at: '', updated_at: '' })}
+          onClick={() => setEditPlan({ status: 'plan' } as Trade)}
           className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors min-h-[36px]"
         >
           + 計画追加

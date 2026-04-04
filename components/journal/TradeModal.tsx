@@ -122,7 +122,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       mc_score: mcScore,
       mc_regime: mcRegime ? (regimeMap[mcRegime] ?? mcRegime) : null,
       memo: memo.trim() || null,
-      status: 'OPEN',
+      status: 'open',
       // シグナルスナップショット（Signalsページから渡された場合のみ値が入る）
       sector: initial?.sector ?? null,
       signal_price: initial?.signal_price ?? null,

@@ -18,13 +18,17 @@ const today = () => new Date().toISOString().slice(0, 10)
 export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props) {
   const [exitDate, setExitDate] = useState(today())
   const [exitPrice, setExitPrice] = useState('')
+  const [exitReason, setExitReason] = useState('利確')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const EXIT_REASONS = ['利確', '損切', 'トレール損切', '目標達成', 'その他']
 
   useEffect(() => {
     if (open) {
       setExitDate(today())
       setExitPrice('')
+      setExitReason('利確')
       setError('')
     }
   }, [open])
@@ -51,6 +55,12 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
     const pnlPct = ((ep - trade.entry_price) / trade.entry_price) * 100
     const result = pnl > 0 ? 'WIN' : 'LOSS'
 
+    // R倍率計算（stop_priceがある場合）
+    const rMult =
+      trade.stop_price != null && trade.entry_price !== trade.stop_price
+        ? (ep - trade.entry_price) / (trade.entry_price - trade.stop_price)
+        : null
+
     const { error: err } = await supabase
       .from('trades')
       .update({
@@ -59,13 +69,35 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
         pnl,
         pnl_pct: pnlPct,
         result,
-        status: 'CLOSED',
+        r_multiple: rMult,
+        exit_reason: exitReason,
+        status: 'closed',
         updated_at: new Date().toISOString(),
       })
       .eq('id', trade.id)
 
+    if (err) { setSaving(false); setError(err.message); return }
+
+    // consec_losses 更新
+    const { data: riskData } = await supabase
+      .from('risk_settings')
+      .select('id, consec_losses')
+      .limit(1)
+      .maybeSingle()
+
+    const prevLosses = riskData?.consec_losses ?? 0
+    const newLosses = (rMult != null && rMult < 0) || (rMult == null && pnl < 0) ? prevLosses + 1 : 0
+
+    if (riskData?.id) {
+      await supabase
+        .from('risk_settings')
+        .update({ consec_losses: newLosses, updated_at: new Date().toISOString() })
+        .eq('id', riskData.id)
+    } else {
+      await supabase.from('risk_settings').insert({ consec_losses: newLosses })
+    }
+
     setSaving(false)
-    if (err) { setError(err.message); return }
     onSaved()
     onClose()
   }
@@ -120,6 +152,20 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
               placeholder="例: 4100"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* Exit Reason */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Exit理由</label>
+            <select
+              value={exitReason}
+              onChange={e => setExitReason(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              {EXIT_REASONS.map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
           </div>
         </div>
 

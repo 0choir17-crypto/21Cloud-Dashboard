@@ -14,13 +14,16 @@ export interface Trade {
   mc_score: number | null
   mc_regime: string | null
   memo: string | null
-  status: 'OPEN' | 'CLOSED'
+  status: 'plan' | 'open' | 'closed'
   created_at: string
   updated_at: string
 
-  // Portfolio統合用（Step C準備）
+  // Portfolio統合用
   sector: string | null
   stop_price: number | null
+  stop_21l: number | null
+  cost_basis: number | null
+  init_risk_pct: number | null
   target_r: number | null
   exit_reason: string | null
   r_multiple: number | null

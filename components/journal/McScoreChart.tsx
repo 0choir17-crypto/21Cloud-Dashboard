@@ -30,7 +30,7 @@ function getBarColor(wr: number): string {
 
 export default function McScoreChart({ trades }: Props) {
   const closed = useMemo(
-    () => trades.filter(t => t.status === 'CLOSED'),
+    () => trades.filter(t => t.status === 'closed'),
     [trades]
   )
 

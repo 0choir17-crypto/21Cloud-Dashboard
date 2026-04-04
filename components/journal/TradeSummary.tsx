@@ -17,8 +17,8 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 export default function TradeSummary({ trades }: Props) {
-  const closed = trades.filter(t => t.status === 'CLOSED')
-  const open = trades.filter(t => t.status === 'OPEN')
+  const closed = trades.filter(t => t.status === 'closed')
+  const open = trades.filter(t => t.status === 'open')
 
   if (closed.length === 0 && open.length === 0) return null
 

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Position } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
 import PositionModal from './PositionModal'
 import CloseModal from './CloseModal'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 type Props = {
-  positions: Position[]
+  positions: Trade[]
+
   onRefresh: () => void
 }
 
@@ -60,24 +61,24 @@ async function fetchCurrentPrices(tickers: string[]): Promise<Record<string, num
   }
 }
 
-export default function PositionsTab({ positions, onRefresh }: Props) {
-  const openPositions = positions.filter(p => p.status === 'open')
+export default function TradesTab({ positions, onRefresh }: Props) {
+  const openTrades = positions.filter(p => p.status === 'open')
   const [prices, setPrices] = useState<Record<string, number | null>>({})
-  const [editPos, setEditPos] = useState<Position | null>(null)
-  const [closePos, setClosePos] = useState<Position | null>(null)
-  const [deletePos, setDeletePos] = useState<Position | null>(null)
+  const [editPos, setEditPos] = useState<Trade | null>(null)
+  const [closePos, setClosePos] = useState<Trade | null>(null)
+  const [deletePos, setDeletePos] = useState<Trade | null>(null)
 
   const loadPrices = useCallback(async () => {
-    const tickers = [...new Set(openPositions.map(p => p.ticker))]
+    const tickers = [...new Set(openTrades.map(p => p.ticker))]
     const map = await fetchCurrentPrices(tickers)
     setPrices(map)
-  }, [openPositions.map(p => p.ticker).join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [openTrades.map(p => p.ticker).join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadPrices() }, [loadPrices])
 
   async function handleDelete() {
     if (!deletePos) return
-    await supabase.from('positions').delete().eq('id', deletePos.id)
+    await supabase.from('trades').delete().eq('id', deletePos.id)
     setDeletePos(null)
     onRefresh()
   }
@@ -85,9 +86,9 @@ export default function PositionsTab({ positions, onRefresh }: Props) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <span className="text-sm text-gray-500">{openPositions.length} ポジション</span>
+        <span className="text-sm text-gray-500">{openTrades.length} ポジション</span>
         <button
-          onClick={() => setEditPos({ id: '', ticker: '', company_name: null, sector: null, entry_date: '', entry_price: 0, shares: 0, cost_basis: null, stop_price: null, stop_21l: null, init_risk_pct: null, target_r: null, memo: null, status: 'open', created_at: '', updated_at: '' })}
+          onClick={() => setEditPos({} as Trade)}
           className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors min-h-[36px]"
         >
           + ポジション追加
@@ -107,7 +108,7 @@ export default function PositionsTab({ positions, onRefresh }: Props) {
             </tr>
           </thead>
           <tbody>
-            {openPositions.map((pos, i) => {
+            {openTrades.map((pos, i) => {
               const curPrice = prices[pos.ticker] ?? null
               const unrealizedPnl = curPrice != null ? (curPrice - pos.entry_price) * pos.shares : null
               const unrealizedPct = curPrice != null ? (curPrice - pos.entry_price) / pos.entry_price * 100 : null
@@ -161,17 +162,17 @@ export default function PositionsTab({ positions, onRefresh }: Props) {
             })}
           </tbody>
         </table>
-        {openPositions.length === 0 && (
+        {openTrades.length === 0 && (
           <div className="py-10 text-center text-gray-400 text-sm">保有ポジションはありません</div>
         )}
       </div>
 
       {/* Mobile cards */}
       <div className="block sm:hidden space-y-3">
-        {openPositions.length === 0 && (
+        {openTrades.length === 0 && (
           <p className="text-center text-gray-400 text-sm py-8">保有ポジションはありません</p>
         )}
-        {openPositions.map(pos => {
+        {openTrades.map(pos => {
           const curPrice = prices[pos.ticker] ?? null
           const unrealizedPnl = curPrice != null ? (curPrice - pos.entry_price) * pos.shares : null
           const unrealizedPct = curPrice != null ? (curPrice - pos.entry_price) / pos.entry_price * 100 : null

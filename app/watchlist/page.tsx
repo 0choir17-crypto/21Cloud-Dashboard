@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { WatchlistItem } from '@/types/portfolio'
-import { Position } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
 import WatchlistModal from '@/components/watchlist/WatchlistModal'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import PositionModal from '@/components/portfolio/PositionModal'
@@ -68,13 +68,23 @@ export default function WatchlistPage() {
   }
 
   // Build prefill for PositionModal from watchlist item
-  const promotePrefill: Partial<Position> | undefined = promoteItem ? {
+  const promotePrefill: Partial<Trade> | undefined = promoteItem ? {
     ticker: promoteItem.ticker,
     company_name: promoteItem.company_name,
     entry_price: promoteItem.entry_price ?? 0,
     stop_price: promoteItem.stop_price,
     target_r: promoteItem.target_r,
     memo: promoteItem.memo,
+    // シグナルスナップショット引き継ぎ
+    sector: promoteItem.sector_name,
+    signal_price: promoteItem.signal_price,
+    rs_at_entry: promoteItem.rs_composite,
+    rvol_at_entry: promoteItem.rvol,
+    adr_at_entry: promoteItem.adr_pct,
+    dist_ema21_at_entry: promoteItem.dist_ema21_r,
+    stop_pct_at_entry: promoteItem.stop_pct,
+    mc_met_at_entry: promoteItem.mc_met,
+    mc_condition_at_entry: promoteItem.mc_condition,
   } : undefined
 
   const thClass = (key: SortKey) =>

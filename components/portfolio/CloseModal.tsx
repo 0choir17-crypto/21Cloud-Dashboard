@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Position } from '@/types/portfolio'
+import { Trade } from '@/types/trades'
 import Modal from '@/components/shared/Modal'
 
 type Props = {
   open: boolean
   onClose: () => void
   onSaved: () => void
-  position: Position | null
+  position: Trade | null
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -56,30 +56,26 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
         ? (ep2 - position.entry_price) / (position.entry_price - position.stop_price)
         : null
 
-    // 1. Insert trade_history
-    const { error: histErr } = await supabase.from('trade_history').insert({
-      ticker: position.ticker,
-      company_name: position.company_name,
-      entry_date: position.entry_date,
-      exit_date: exitDate,
-      entry_price: position.entry_price,
-      exit_price: ep2,
-      shares: position.shares,
-      stop_price: position.stop_price,
-      target_r: position.target_r,
-      realized_pnl: pnl,
-      r_multiple: rMult,
-      exit_reason: exitReason,
-      memo: position.memo,
-    })
-    if (histErr) { setSaving(false); setError(histErr.message); return }
+    // trades テーブルを直接 update
+    const pnlPct = position.entry_price > 0
+      ? ((ep2 - position.entry_price) / position.entry_price) * 100
+      : null
 
-    // 2. Update position status to closed
-    const { error: posErr } = await supabase
-      .from('positions')
-      .update({ status: 'closed', updated_at: new Date().toISOString() })
+    const { error: updateErr } = await supabase
+      .from('trades')
+      .update({
+        exit_date: exitDate,
+        exit_price: ep2,
+        pnl: pnl,
+        pnl_pct: pnlPct,
+        r_multiple: rMult,
+        exit_reason: exitReason,
+        result: pnl >= 0 ? 'WIN' : 'LOSS',
+        status: 'closed',
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', position.id)
-    if (posErr) { setSaving(false); setError(posErr.message); return }
+    if (updateErr) { setSaving(false); setError(updateErr.message); return }
 
     // 3. Update consec_losses in risk_settings
     const { data: riskData } = await supabase

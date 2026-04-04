@@ -35,9 +35,9 @@ function McBadge({ score, regime }: { score: number | null; regime: string | nul
 }
 
 export default function TradeList({ trades, onClose }: Props) {
-  const openTrades = trades.filter(t => t.status === 'OPEN')
+  const openTrades = trades.filter(t => t.status === 'open')
   const closedTrades = trades
-    .filter(t => t.status === 'CLOSED')
+    .filter(t => t.status === 'closed')
     .sort((a, b) => (b.exit_date ?? '').localeCompare(a.exit_date ?? ''))
 
   return (
