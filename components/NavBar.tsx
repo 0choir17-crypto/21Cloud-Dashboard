@@ -60,12 +60,12 @@ export default function NavBar() {
       <span className="text-gray-300 select-none flex-shrink-0">|</span>
       <Link href="/" className={linkClass('/')}>Market</Link>
       <Link href="/sectors" className={linkClass('/sectors')}>Sectors</Link>
-      <Link href="/signals" className={linkClass('/signals')}>Signals</Link>
       <Link href="/leaders" className={linkClass('/leaders')}>Leaders</Link>
-      <Link href="/guide" className={linkClass('/guide')}>Guide</Link>
+      <Link href="/signals" className={linkClass('/signals')}>Signals</Link>
       <Link href="/watchlist" className={linkClass('/watchlist')}>Watchlist</Link>
-      <Link href="/journal" className={linkClass('/journal')}>Journal</Link>
       <Link href="/portfolio" className={linkClass('/portfolio')}>Portfolio</Link>
+      <Link href="/journal" className={linkClass('/journal')}>Journal</Link>
+      <Link href="/guide" className={linkClass('/guide')}>Guide</Link>
     </nav>
   )
 }
