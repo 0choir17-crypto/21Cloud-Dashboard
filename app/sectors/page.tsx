@@ -33,7 +33,7 @@ export default function SectorsPage() {
       .from('sector_index_prices')
       .select(SECTOR_SELECT_WITH_RS)
       .order('date', { ascending: false })
-      .limit(200)
+      .limit(17 * 25)
 
     let rawData: any[] | null = rawFull
 
@@ -42,7 +42,7 @@ export default function SectorsPage() {
         .from('sector_index_prices')
         .select(SECTOR_SELECT_BASE)
         .order('date', { ascending: false })
-        .limit(200)
+        .limit(17 * 25)
       rawData = rawBase
     }
 
@@ -66,13 +66,17 @@ export default function SectorsPage() {
       rs_1d: number
     }[]
 
-    // ── RRG用: 各セクターの日付ユニーク数が20以上あるか確認 ────────────────
+    // ── RRG用: 日付ユニーク数が20以上 OR 最新日にRRG表示値が存在すればOK ──
     const sectorDays: Record<string, Set<string>> = {}
     for (const s of sectors) {
       if (!sectorDays[s.sector_name]) sectorDays[s.sector_name] = new Set()
       sectorDays[s.sector_name].add(s.date)
     }
-    const rrgReady = latestSectors.every(s => (sectorDays[s.sector_name]?.size ?? 0) >= 20)
+    const hasEnoughHistory = latestSectors.length > 0 &&
+      latestSectors.every(s => (sectorDays[s.sector_name]?.size ?? 0) >= 20)
+    const hasRRGValues = latestSectors.length > 0 &&
+      latestSectors.some(s => s.dist_sma50_pct != null && s.chg_5d_pct != null)
+    const rrgReady = hasEnoughHistory || hasRRGValues
 
     setLatest(latestSectors)
     setRsHistory(history)
