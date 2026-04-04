@@ -8,9 +8,16 @@ import { SectorData, Quadrant, getQuadrant, QUADRANT_CONFIG } from '@/types/sect
 
 type Props = { sectors: SectorData[] }
 
+type PointData = {
+  x: number
+  y: number
+  name: string
+  quadrant: Quadrant
+}
+
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
-  const d = payload[0]?.payload
+  const d = payload[0]?.payload as PointData | undefined
   return (
     <div className="bg-white border border-[#e8eaed] rounded-lg px-3 py-2 shadow-sm text-xs">
       <p className="font-medium text-gray-700 mb-1">{d?.name}</p>
@@ -20,7 +27,26 @@ function CustomTooltip({ active, payload }: any) {
   )
 }
 
-const QUADRANTS: Quadrant[] = ['leader', 'improving', 'weakening', 'lagging']
+/** セクター名ラベルを描画するカスタムシェイプ */
+function SectorLabel(props: any) {
+  const { cx, cy, payload } = props
+  if (cx == null || cy == null || !payload) return null
+  const d = payload as PointData
+  const color = QUADRANT_CONFIG[d.quadrant].color
+  return (
+    <text
+      x={cx}
+      y={cy}
+      textAnchor="middle"
+      dominantBaseline="central"
+      fill={color}
+      fontSize={11}
+      fontWeight={600}
+    >
+      {d.name}
+    </text>
+  )
+}
 
 export default function SectorRRG({ sectors }: Props) {
   if (sectors.length === 0) {
@@ -31,7 +57,7 @@ export default function SectorRRG({ sectors }: Props) {
     )
   }
 
-  const allData = sectors.map(s => ({
+  const allData: PointData[] = sectors.map(s => ({
     x: s.dist_sma50_pct ?? 0,
     y: s.chg_5d_pct     ?? 0,
     name: s.sector_name,
@@ -44,8 +70,8 @@ export default function SectorRRG({ sectors }: Props) {
         セクター RRG（X: SMA50乖離% / Y: 5D%）
       </p>
       <div className="relative">
-        <ResponsiveContainer width="100%" height={400}>
-          <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
+        <ResponsiveContainer width="100%" height={420}>
+          <ScatterChart margin={{ top: 20, right: 40, bottom: 30, left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f2f4" />
             <XAxis
               type="number"
@@ -66,18 +92,10 @@ export default function SectorRRG({ sectors }: Props) {
             <RechartsTooltip content={<CustomTooltip />} />
             <ReferenceLine x={0} stroke="#9ca3af" strokeDasharray="4 4" />
             <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
-            {QUADRANTS.map(q => {
-              const config = QUADRANT_CONFIG[q]
-              return (
-                <Scatter
-                  key={q}
-                  name={config.label}
-                  data={allData.filter(d => d.quadrant === q)}
-                  fill={config.color}
-                  opacity={0.85}
-                />
-              )
-            })}
+            <Scatter
+              data={allData}
+              shape={<SectorLabel />}
+            />
           </ScatterChart>
         </ResponsiveContainer>
         {/* 4象限ラベル */}
