@@ -7,9 +7,10 @@ type ScreenGuideEntry = {
   rank: number
   name: string
   dbName: string
-  type: 'bull' | 'bear' | 'both' | 'unknown'
+  type: 'always_on' | 'bull' | 'bear'
   kind: 'factor' | 'event'
   holdDays: number
+  mcCondition: string
   conditions: string
   role: string
   backtest: {
@@ -27,9 +28,10 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     rank: 1,
     name: 'Gap Up',
     dbName: 'EVT_SMA10_ADR_Gap3',
-    type: 'both',
+    type: 'always_on',
     kind: 'event',
     holdDays: 10,
+    mcCondition: 'Always-on',
     conditions: 'SMA10から-1.5R以下 & ADR≤3.5% & ギャップアップ≥3% & RS≥70',
     role: '移動平均線より下に沈んだ低ボラ銘柄が、材料で急騰した初動を捉える',
     backtest: {
@@ -42,9 +44,10 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     rank: 2,
     name: 'RS Dip',
     dbName: 'FCT_RS_Divergence',
-    type: 'both',
+    type: 'always_on',
     kind: 'factor',
     holdDays: 15,
+    mcCondition: 'Always-on',
     conditions: 'RS≥80 & SMA10から-3R以上急落',
     role: 'TOPIXに対して相対的に強い銘柄が、一時的に深く売られた後の反発を狙う',
     backtest: {
@@ -57,90 +60,96 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     rank: 3,
     name: '21EMA Pullback',
     dbName: 'FCT_EMA21_SMA10_CRS',
-    type: 'both',
+    type: 'always_on',
     kind: 'factor',
     holdDays: 15,
-    conditions: 'EMA21から-2R以下 & SMA10から-1.5R以下 & RS≥80 & 空売り比率≤5',
+    mcCondition: 'Always-on',
+    conditions: 'EMA21から-2R以下 & SMA10から-1.5R以下 & RS≥80 & 空売り比率≤5 & DuPont Leverage<2.0',
     role: '21日指数移動平均から深く調整した相対強度の高い銘柄を捕捉',
     backtest: {
       oos_pf: 33.06, oos_wr: 90.7, oos_n: 2729, spd: 2.2,
       wf: '5/5',
-      regime_note: 'v4: RS 70→80, ema21 -1.5→-2.0, dist10 -1.0→-1.5, hold 20→15d',
+      regime_note: 'v4: RS 70→80, ema21 -2.0, dist10 -1.5, hold 15d. dupont_leverage<2.0追加',
     },
   },
   {
     rank: 4,
     name: '10/50SMA Pullback',
     dbName: 'FCT_SMA10_SMA50_CRS',
-    type: 'both',
+    type: 'always_on',
     kind: 'factor',
     holdDays: 20,
-    conditions: 'SMA10から-1.5R以下 & SMA50から-1R以下 & RS≥80 & 空売り残変化≤0',
+    mcCondition: 'Always-on',
+    conditions: 'SMA10から-1.5R以下 & SMA50から-1R以下 & RS≥80 & 空売り残変化≤0 & DuPont Leverage<2.0',
     role: '短期・中期MAから同時調整。空売り残の減少がリバーサルシグナル',
     backtest: {
       oos_pf: 20.39, oos_wr: 86.0, oos_n: 3060, spd: 2.5,
       wf: '4/5',
-      regime_note: 'v4: RS 70→80, dist10 -1.0→-1.5, ADR撤廃, hold 40→20d',
+      regime_note: 'v4: RS 70→80, dist10 -1.5, ADR撤廃, hold 20d. dupont_leverage<2.0追加',
     },
   },
   {
     rank: 5,
     name: 'CWH',
     dbName: 'EVT_CWH_BPS_EPS',
-    type: 'both',
+    type: 'bull',
     kind: 'event',
     holdDays: 40,
-    conditions: 'カップ深さ-40〜-8% & 出来高収縮≤0.5 & 52W高値-10%以内 & BPS≥2240 & EPS≥95 & RS≥70',
+    mcCondition: 'v3≥17',
+    conditions: 'カップ深さ-40〜-8% & 出来高収縮≤0.5 & 52W高値-10%以内 & BPS≥2240 & EPS≥95 & RS≥70 & DuPont Leverage<2.0',
     role: 'クラシックなMinerviniパターン。出来高が収縮してエネルギーを蓄積した銘柄のブレイクアウト',
     backtest: {
       oos_pf: 4.42, oos_wr: 61.0, oos_n: 508, spd: 0.4,
       wf: '5/5',
-      regime_note: 'v4: RS追加≥70, vc 0.6→0.5',
+      regime_note: 'v4: RS≥70, vc 0.5. MC v3≥17で発動. dupont_leverage<2.0追加',
     },
   },
   {
     rank: 6,
     name: 'RVOL 2x',
     dbName: 'EVT_RVOL2x_BPS_EpsGr',
-    type: 'both',
+    type: 'bear',
     kind: 'event',
     holdDays: 15,
-    conditions: '出来高≥2倍 & BPS≥2240 & EPS成長≥25% & SMA10から0.5R以内 & RS≥70',
+    mcCondition: 'v3≤9',
+    conditions: '出来高≥2倍 & BPS≥2240 & EPS成長≥25% & SMA10から0.5R以内 & RS≥70 & DuPont Leverage<2.0',
     role: '割安かつ高成長のファンダメンタルを持つ銘柄に、異常出来高が発生した日を検出',
     backtest: {
       oos_pf: 4.23, oos_wr: 70.6, oos_n: 496, spd: 0.4,
       wf: '5/5',
-      regime_note: 'v4: RS追加≥70, dist10 1.0→0.5, hold 15d',
+      regime_note: 'v4: RS≥70, dist10 0.5, hold 15d. MC v3≤9で発動. dupont_leverage<2.0追加',
     },
   },
   {
     rank: 7,
     name: 'Value',
     dbName: 'FCT_ValueQuality_CRS',
-    type: 'both',
+    type: 'bull',
     kind: 'factor',
     holdDays: 40,
+    mcCondition: 'v3≥20',
     conditions: 'PBR≤0.5 & EPS≥100 & ADR≤3% & RS≥80',
     role: 'バリュー×クオリティの複合スクリーン。低PBRだが収益力がある銘柄',
     backtest: {
       oos_pf: 4.20, oos_wr: 67.5, oos_n: 17817, spd: 14.4,
       wf: '4/5',
-      regime_note: 'v4: RS 70→80, pbr 0.6→0.5, eps 150→100',
+      regime_note: 'v4: RS 80, pbr 0.5, eps 100. MC v3≥20で発動',
     },
   },
   {
     rank: 8,
     name: 'VCS Coil',
     dbName: 'FCT_RS_VCS_Coil',
-    type: 'both',
+    type: 'bull',
     kind: 'factor',
     holdDays: 40,
-    conditions: 'RS≥80 & VCS≥80 & ADR≤3%',
+    mcCondition: 'v3≥18',
+    conditions: 'RS≥80 & VCS≥80 & ADR≤3% & DuPont Leverage<2.0',
     role: 'ボラティリティが収縮した相対強度の高い銘柄。ブレイクアウト前のwatch候補',
     backtest: {
       oos_pf: 2.78, oos_wr: 58.1, oos_n: 8369, spd: 6.7,
       wf: '5/5',
-      regime_note: 'v4新規: 既存スクリーンと直交する新コンセプト',
+      regime_note: 'v4新規: 既存スクリーンと直交するコンセプト. MC v3≥18で発動. dupont_leverage<2.0追加',
     },
   },
   {
@@ -150,6 +159,7 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bear',
     kind: 'factor',
     holdDays: 30,
+    mcCondition: 'v3≤4',
     conditions: 'MC v3≤4 & RS≥70 & Low≤21EMA',
     role: 'Bear環境(MC v3≤4)で相対強度の高い銘柄を、21EMAへの押し目で拾うスクリーン',
     backtest: {
@@ -165,6 +175,7 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bear',
     kind: 'factor',
     holdDays: 20,
+    mcCondition: 'v3≤1',
     conditions: '配当利回り≥2% & 増配 & EPS成長≥30% & MC v3≤1',
     role: 'Extreme Bear環境(MC v3≤1)で配当利回り・増配・EPS成長の3条件を満たすディフェンシブ銘柄を検出',
     backtest: {
@@ -181,10 +192,9 @@ type SortDir = 'asc' | 'desc'
 
 // ── Type / Kind badge colors ─────────────────────────────────────────────────
 const TYPE_BADGE: Record<string, string> = {
-  bull:    'bg-green-100 text-green-700 border-green-300',
-  bear:    'bg-red-100 text-red-700 border-red-300',
-  both:    'bg-blue-100 text-blue-700 border-blue-300',
-  unknown: 'bg-gray-100 text-gray-500 border-gray-300',
+  always_on: 'bg-blue-100 text-blue-700 border-blue-300',
+  bull:      'bg-green-100 text-green-700 border-green-300',
+  bear:      'bg-red-100 text-red-700 border-red-300',
 }
 
 const KIND_BADGE: Record<string, string> = {
@@ -214,6 +224,9 @@ const GLOSSARY = [
   { term: 'Hit',      desc: '1\u9298\u67c4\u304c\u8907\u6570\u30b9\u30af\u30ea\u30fc\u30f3\u306b\u540c\u6642\u30d2\u30c3\u30c8\u3057\u305f\u56de\u6570\u3002\u591a\u3044\u307b\u3069\u78ba\u4fe1\u5ea6\u304c\u9ad8\u3044' },
   { term: 'Factor',   desc: '\u6bce\u65e5\u5168\u9298\u67c4\u3092\u30b9\u30ad\u30e3\u30f3\u3059\u308b\u30bf\u30a4\u30d7\u3002\u6761\u4ef6\u3092\u6e80\u305f\u3059\u9650\u308a\u6bce\u65e5\u30b7\u30b0\u30ca\u30eb\u304c\u51fa\u308b' },
   { term: 'Event',    desc: '\u7279\u5b9a\u306e\u30a4\u30d9\u30f3\u30c8\uff08\u30ae\u30e3\u30c3\u30d7\u30a2\u30c3\u30d7\u3001\u30d6\u30ec\u30a4\u30af\u30a2\u30a6\u30c8\u7b49\uff09\u304c\u767a\u751f\u3057\u305f\u65e5\u306e\u307f\u30b7\u30b0\u30ca\u30eb\u304c\u51fa\u308b' },
+  { term: 'MC v3',    desc: 'Market Condition v3\u300221\u8981\u7d20\u306e\u30b9\u30b3\u30a2\u30ab\u30fc\u30c9\u3067\u5e02\u5834\u74b0\u5883\u30920\u301c21\u70b9\u3067\u8a55\u4fa1\u3002\u9ad8\u3044=\u5f37\u6c17\u3001\u4f4e\u3044=\u5f31\u6c17' },
+  { term: 'DuPont Leverage', desc: '\u7dcf\u8cc7\u7523\u00f7\u81ea\u5df1\u8cc7\u672c\u3002\u8ca1\u52d9\u30ec\u30d0\u30ec\u30c3\u30b8\u306e\u6307\u6a19\u30022.0\u4ee5\u4e0a\u306f\u904e\u5270\u50b5\u52d9\u30ea\u30b9\u30af\u3068\u3057\u3066\u30d5\u30a3\u30eb\u30bf\u30fc' },
+  { term: 'Divergence', desc: '\u6307\u6570\u304c\u4e0a\u6607\u3057\u3066\u3044\u308b\u306e\u306bBreadth\u304c\u60aa\u5316\u3057\u3066\u3044\u308b\u72b6\u614b\u3002\u5929\u4e95\u306e\u8b66\u544a\u30b7\u30b0\u30ca\u30eb' },
 ]
 
 // ── Sortable header ───────────────────────────────────────────────────────────
@@ -298,7 +311,7 @@ export default function GuidePage() {
           Screen Guide
         </h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          screens_v4 — Factor 5 + Event 3 (RS re-optimized + 2 new screens)
+          screens_v4 + MC v3 — Always-on 4 + Bear 3 + Bull 3（10 screens）
         </p>
       </header>
 
@@ -315,6 +328,7 @@ export default function GuidePage() {
                 <GuideSortTh label="Screen"    sortKey="name"     {...sp} />
                 <GuideSortTh label="Type"      sortKey="type"     {...sp} />
                 <GuideSortTh label="Kind"      sortKey="kind"     {...sp} />
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">MC v3</th>
                 <GuideSortTh label="Hold"      sortKey="holdDays" {...sp} align="right" />
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Conditions</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Role</th>
@@ -334,12 +348,23 @@ export default function GuidePage() {
                   <td className="px-3 py-2.5 font-bold text-sm whitespace-nowrap">{s.name}</td>
                   <td className="px-3 py-2.5">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${TYPE_BADGE[s.type]}`}>
-                      {s.type}
+                      {s.type === 'always_on' ? 'Always' : s.type}
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${KIND_BADGE[s.kind]}`}>
                       {s.kind}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                      s.type === 'always_on'
+                        ? 'bg-blue-50 text-blue-600 border-blue-200'
+                        : s.type === 'bear'
+                        ? 'bg-red-50 text-red-600 border-red-200'
+                        : 'bg-green-50 text-green-600 border-green-200'
+                    }`}>
+                      {s.mcCondition}
                     </span>
                   </td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs">{s.holdDays}d</td>
@@ -359,17 +384,26 @@ export default function GuidePage() {
       {/* ── Market Condition ──────────────────────────────────────────────── */}
       <section className="mb-8">
         <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-          Market Condition
+          Market Condition (MC v3)
         </h2>
         <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
           <p className="text-sm text-gray-600 mb-3">
-            画面上部のバッジはマーケット全体の状態を示します。
+            画面上部のバッジはマーケット全体の状態を示します。MC v3 は21要素のスコアカードで市場環境を0〜21点で評価します。
           </p>
           <ul className="space-y-2 text-sm text-gray-700">
             <li><strong className="text-gray-900">Trend</strong> — TOPIXの位置関係（Bull / Neutral / Bear）</li>
-            <li><strong className="text-gray-900">Scorecard</strong> — 12ファクタースコアカード（0-12）。数値が高いほど強気環境</li>
+            <li><strong className="text-gray-900">Scorecard</strong> — MC v3 スコアカード（0-21）。数値が高いほど強気環境</li>
             <li><strong className="text-gray-900">Breadth</strong> — 値上がり銘柄比率の強度（Strong / Normal / Weak）</li>
+            <li><strong className="text-gray-900">Divergence</strong> — 指数↑ × Breadth↓ の天井警告フラグ</li>
           </ul>
+          <div className="mt-4 rounded-lg bg-gray-50 border border-[#e8eaed] p-4">
+            <p className="text-xs font-semibold text-gray-700 mb-2">スクリーン発動カテゴリ</p>
+            <ul className="space-y-1.5 text-xs text-gray-600">
+              <li><span className="inline-block w-16 font-semibold text-blue-600">Always-on</span>MC スコアに関係なく常に発動（4本）</li>
+              <li><span className="inline-block w-16 font-semibold text-red-600">Bear</span>MC スコアが閾値以下で発動 — 下落相場で有効（3本）</li>
+              <li><span className="inline-block w-16 font-semibold text-green-600">Bull</span>MC スコアが閾値以上で発動 — 上昇相場で有効（3本）</li>
+            </ul>
+          </div>
         </div>
       </section>
 
