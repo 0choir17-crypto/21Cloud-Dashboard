@@ -32,12 +32,12 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     kind: 'event',
     holdDays: 10,
     mcCondition: 'Always-on',
-    conditions: 'SMA10から-1.5R以下 & ADR≤3.5% & ギャップアップ≥3% & RS≥70',
+    conditions: 'SMA10から-1.5R以下 & ADR≤3.5% & ギャップアップ≥3% & RS≥70 & 信用買い残比率5d≤0.25',
     role: '移動平均線より下に沈んだ低ボラ銘柄が、材料で急騰した初動を捉える',
     backtest: {
       oos_pf: 55.49, oos_wr: 95.2, oos_n: 433, spd: 0.3,
       wf: '4/5',
-      regime_note: 'v4: RS 60→70, dist10 -1.0→-1.5, ADR 2.5→3.5, hold 20→10d',
+      regime_note: 'v5 R1: margin_buy_ratio_5d≤0.25追加（breakdown filter）',
     },
   },
   {
@@ -80,12 +80,12 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     kind: 'factor',
     holdDays: 20,
     mcCondition: 'Always-on',
-    conditions: 'SMA10から-1.5R以下 & SMA50から-1R以下 & RS≥80 & 空売り残変化≤0 & DuPont Leverage<2.0',
+    conditions: 'SMA10から-1.5R以下 & SMA50から-1R以下 & RS≥75 & 空売り残変化≤0 & DuPont Leverage≥2.0 & 現物買い比率5d≥0.7',
     role: '短期・中期MAから同時調整。空売り残の減少がリバーサルシグナル',
     backtest: {
       oos_pf: 20.39, oos_wr: 86.0, oos_n: 3060, spd: 2.5,
-      wf: '4/5',
-      regime_note: 'v4: RS 70→80, dist10 -1.5, ADR撤廃, hold 20d. dupont_leverage<2.0追加',
+      wf: '5/5',
+      regime_note: 'v5 R1: cash_buy_ratio_5d≥0.7追加. R2: RS 80→75 (WF 4/5→5/5)',
     },
   },
   {
@@ -96,12 +96,12 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     kind: 'event',
     holdDays: 40,
     mcCondition: 'v3≥17',
-    conditions: 'カップ深さ-40〜-8% & 出来高収縮≤0.5 & 52W高値-10%以内 & BPS≥2240 & EPS≥95 & RS≥70 & DuPont Leverage<2.0',
+    conditions: 'カップ深さ-30〜-8% & 出来高収縮≤0.5 & 52W高値-10%以内 & BPS≥2240 & EPS≥95 & RS≥70 & DuPont Leverage≥2.0 & 信用買い残比率5d≤0.25',
     role: 'クラシックなMinerviniパターン。出来高が収縮してエネルギーを蓄積した銘柄のブレイクアウト',
     backtest: {
       oos_pf: 4.42, oos_wr: 61.0, oos_n: 508, spd: 0.4,
       wf: '5/5',
-      regime_note: 'v4: RS≥70, vc 0.5. MC v3≥17で発動. dupont_leverage<2.0追加',
+      regime_note: 'v5 R1: margin_buy_ratio_5d≤0.25追加. R2: cup_depth -40→-30 (WF 2/5→4/5)',
     },
   },
   {
@@ -112,12 +112,12 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     kind: 'event',
     holdDays: 15,
     mcCondition: 'v3≤9',
-    conditions: '出来高≥2倍 & BPS≥2240 & EPS成長≥25% & SMA10から0.5R以内 & RS≥70 & DuPont Leverage<2.0',
+    conditions: '出来高≥2倍 & BPS≥1500 & EPS成長≥20% & SMA10から0.0R以内 & RS≥80 & DuPont Leverage≥2.0 & 信用買い残比率5d≤0.3',
     role: '割安かつ高成長のファンダメンタルを持つ銘柄に、異常出来高が発生した日を検出',
     backtest: {
-      oos_pf: 4.23, oos_wr: 70.6, oos_n: 496, spd: 0.4,
+      oos_pf: 16.65, oos_wr: 78.1, oos_n: 122, spd: 0.4,
       wf: '5/5',
-      regime_note: 'v4: RS≥70, dist10 0.5, hold 15d. MC v3≤9で発動. dupont_leverage<2.0追加',
+      regime_note: 'v5 R1: margin_buy_ratio_5d≤0.3追加. R2: BPS 2240→1500, eps_gr 25→20, RS 70→80, dist10 0.5→0.0 (PF 4.21→16.65)',
     },
   },
   {
