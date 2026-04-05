@@ -1,11 +1,11 @@
 const REGIME_COLOR: Record<string, string> = {
-  strong_bull: '#16a34a',
-  bull:        '#16a34a',
+  strong_bull: '#639922',
+  bull:        '#97C459',
   strong:      '#16a34a',
-  neutral:     '#d97706',
+  neutral:     '#B4B2A9',
   normal:      '#d97706',
-  bear:        '#dc2626',
-  strong_bear: '#dc2626',
+  bear:        '#F09595',
+  strong_bear: '#E24B4A',
   weak:        '#dc2626',
 }
 

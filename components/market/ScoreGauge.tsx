@@ -3,23 +3,23 @@ import { MarketConditions } from '@/types/market'
 type Regime = MarketConditions['scorecard_regime']
 
 const REGIME_CONFIG: Record<NonNullable<Regime>, { color: string; label: string }> = {
-  strong_bull: { color: '#16a34a', label: 'Strong Bull' },
-  bull:         { color: '#2563eb', label: 'Bull' },
-  neutral:      { color: '#d97706', label: 'Neutral' },
-  bear:         { color: '#dc2626', label: 'Bear' },
-  strong_bear:  { color: '#991b1b', label: 'Strong Bear' },
+  strong_bull: { color: '#639922', label: 'Strong Bull' },
+  bull:         { color: '#97C459', label: 'Bull' },
+  neutral:      { color: '#B4B2A9', label: 'Neutral' },
+  bear:         { color: '#F09595', label: 'Bear' },
+  strong_bear:  { color: '#E24B4A', label: 'Strong Bear' },
 }
 
 const MARKET_REGIME_CONFIG: Record<string, { color: string; label: string }> = {
-  bull:    { color: '#16a34a', label: 'Bull' },
-  neutral: { color: '#d97706', label: 'Neutral' },
-  bear:    { color: '#dc2626', label: 'Bear' },
+  bull:    { color: '#639922', label: 'Bull' },
+  neutral: { color: '#B4B2A9', label: 'Neutral' },
+  bear:    { color: '#E24B4A', label: 'Bear' },
 }
 
 const BREADTH_REGIME_CONFIG: Record<string, { color: string; label: string }> = {
-  strong: { color: '#16a34a', label: 'Strong' },
-  normal: { color: '#d97706', label: 'Normal' },
-  weak:   { color: '#dc2626', label: 'Weak' },
+  strong: { color: '#639922', label: 'Strong' },
+  normal: { color: '#B4B2A9', label: 'Normal' },
+  weak:   { color: '#E24B4A', label: 'Weak' },
 }
 
 type Props = {

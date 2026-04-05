@@ -23,14 +23,14 @@ function ScoreDots({ score }: { score: number | null | undefined }) {
   if (score === null || score === undefined) {
     return <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400">N/A</span>
   }
-  const colors = ['#dc2626', '#f97316', '#9ca3af', '#16a34a']
+  const colors = ['#E24B4A', '#F09595', '#B4B2A9', '#639922']
   return (
     <div className="flex items-center gap-1">
-      {[0, 1, 2, 3].map(i => (
+      {[0, 1, 2].map(i => (
         <div
           key={i}
           className="w-2.5 h-2.5 rounded-full"
-          style={{ backgroundColor: i <= score ? colors[score] : '#e5e7eb' }}
+          style={{ backgroundColor: i < score ? colors[score] : '#e5e7eb' }}
         />
       ))}
       <span className="text-xs font-mono text-gray-500 ml-1">{score}/3</span>
