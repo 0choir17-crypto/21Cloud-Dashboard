@@ -95,7 +95,7 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bull',
     kind: 'event',
     holdDays: 40,
-    mcCondition: 'v3≥17',
+    mcCondition: 'MC≥17',
     conditions: 'カップ深さ-30〜-8% & 出来高収縮≤0.5 & 52W高値-10%以内 & BPS≥2240 & EPS≥95 & RS≥70 & DuPont Leverage≥2.0 & 信用買い残比率5d≤0.25',
     role: 'クラシックなMinerviniパターン。出来高が収縮してエネルギーを蓄積した銘柄のブレイクアウト',
     backtest: {
@@ -111,7 +111,7 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bear',
     kind: 'event',
     holdDays: 15,
-    mcCondition: 'v3≤9',
+    mcCondition: 'MC≤9',
     conditions: '出来高≥2倍 & BPS≥1500 & EPS成長≥20% & SMA10から0.0R以内 & RS≥80 & DuPont Leverage≥2.0 & 信用買い残比率5d≤0.3',
     role: '割安かつ高成長のファンダメンタルを持つ銘柄に、異常出来高が発生した日を検出',
     backtest: {
@@ -127,13 +127,13 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bull',
     kind: 'factor',
     holdDays: 40,
-    mcCondition: 'v3≥20',
+    mcCondition: 'MC≥20',
     conditions: 'PBR≤0.5 & EPS≥100 & ADR≤3% & RS≥80',
     role: 'バリュー×クオリティの複合スクリーン。低PBRだが収益力がある銘柄',
     backtest: {
       oos_pf: 4.20, oos_wr: 67.5, oos_n: 17817, spd: 14.4,
       wf: '4/5',
-      regime_note: 'v4: RS 80, pbr 0.5, eps 100. MC v3≥20で発動',
+      regime_note: 'v4: RS 80, pbr 0.5, eps 100. MC≥20で発動',
     },
   },
   {
@@ -143,13 +143,13 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bull',
     kind: 'factor',
     holdDays: 40,
-    mcCondition: 'v3≥18',
+    mcCondition: 'MC≥18',
     conditions: 'RS≥80 & VCS≥80 & ADR≤3% & DuPont Leverage<2.0',
     role: 'ボラティリティが収縮した相対強度の高い銘柄。ブレイクアウト前のwatch候補',
     backtest: {
       oos_pf: 2.78, oos_wr: 58.1, oos_n: 8369, spd: 6.7,
       wf: '5/5',
-      regime_note: 'v4新規: 既存スクリーンと直交するコンセプト. MC v3≥18で発動. dupont_leverage<2.0追加',
+      regime_note: 'v4新規: 既存スクリーンと直交するコンセプト. MC≥18で発動. dupont_leverage<2.0追加',
     },
   },
   {
@@ -159,13 +159,13 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bear',
     kind: 'factor',
     holdDays: 30,
-    mcCondition: 'v3≤4',
-    conditions: 'MC v3≤4 & RS≥70 & Low≤21EMA',
-    role: 'Bear環境(MC v3≤4)で相対強度の高い銘柄を、21EMAへの押し目で拾うスクリーン',
+    mcCondition: 'MC≤4',
+    conditions: 'MC≤4 & RS≥70 & Low≤21EMA',
+    role: 'Bear環境(MC≤4)で相対強度の高い銘柄を、21EMAへの押し目で拾うスクリーン',
     backtest: {
       oos_pf: 3.36, oos_wr: 63.1, oos_n: 53522, spd: 42.5,
       wf: '4/5',
-      regime_note: 'MC v3≤4のみ発動。固定30日保有',
+      regime_note: 'MC≤4のみ発動。固定30日保有',
     },
   },
   {
@@ -175,13 +175,13 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     type: 'bear',
     kind: 'factor',
     holdDays: 20,
-    mcCondition: 'v3≤1',
-    conditions: '配当利回り≥2% & 増配 & EPS成長≥30% & MC v3≤1',
-    role: 'Extreme Bear環境(MC v3≤1)で配当利回り・増配・EPS成長の3条件を満たすディフェンシブ銘柄を検出',
+    mcCondition: 'MC≤1',
+    conditions: '配当利回り≥2% & 増配 & EPS成長≥30% & MC≤1',
+    role: 'Extreme Bear環境(MC≤1)で配当利回り・増配・EPS成長の3条件を満たすディフェンシブ銘柄を検出',
     backtest: {
       oos_pf: 5.69, oos_wr: 68.0, oos_n: 320, spd: 0.3,
       wf: '5/5',
-      regime_note: 'MC v3≤1のみ発動。Premium配当データ使用',
+      regime_note: 'MC≤1のみ発動。Premium配当データ使用',
     },
   },
 ]
@@ -224,7 +224,7 @@ const GLOSSARY = [
   { term: 'Hit',      desc: '1\u9298\u67c4\u304c\u8907\u6570\u30b9\u30af\u30ea\u30fc\u30f3\u306b\u540c\u6642\u30d2\u30c3\u30c8\u3057\u305f\u56de\u6570\u3002\u591a\u3044\u307b\u3069\u78ba\u4fe1\u5ea6\u304c\u9ad8\u3044' },
   { term: 'Factor',   desc: '\u6bce\u65e5\u5168\u9298\u67c4\u3092\u30b9\u30ad\u30e3\u30f3\u3059\u308b\u30bf\u30a4\u30d7\u3002\u6761\u4ef6\u3092\u6e80\u305f\u3059\u9650\u308a\u6bce\u65e5\u30b7\u30b0\u30ca\u30eb\u304c\u51fa\u308b' },
   { term: 'Event',    desc: '\u7279\u5b9a\u306e\u30a4\u30d9\u30f3\u30c8\uff08\u30ae\u30e3\u30c3\u30d7\u30a2\u30c3\u30d7\u3001\u30d6\u30ec\u30a4\u30af\u30a2\u30a6\u30c8\u7b49\uff09\u304c\u767a\u751f\u3057\u305f\u65e5\u306e\u307f\u30b7\u30b0\u30ca\u30eb\u304c\u51fa\u308b' },
-  { term: 'MC v3',    desc: 'Market Condition v3\u300221\u8981\u7d20\u306e\u30b9\u30b3\u30a2\u30ab\u30fc\u30c9\u3067\u5e02\u5834\u74b0\u5883\u30920\u301c21\u70b9\u3067\u8a55\u4fa1\u3002\u9ad8\u3044=\u5f37\u6c17\u3001\u4f4e\u3044=\u5f31\u6c17' },
+  { term: 'MC',    desc: 'Market Condition v3\u300221\u8981\u7d20\u306e\u30b9\u30b3\u30a2\u30ab\u30fc\u30c9\u3067\u5e02\u5834\u74b0\u5883\u30920\u301c21\u70b9\u3067\u8a55\u4fa1\u3002\u9ad8\u3044=\u5f37\u6c17\u3001\u4f4e\u3044=\u5f31\u6c17' },
   { term: 'DuPont Leverage', desc: '\u7dcf\u8cc7\u7523\u00f7\u81ea\u5df1\u8cc7\u672c\u3002\u8ca1\u52d9\u30ec\u30d0\u30ec\u30c3\u30b8\u306e\u6307\u6a19\u30022.0\u4ee5\u4e0a\u306f\u904e\u5270\u50b5\u52d9\u30ea\u30b9\u30af\u3068\u3057\u3066\u30d5\u30a3\u30eb\u30bf\u30fc' },
   { term: 'Divergence', desc: '\u6307\u6570\u304c\u4e0a\u6607\u3057\u3066\u3044\u308b\u306e\u306bBreadth\u304c\u60aa\u5316\u3057\u3066\u3044\u308b\u72b6\u614b\u3002\u5929\u4e95\u306e\u8b66\u544a\u30b7\u30b0\u30ca\u30eb' },
 ]
@@ -311,7 +311,7 @@ export default function GuidePage() {
           Screen Guide
         </h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          screens_v4 + MC v3 — Always-on 4 + Bear 3 + Bull 3（10 screens）
+          screens_v4 + MC — Always-on 4 + Bear 3 + Bull 3（10 screens）
         </p>
       </header>
 
@@ -328,7 +328,7 @@ export default function GuidePage() {
                 <GuideSortTh label="Screen"    sortKey="name"     {...sp} />
                 <GuideSortTh label="Type"      sortKey="type"     {...sp} />
                 <GuideSortTh label="Kind"      sortKey="kind"     {...sp} />
-                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">MC v3</th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">MC</th>
                 <GuideSortTh label="Hold"      sortKey="holdDays" {...sp} align="right" />
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Conditions</th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Role</th>
@@ -384,15 +384,15 @@ export default function GuidePage() {
       {/* ── Market Condition ──────────────────────────────────────────────── */}
       <section className="mb-8">
         <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-          Market Condition (MC v3)
+          Market Condition (MC)
         </h2>
         <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
           <p className="text-sm text-gray-600 mb-3">
-            画面上部のバッジはマーケット全体の状態を示します。MC v3 は21要素のスコアカードで市場環境を0〜21点で評価します。
+            画面上部のバッジはマーケット全体の状態を示します。MC は21要素のスコアカードで市場環境を0〜21点で評価します。
           </p>
           <ul className="space-y-2 text-sm text-gray-700">
             <li><strong className="text-gray-900">Trend</strong> — TOPIXの位置関係（Bull / Neutral / Bear）</li>
-            <li><strong className="text-gray-900">Scorecard</strong> — MC v3 スコアカード（0-21）。数値が高いほど強気環境</li>
+            <li><strong className="text-gray-900">Scorecard</strong> — MC スコアカード（0-21）。数値が高いほど強気環境</li>
             <li><strong className="text-gray-900">Breadth</strong> — 値上がり銘柄比率の強度（Strong / Normal / Weak）</li>
             <li><strong className="text-gray-900">Divergence</strong> — 指数↑ × Breadth↓ の天井警告フラグ</li>
           </ul>

@@ -150,7 +150,7 @@ export default function ScoreGauge({
           border: `1px solid ${config.color}40`,
         }}
       >
-        {isV3 ? `MC v3: ${mcScore}/21` : config.label}
+        {isV3 ? `MC: ${mcScore}/21` : config.label}
       </span>
 
       {/* Divergence warning */}

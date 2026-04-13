@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Trade } from '@/types/trades'
 import Modal from '@/components/shared/Modal'
@@ -30,8 +30,30 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
   const [stop21l, setStop21l] = useState('')
   const [targetR, setTargetR] = useState('')
   const [memo, setMemo] = useState('')
+  const [mcScore, setMcScore] = useState<number | null>(null)
+  const [mcRegime, setMcRegime] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // entry_date 変更時に MC Score を自動取得
+  const fetchMcScore = useCallback(async (date: string) => {
+    const { data } = await supabase
+      .from('market_conditions')
+      .select('positive_pct, scorecard_regime, mc_score')
+      .lte('date', date)
+      .order('date', { ascending: false })
+      .limit(1)
+      .single()
+    if (data) {
+      const v3Score = (data as Record<string, unknown>).mc_score as number | null | undefined
+      setMcScore(v3Score ?? (data.positive_pct ?? null))
+      const regimeMap: Record<string, string> = {
+        strong_bull: 'Strong Bull', bull: 'Bull', neutral: 'Neutral',
+        bear: 'Bear', strong_bear: 'Strong Bear',
+      }
+      setMcRegime(data.scorecard_regime ? (regimeMap[data.scorecard_regime] ?? data.scorecard_regime) : null)
+    }
+  }, [])
 
   // Derived: init_risk_pct
   const ep = parseFloat(entryPrice)
@@ -53,9 +75,16 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
       setStop21l(initial?.stop_21l != null ? String(initial.stop_21l) : '')
       setTargetR(initial?.target_r != null ? String(initial.target_r) : '')
       setMemo(initial?.memo ?? '')
+      setMcScore(initial?.mc_score ?? null)
+      setMcRegime(initial?.mc_regime ?? null)
       setError('')
+      // 新規作成時: entry_date の MC Score を自動取得
+      if (!initial?.id) {
+        const date = initial?.entry_date ?? today()
+        fetchMcScore(date)
+      }
     }
-  }, [open, initial])
+  }, [open, initial, fetchMcScore])
 
   async function handleSave() {
     if (!ticker.trim()) { setError('Ticker は必須です'); return }
@@ -85,6 +114,8 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
       init_risk_pct: riskPct,
       target_r: targetR !== '' ? parseFloat(targetR) : null,
       memo: memo.trim() || null,
+      mc_score: mcScore,
+      mc_regime: mcRegime,
       status: statusMode,
       updated_at: new Date().toISOString(),
       // シグナルスナップショット（新規作成時のみ、Watchlist昇格等で渡された場合）
@@ -169,7 +200,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
             <input
               type="date"
               value={entryDate}
-              onChange={e => setEntryDate(e.target.value)}
+              onChange={e => { setEntryDate(e.target.value); if (e.target.value) fetchMcScore(e.target.value) }}
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

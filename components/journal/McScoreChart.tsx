@@ -11,11 +11,13 @@ type Props = {
 }
 
 const BUCKETS = [
-  { label: '0-20', min: 0, max: 20 },
-  { label: '20-40', min: 20, max: 40 },
-  { label: '40-60', min: 40, max: 60 },
-  { label: '60-80', min: 60, max: 80 },
-  { label: '80-100', min: 80, max: 101 },
+  { label: '0-3',   min: 0,  max: 3 },
+  { label: '3-6',   min: 3,  max: 6 },
+  { label: '6-9',   min: 6,  max: 9 },
+  { label: '9-12',  min: 9,  max: 12 },
+  { label: '12-15', min: 12, max: 15 },
+  { label: '15-18', min: 15, max: 18 },
+  { label: '18-21', min: 18, max: 22 },
 ]
 
 const REGIME_ORDER = ['Strong Bull', 'Bull', 'Neutral', 'Bear', 'Strong Bear']
@@ -89,7 +91,7 @@ export default function McScoreChart({ trades }: Props) {
             <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} tickFormatter={v => `${v}%`} />
             <Tooltip
               formatter={(value) => [`${value}%`, 'WR']}
-              labelFormatter={(l) => `MC Score: ${l}%`}
+              labelFormatter={(l) => `MC Score: ${l}`}
             />
             <Bar dataKey="winRate" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, i) => (

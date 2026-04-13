@@ -79,14 +79,15 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
       setMcLoading(true)
       const { data } = await supabase
         .from('market_conditions')
-        .select('positive_pct, scorecard_regime')
+        .select('positive_pct, scorecard_regime, mc_score')
         .lte('date', entryDate)
         .order('date', { ascending: false })
         .limit(1)
         .single()
 
       if (!cancelled && data) {
-        setMcScore(data.positive_pct ?? null)
+        const v3Score = (data as Record<string, unknown>).mc_score as number | null | undefined
+        setMcScore(v3Score ?? (data.positive_pct ?? null))
         setMcRegime(data.scorecard_regime ?? null)
       } else if (!cancelled) {
         setMcScore(null)
@@ -263,7 +264,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
             <span className="text-xs text-gray-400">取得中...</span>
           ) : mcScore != null ? (
             <span className="text-sm font-semibold text-gray-800">
-              {mcScore.toFixed(0)}% ({REGIME_LABEL[mcRegime ?? ''] ?? mcRegime ?? '—'})
+              {mcScore}/21 ({REGIME_LABEL[mcRegime ?? ''] ?? mcRegime ?? '—'})
             </span>
           ) : (
             <span className="text-xs text-gray-400">取得できません</span>

@@ -81,9 +81,9 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
         .single()
 
       if (!cancelled && data) {
-        // v3: use mc_score (0-21) as percentage equivalent, fallback to positive_pct
+        // v3: use mc_score (0-21) raw value, fallback to positive_pct
         const v3Score = (data as Record<string, unknown>).mc_score as number | null | undefined
-        setMcScore(v3Score != null ? (v3Score / 21) * 100 : (data.positive_pct ?? null))
+        setMcScore(v3Score ?? (data.positive_pct ?? null))
         setMcRegime(data.scorecard_regime ?? null)
       } else if (!cancelled) {
         setMcScore(null)
@@ -273,7 +273,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
             <span className="text-xs text-gray-400">取得中...</span>
           ) : mcScore != null ? (
             <span className="text-sm font-semibold text-gray-800">
-              {mcScore.toFixed(0)}% ({regimeLabel[mcRegime ?? ''] ?? mcRegime ?? '—'})
+              {mcScore}/21 ({regimeLabel[mcRegime ?? ''] ?? mcRegime ?? '—'})
             </span>
           ) : (
             <span className="text-xs text-gray-400">取得できません</span>

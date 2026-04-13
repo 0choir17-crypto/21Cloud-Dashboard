@@ -47,7 +47,7 @@ function McBadge({ score, regime }: { score: number | null; regime: string | nul
   if (score == null) return <span className="text-xs text-gray-400">MC: —</span>
   return (
     <span className="inline-flex items-center gap-1 text-xs text-gray-600">
-      MC: {score.toFixed(0)}%
+      MC: {Math.round(score)}/21
       <RegimeBadge regime={regime} />
     </span>
   )

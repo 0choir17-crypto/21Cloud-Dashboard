@@ -21,23 +21,23 @@ export const SCREEN_RANK: Record<string, number> = {
   'EVT_CWH_BPS_EPS':       5,  // PF 4.42
   'EVT_RVOL2x_BPS_EpsGr':  6,  // PF 4.23
   'FCT_ValueQuality_CRS':  7,  // PF 4.20
-  'DIV_DY_Incr_EpsGr':     8,  // PF 5.69 (MC v3<=1のみ発動)
-  'BearRS_Leader':          9,  // PF 3.06 (MC v3<=4のみ発動)
+  'DIV_DY_Incr_EpsGr':     8,  // PF 5.69 (MC<=1のみ発動)
+  'BearRS_Leader':          9,  // PF 3.06 (MC<=4のみ発動)
   'FCT_RS_VCS_Coil':       10, // PF 2.78
 }
 
-// MC v3 条件マッピング
+// MC 条件マッピング
 export const MC_V3_CONDITIONS: Record<string, { type: 'always_on' | 'bear' | 'bull'; threshold?: number; label: string }> = {
   'FCT_SMA10_SMA50_CRS':  { type: 'always_on', label: '' },
   'FCT_EMA21_SMA10_CRS':  { type: 'always_on', label: '' },
   'EVT_SMA10_ADR_Gap3':   { type: 'always_on', label: '' },
   'FCT_RS_Divergence':    { type: 'always_on', label: '' },
-  'EVT_RVOL2x_BPS_EpsGr': { type: 'bear', threshold: 9, label: 'v3\u22649' },
-  'BearRS_Leader':         { type: 'bear', threshold: 4, label: 'v3\u22644' },
-  'DIV_DY_Incr_EpsGr':    { type: 'bear', threshold: 1, label: 'v3\u22641' },
-  'EVT_CWH_BPS_EPS':      { type: 'bull', threshold: 17, label: 'v3\u226517' },
-  'FCT_RS_VCS_Coil':      { type: 'bull', threshold: 18, label: 'v3\u226518' },
-  'FCT_ValueQuality_CRS': { type: 'bull', threshold: 20, label: 'v3\u226520' },
+  'EVT_RVOL2x_BPS_EpsGr': { type: 'bear', threshold: 9, label: 'MC\u22649' },
+  'BearRS_Leader':         { type: 'bear', threshold: 4, label: 'MC\u22644' },
+  'DIV_DY_Incr_EpsGr':    { type: 'bear', threshold: 1, label: 'MC\u22641' },
+  'EVT_CWH_BPS_EPS':      { type: 'bull', threshold: 17, label: 'MC\u226517' },
+  'FCT_RS_VCS_Coil':      { type: 'bull', threshold: 18, label: 'MC\u226518' },
+  'FCT_ValueQuality_CRS': { type: 'bull', threshold: 20, label: 'MC\u226520' },
 }
 
 // screen_name は | で複数連結されている場合がある
@@ -48,8 +48,8 @@ export function formatScreenName(raw: string): string {
     .join(' \u00B7 ')
 }
 
-// MC v3 ベースの推奨スクリーン判定
-// Always-on は常に推奨、Bear/Bull は MC v3 条件で判定
+// MC ベースの推奨スクリーン判定
+// Always-on は常に推奨、Bear/Bull は MC 条件で判定
 const RECOMMENDED_SCREENS: Record<string, string[]> = {
   'bull_strong_bull': ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
   'bull_bull':        ['Gap Up', 'RS Dip', '21EMA Pullback', '10/50SMA Pullback', 'CWH', 'RVOL 2x', 'Value', 'VCS Coil'],
