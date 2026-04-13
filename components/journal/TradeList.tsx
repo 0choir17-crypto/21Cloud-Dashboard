@@ -6,6 +6,7 @@ import { SCREEN_NAME_MAP } from '@/lib/screenNames'
 type Props = {
   trades: Trade[]
   onClose: (trade: Trade) => void
+  onEdit: (trade: Trade) => void
 }
 
 function RegimeBadge({ regime }: { regime: string | null }) {
@@ -52,7 +53,7 @@ function McBadge({ score, regime }: { score: number | null; regime: string | nul
   )
 }
 
-export default function TradeList({ trades, onClose }: Props) {
+export default function TradeList({ trades, onClose, onEdit }: Props) {
   const openTrades = trades.filter(t => t.status === 'open')
   const closedTrades = trades
     .filter(t => t.status === 'closed')
@@ -90,12 +91,20 @@ export default function TradeList({ trades, onClose }: Props) {
                   </div>
                   <SignalSnapshotLine t={t} />
                 </div>
-                <button
-                  onClick={() => onClose(t)}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors self-end sm:self-auto"
-                >
-                  Close
-                </button>
+                <div className="flex gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => onEdit(t)}
+                    className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onClose(t)}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -142,6 +151,12 @@ export default function TradeList({ trades, onClose }: Props) {
                     </div>
                     <SignalSnapshotLine t={t} />
                   </div>
+                  <button
+                    onClick={() => onEdit(t)}
+                    className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors self-end sm:self-auto"
+                  >
+                    Edit
+                  </button>
                 </div>
               )
             })}

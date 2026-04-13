@@ -8,12 +8,14 @@ import McScoreChart from '@/components/journal/McScoreChart'
 import TradeList from '@/components/journal/TradeList'
 import TradeModal from '@/components/journal/TradeModal'
 import CloseTradeModal from '@/components/journal/CloseTradeModal'
+import EditTradeModal from '@/components/journal/EditTradeModal'
 
 export default function JournalPage() {
   const [trades, setTrades] = useState<Trade[]>([])
   const [loading, setLoading] = useState(true)
   const [showNewTrade, setShowNewTrade] = useState(false)
   const [closingTrade, setClosingTrade] = useState<Trade | null>(null)
+  const [editingTrade, setEditingTrade] = useState<Trade | null>(null)
 
   const fetchTrades = useCallback(async () => {
     setLoading(true)
@@ -89,6 +91,7 @@ export default function JournalPage() {
           <TradeList
             trades={trades}
             onClose={(trade) => setClosingTrade(trade)}
+            onEdit={(trade) => setEditingTrade(trade)}
           />
         </>
       )}
@@ -106,6 +109,14 @@ export default function JournalPage() {
         onClose={() => setClosingTrade(null)}
         onSaved={fetchTrades}
         trade={closingTrade}
+      />
+
+      {/* トレード編集モーダル */}
+      <EditTradeModal
+        open={editingTrade !== null}
+        onClose={() => setEditingTrade(null)}
+        onSaved={fetchTrades}
+        trade={editingTrade}
       />
     </main>
   )
