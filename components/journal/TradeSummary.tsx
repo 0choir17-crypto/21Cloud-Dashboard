@@ -6,11 +6,15 @@ type Props = {
   trades: Trade[]
 }
 
-function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function StatCard({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'default' | 'warning' | 'muted' }) {
+  const valueClass =
+    tone === 'warning' ? 'text-amber-600' :
+    tone === 'muted'   ? 'text-gray-400' :
+    'text-gray-900'
   return (
     <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 text-center">
       <p className="text-xs font-medium text-gray-500 mb-1">{label}</p>
-      <p className="text-xl font-bold text-gray-900">{value}</p>
+      <p className={`text-xl font-bold ${valueClass}`}>{value}</p>
       {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   )
@@ -31,9 +35,10 @@ export default function TradeSummary({ trades }: Props) {
   const grossProfit = wins.reduce((sum, t) => sum + (t.pnl_pct ?? 0), 0)
   const grossLoss = Math.abs(losses.reduce((sum, t) => sum + (t.pnl_pct ?? 0), 0))
   const pf = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0
+  const unreviewedCount = closed.filter(t => !t.reviewed_at).length
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
       <StatCard
         label="Total"
         value={`${closed.length} trades`}
@@ -51,6 +56,11 @@ export default function TradeSummary({ trades }: Props) {
       <StatCard
         label="PF"
         value={closed.length > 0 ? (pf === Infinity ? '∞' : pf.toFixed(2)) : '—'}
+      />
+      <StatCard
+        label="🔍 未振り返り"
+        value={closed.length > 0 ? `${unreviewedCount}件` : '—'}
+        tone={unreviewedCount > 0 ? 'warning' : 'muted'}
       />
     </div>
   )
