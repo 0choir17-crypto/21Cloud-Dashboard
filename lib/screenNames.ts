@@ -13,7 +13,7 @@ export const SCREEN_NAME_MAP: Record<string, string> = {
   'EVT_BearRS_ShortCover':  'ShortCover',
 }
 
-// screens_v4 成績順ランク（PF降順）
+// screens_v5 成績順ランク（PF降順）
 export const SCREEN_RANK: Record<string, number> = {
   'EVT_SMA10_ADR_Gap3':    1,  // PF 55.49
   'FCT_RS_Divergence':     2,  // PF 36.82
@@ -25,7 +25,7 @@ export const SCREEN_RANK: Record<string, number> = {
   'DIV_DY_Incr_EpsGr':     8,  // PF 5.69 (MC<=1のみ発動)
   'BearRS_Leader':          9,  // PF 3.06 (MC<=4のみ発動)
   'FCT_RS_VCS_Coil':       10, // PF 2.78
-  'EVT_BearRS_ShortCover':  11, // PF 12.63 (MC<=3のみ発動)
+  'EVT_BearRS_ShortCover':  11, // PF 35.62 (MC<=3のみ発動, T-5統合版)
 }
 
 // MC 条件マッピング
