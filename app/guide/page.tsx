@@ -192,12 +192,12 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
     kind: 'event',
     holdDays: 15,
     mcCondition: 'MC≤3',
-    conditions: 'cockpit_rs<35 & short_sell>0.30 & dist_ema21≤-8 & pct_52wh≤-30 & margin_buy<0.20',
-    role: 'Bear深押し+高空売り反発型。低RS銘柄が空売り圧力下で反発する逆張りシグナル（Phase C Cluster 1）',
+    conditions: 'cockpit_rs<35 & RS 5日下落≥8pt & short_sell>0.30 & dist_ema21≤-10 & pct_52wh≤-30 & margin_buy<0.20',
+    role: 'Bear深押し+高空売り反発型（T-5統合版）。5日間でRSが8pt以上下落した低RS銘柄の逆張りシグナル',
     backtest: {
-      oos_pf: 12.63, oos_wr: 32.5, oos_n: 4797, spd: 0.5,
-      wf: '4/5',
-      regime_note: 'MC≤3のみ発動。Phase C K-means→D1グリッドサーチ→E Cohen d→F regime分解で検証',
+      oos_pf: 35.62, oos_wr: 37.66, oos_n: 1901, spd: 0.2,
+      wf: '5/5',
+      regime_note: 'MC≤3のみ発動。Phase X-2 T-5統合版。baseline PF14.85から+140%改善',
     },
   },
 ]
