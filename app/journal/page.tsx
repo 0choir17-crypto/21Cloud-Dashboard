@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Trade } from '@/types/trades'
 import TradeSummary from '@/components/journal/TradeSummary'
 import McScoreChart from '@/components/journal/McScoreChart'
-import TradeList from '@/components/journal/TradeList'
+import TradeList, { ExpandedRow } from '@/components/journal/TradeList'
 import TradeModal from '@/components/journal/TradeModal'
 import CloseTradeModal from '@/components/journal/CloseTradeModal'
 import EditTradeModal from '@/components/journal/EditTradeModal'
@@ -16,6 +16,7 @@ export default function JournalPage() {
   const [showNewTrade, setShowNewTrade] = useState(false)
   const [closingTrade, setClosingTrade] = useState<Trade | null>(null)
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null)
+  const [expandedRow, setExpandedRow] = useState<ExpandedRow>(null)
 
   const fetchTrades = useCallback(async () => {
     setLoading(true)
@@ -30,6 +31,17 @@ export default function JournalPage() {
   }, [])
 
   useEffect(() => { fetchTrades() }, [fetchTrades])
+
+  const toggleExpanded = useCallback((tradeId: number, type: 'review' | 'signal') => {
+    setExpandedRow(prev =>
+      prev?.tradeId === tradeId && prev?.type === type ? null : { tradeId, type }
+    )
+  }, [])
+
+  const handleSectionSaved = useCallback(async () => {
+    await fetchTrades()
+    setExpandedRow(null)
+  }, [fetchTrades])
 
   return (
     <main className="min-h-screen p-6" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -92,6 +104,11 @@ export default function JournalPage() {
             trades={trades}
             onClose={(trade) => setClosingTrade(trade)}
             onEdit={(trade) => setEditingTrade(trade)}
+            expandedRow={expandedRow}
+            onToggleReview={(tradeId) => toggleExpanded(tradeId, 'review')}
+            onToggleSignalEdit={(tradeId) => toggleExpanded(tradeId, 'signal')}
+            onSectionSaved={handleSectionSaved}
+            onSectionCancel={() => setExpandedRow(null)}
           />
         </>
       )}

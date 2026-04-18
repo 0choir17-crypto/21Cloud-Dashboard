@@ -37,4 +37,10 @@ export interface Trade {
   stop_pct_at_entry: number | null
   mc_met_at_entry: boolean | null
   mc_condition_at_entry: string | null
+
+  // 振り返り (bigger P1)
+  review_tags?: string[]
+  lesson_learned?: string | null
+  entry_reason?: string | null
+  reviewed_at?: string | null
 }
