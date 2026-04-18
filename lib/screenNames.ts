@@ -1,4 +1,4 @@
-// screens_v4: 8スクリーン + BearRS_Leader + DIV_DY_Incr_EpsGr (10スクリーン)
+// screens_v5: 8スクリーン + BearRS_Leader + DIV_DY_Incr_EpsGr + EVT_BearRS_ShortCover (11スクリーン)
 export const SCREEN_NAME_MAP: Record<string, string> = {
   'EVT_SMA10_ADR_Gap3':    'Gap Up',
   'FCT_RS_Divergence':     'RS Dip',
@@ -10,6 +10,7 @@ export const SCREEN_NAME_MAP: Record<string, string> = {
   'FCT_RS_VCS_Coil':       'VCS Coil',
   'BearRS_Leader':          'BearRS',
   'DIV_DY_Incr_EpsGr':     'Div Bear',
+  'EVT_BearRS_ShortCover':  'ShortCover',
 }
 
 // screens_v4 成績順ランク（PF降順）
@@ -24,6 +25,7 @@ export const SCREEN_RANK: Record<string, number> = {
   'DIV_DY_Incr_EpsGr':     8,  // PF 5.69 (MC<=1のみ発動)
   'BearRS_Leader':          9,  // PF 3.06 (MC<=4のみ発動)
   'FCT_RS_VCS_Coil':       10, // PF 2.78
+  'EVT_BearRS_ShortCover':  11, // PF 12.63 (MC<=3のみ発動)
 }
 
 // MC 条件マッピング
@@ -35,6 +37,7 @@ export const MC_V3_CONDITIONS: Record<string, { type: 'always_on' | 'bear' | 'bu
   'EVT_RVOL2x_BPS_EpsGr': { type: 'bear', threshold: 9, label: 'MC\u22649' },
   'BearRS_Leader':         { type: 'bear', threshold: 4, label: 'MC\u22644' },
   'DIV_DY_Incr_EpsGr':    { type: 'bear', threshold: 1, label: 'MC\u22641' },
+  'EVT_BearRS_ShortCover': { type: 'bear', threshold: 3, label: 'MC\u22643' },
   'EVT_CWH_BPS_EPS':      { type: 'bull', threshold: 17, label: 'MC\u226517' },
   'FCT_RS_VCS_Coil':      { type: 'bull', threshold: 18, label: 'MC\u226518' },
   'FCT_ValueQuality_CRS': { type: 'bull', threshold: 20, label: 'MC\u226520' },

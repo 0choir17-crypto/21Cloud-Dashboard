@@ -184,6 +184,22 @@ const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
       regime_note: 'MC≤1のみ発動。Premium配当データ使用',
     },
   },
+  {
+    rank: 11,
+    name: 'ShortCover',
+    dbName: 'EVT_BearRS_ShortCover',
+    type: 'bear',
+    kind: 'event',
+    holdDays: 15,
+    mcCondition: 'MC≤3',
+    conditions: 'cockpit_rs<35 & short_sell>0.30 & dist_ema21≤-8 & pct_52wh≤-30 & margin_buy<0.20',
+    role: 'Bear深押し+高空売り反発型。低RS銘柄が空売り圧力下で反発する逆張りシグナル（Phase C Cluster 1）',
+    backtest: {
+      oos_pf: 12.63, oos_wr: 32.5, oos_n: 4797, spd: 0.5,
+      wf: '4/5',
+      regime_note: 'MC≤3のみ発動。Phase C K-means→D1グリッドサーチ→E Cohen d→F regime分解で検証',
+    },
+  },
 ]
 
 // ── Sort logic ────────────────────────────────────────────────────────────────
@@ -311,7 +327,7 @@ export default function GuidePage() {
           Screen Guide
         </h1>
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-          screens_v4 + MC — Always-on 4 + Bear 3 + Bull 3（10 screens）
+          screens_v5 + MC — Always-on 4 + Bear 4 + Bull 3（11 screens）
         </p>
       </header>
 
