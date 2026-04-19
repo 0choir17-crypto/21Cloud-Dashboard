@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Trade } from '@/types/trades'
 import { CATEGORY_LABELS, ReviewTagCategory, groupTagsByCategory } from '@/lib/reviewTags'
 import { calculateMissedRate } from '@/lib/mfeMae'
+import TradeChart from './TradeChart'
 
 type Props = {
   trade: Trade
@@ -77,6 +78,12 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
       {error && (
         <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded">{error}</p>
       )}
+
+      {/* チャート */}
+      <div>
+        <p className="text-xs font-semibold text-gray-700 mb-2">📈 チャート</p>
+        <TradeChart trade={trade} />
+      </div>
 
       {/* MFE / MAE */}
       {trade.mfe_pct != null && trade.mae_pct != null ? (
