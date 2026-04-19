@@ -150,8 +150,26 @@ export default function TradeList({
                   <div className="space-y-1 min-w-0 flex-1">
                     {/* 1行目: 最重要 */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono font-bold text-blue-600 text-base">{t.ticker}</span>
-                      <span className="text-sm text-gray-700 truncate">{t.company_name ?? ''}</span>
+                      <a
+                        href={`https://jp.tradingview.com/chart/?symbol=TSE:${t.ticker}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-mono font-bold text-blue-600 text-base hover:underline"
+                      >
+                        {t.ticker}
+                      </a>
+                      {t.company_name ? (
+                        <a
+                          href={`https://shikiho.toyokeizai.net/stocks/${t.ticker}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-gray-700 truncate hover:underline"
+                        >
+                          {t.company_name}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-700 truncate" />
+                      )}
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${screenBadgeClass(t.screen_name)}`}>
                         {t.screen_name ? (SCREEN_NAME_MAP[t.screen_name] ?? t.screen_name) : '—'}
                       </span>
@@ -206,8 +224,26 @@ export default function TradeList({
                     <div className="space-y-1 min-w-0 flex-1">
                       {/* 1行目: 最重要 */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono font-bold text-base text-gray-800">{t.ticker}</span>
-                        <span className="text-sm text-gray-700 truncate">{t.company_name ?? ''}</span>
+                        <a
+                          href={`https://jp.tradingview.com/chart/?symbol=TSE:${t.ticker}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-mono font-bold text-base text-blue-600 hover:underline"
+                        >
+                          {t.ticker}
+                        </a>
+                        {t.company_name ? (
+                          <a
+                            href={`https://shikiho.toyokeizai.net/stocks/${t.ticker}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-gray-700 truncate hover:underline"
+                          >
+                            {t.company_name}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-700 truncate" />
+                        )}
                         <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${screenBadgeClass(t.screen_name)}`}>
                           {t.screen_name ? (SCREEN_NAME_MAP[t.screen_name] ?? t.screen_name) : '—'}
                         </span>

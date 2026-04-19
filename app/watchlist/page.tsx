@@ -147,7 +147,7 @@ export default function WatchlistPage() {
               >
                 <td className="px-3 py-2.5 whitespace-nowrap">
                   <a
-                    href={`https://www.tradingview.com/chart/?symbol=TSE:${item.ticker}`}
+                    href={`https://jp.tradingview.com/chart/?symbol=TSE:${item.ticker}`}
                     target="_blank"
                     rel="noreferrer"
                     className="font-mono font-bold text-blue-600 hover:underline text-xs"
@@ -234,7 +234,7 @@ export default function WatchlistPage() {
             <div className="flex justify-between items-start mb-2">
               <div>
                 <a
-                  href={`https://www.tradingview.com/chart/?symbol=TSE:${item.ticker}`}
+                  href={`https://jp.tradingview.com/chart/?symbol=TSE:${item.ticker}`}
                   target="_blank"
                   rel="noreferrer"
                   className="font-mono font-bold text-blue-600 text-base hover:underline"

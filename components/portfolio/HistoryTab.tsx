@@ -118,7 +118,7 @@ export default function HistoryTab({ history }: Props) {
             {history.map((h, i) => (
               <tr key={h.id} className={`border-b border-[#f0f2f4] hover:bg-gray-50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}>
                 <td className="px-3 py-2.5 whitespace-nowrap">
-                  <a href={`https://www.tradingview.com/chart/?symbol=TSE:${h.ticker}`} target="_blank" rel="noreferrer"
+                  <a href={`https://jp.tradingview.com/chart/?symbol=TSE:${h.ticker}`} target="_blank" rel="noreferrer"
                      className="font-mono font-bold text-blue-600 hover:underline text-xs">{h.ticker}</a>
                 </td>
                 <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-700">{h.company_name ?? '—'}</td>
@@ -149,7 +149,7 @@ export default function HistoryTab({ history }: Props) {
           <div key={h.id} className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-4">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <a href={`https://www.tradingview.com/chart/?symbol=TSE:${h.ticker}`} target="_blank" rel="noreferrer"
+                <a href={`https://jp.tradingview.com/chart/?symbol=TSE:${h.ticker}`} target="_blank" rel="noreferrer"
                    className="font-mono font-bold text-blue-600 text-sm">{h.ticker}</a>
                 {h.company_name && <span className="ml-2 text-xs text-gray-600">{h.company_name}</span>}
               </div>

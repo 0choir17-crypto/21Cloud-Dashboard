@@ -121,7 +121,7 @@ export default function TradesTab({ positions, onRefresh }: Props) {
                   className={`border-b border-[#f0f2f4] hover:bg-gray-50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}`}
                 >
                   <td className="px-3 py-2.5 whitespace-nowrap">
-                    <a href={`https://www.tradingview.com/chart/?symbol=TSE:${pos.ticker}`} target="_blank" rel="noreferrer"
+                    <a href={`https://jp.tradingview.com/chart/?symbol=TSE:${pos.ticker}`} target="_blank" rel="noreferrer"
                        className="font-mono font-bold text-blue-600 hover:underline text-xs">{pos.ticker}</a>
                   </td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-700">
@@ -180,7 +180,7 @@ export default function TradesTab({ positions, onRefresh }: Props) {
             <div key={pos.id} className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <a href={`https://www.tradingview.com/chart/?symbol=TSE:${pos.ticker}`} target="_blank" rel="noreferrer"
+                  <a href={`https://jp.tradingview.com/chart/?symbol=TSE:${pos.ticker}`} target="_blank" rel="noreferrer"
                      className="font-mono font-bold text-blue-600 text-base">{pos.ticker}</a>
                   {pos.company_name && <span className="ml-2 text-xs text-gray-600">{pos.company_name}</span>}
                 </div>
