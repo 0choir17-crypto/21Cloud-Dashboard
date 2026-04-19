@@ -28,14 +28,14 @@ export function McScoreChart({ height = 240 }: Props) {
   const latest = data.length > 0 ? data[data.length - 1].value : null
 
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-[var(--text-secondary)]">
-          MC Score 推移 (180日)
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold text-gray-500">
+          MC Score — Last 180 days
         </h3>
         {latest !== null && (
           <span className="text-sm font-mono text-[var(--text-secondary)]">
-            最新: {latest.toFixed(0)}/21
+            Latest: {latest.toFixed(0)}/21
           </span>
         )}
       </div>
@@ -44,7 +44,7 @@ export function McScoreChart({ height = 240 }: Props) {
           className="flex items-center justify-center bg-slate-50 rounded-md text-sm text-slate-400"
           style={{ height }}
         >
-          読み込み中...
+          Loading...
         </div>
       ) : (
         <TimeSeriesChart
@@ -55,6 +55,12 @@ export function McScoreChart({ height = 240 }: Props) {
           yMin={0}
           yMax={21}
           horizontalLines={[
+            {
+              price: 21,
+              color: 'rgba(148, 163, 184, 0.5)',
+              title: 'Max 21',
+              lineStyle: LineStyle.Dotted,
+            },
             {
               price: 17,
               color: 'rgba(16, 185, 129, 0.5)',

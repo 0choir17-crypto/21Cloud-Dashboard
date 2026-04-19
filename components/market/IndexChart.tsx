@@ -79,6 +79,7 @@ export function IndexChart({ prefix, displayName, height = 260, lookbackDays = 1
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#64748b',
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: 'rgba(148, 163, 184, 0.12)' },

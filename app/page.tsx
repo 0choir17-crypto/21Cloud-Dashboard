@@ -126,6 +126,8 @@ export default function Page() {
               />
               <hr className="my-4 border-[#e8eaed]" />
               <FactorGrid market={market} />
+              <hr className="my-4 border-[#e8eaed]" />
+              <McScoreChart height={200} />
             </div>
             {/* 右: 指数カード縦3枚 */}
             <div className="flex flex-col gap-4 h-full">
@@ -135,12 +137,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* ③ MC Score 時系列 */}
-          <div className="mb-8">
-            <McScoreChart height={240} />
-          </div>
-
-          {/* ④ Market Breadth */}
+          {/* ③ Market Breadth */}
           <BreadthPanel market={market} />
         </>
       )}
