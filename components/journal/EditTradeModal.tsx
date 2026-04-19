@@ -44,10 +44,27 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
   const [exitDate, setExitDate] = useState('')
   const [exitPrice, setExitPrice] = useState('')
 
+  // Signal snapshot fields
+  const [signalPrice, setSignalPrice] = useState('')
+  const [rsAtEntry, setRsAtEntry] = useState('')
+  const [rvolAtEntry, setRvolAtEntry] = useState('')
+  const [adrAtEntry, setAdrAtEntry] = useState('')
+  const [distEma21AtEntry, setDistEma21AtEntry] = useState('')
+  const [stopPctAtEntry, setStopPctAtEntry] = useState('')
+  const [mcMetAtEntry, setMcMetAtEntry] = useState(false)
+  const [mcConditionAtEntry, setMcConditionAtEntry] = useState('')
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const isClosed = trade?.status === 'closed'
+
+  const toStr = (v: number | null | undefined) => v == null ? '' : String(v)
+  const toNum = (v: string): number | null => {
+    if (v.trim() === '') return null
+    const n = Number(v)
+    return isNaN(n) ? null : n
+  }
 
   // Populate form from trade
   useEffect(() => {
@@ -63,6 +80,14 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
       setMcRegime(trade.mc_regime)
       setExitDate(trade.exit_date ?? '')
       setExitPrice(trade.exit_price != null ? String(trade.exit_price) : '')
+      setSignalPrice(toStr(trade.signal_price))
+      setRsAtEntry(toStr(trade.rs_at_entry))
+      setRvolAtEntry(toStr(trade.rvol_at_entry))
+      setAdrAtEntry(toStr(trade.adr_at_entry))
+      setDistEma21AtEntry(toStr(trade.dist_ema21_at_entry))
+      setStopPctAtEntry(toStr(trade.stop_pct_at_entry))
+      setMcMetAtEntry(trade.mc_met_at_entry ?? false)
+      setMcConditionAtEntry(trade.mc_condition_at_entry ?? '')
       setError('')
     }
   }, [open, trade])
@@ -137,6 +162,14 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
       mc_score: mcScore,
       mc_regime: mcRegime ? (REGIME_MAP[mcRegime] ?? mcRegime) : null,
       memo: memo.trim() || null,
+      signal_price: toNum(signalPrice),
+      rs_at_entry: toNum(rsAtEntry),
+      rvol_at_entry: toNum(rvolAtEntry),
+      adr_at_entry: toNum(adrAtEntry),
+      dist_ema21_at_entry: toNum(distEma21AtEntry),
+      stop_pct_at_entry: toNum(stopPctAtEntry),
+      mc_met_at_entry: mcMetAtEntry,
+      mc_condition_at_entry: mcConditionAtEntry.trim() || null,
       updated_at: new Date().toISOString(),
     }
 
@@ -324,6 +357,96 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
             )}
           </>
         )}
+
+        {/* Signal Snapshot */}
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-xs font-semibold text-gray-500 mb-3">📝 シグナルスナップショット</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Signal Price</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={signalPrice}
+                onChange={e => setSignalPrice(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">RS (0-100)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                value={rsAtEntry}
+                onChange={e => setRsAtEntry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">RVOL</label>
+              <input
+                type="number"
+                step="0.1"
+                value={rvolAtEntry}
+                onChange={e => setRvolAtEntry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">ADR%</label>
+              <input
+                type="number"
+                step="0.1"
+                value={adrAtEntry}
+                onChange={e => setAdrAtEntry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">EMA21乖離 (R)</label>
+              <input
+                type="number"
+                step="0.1"
+                value={distEma21AtEntry}
+                onChange={e => setDistEma21AtEntry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Stop%</label>
+              <input
+                type="number"
+                step="0.1"
+                value={stopPctAtEntry}
+                onChange={e => setStopPctAtEntry(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">MC Condition</label>
+              <input
+                type="text"
+                value={mcConditionAtEntry}
+                onChange={e => setMcConditionAtEntry(e.target.value)}
+                placeholder="例: MC≤9"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-end">
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700 py-2">
+                <input
+                  type="checkbox"
+                  checked={mcMetAtEntry}
+                  onChange={e => setMcMetAtEntry(e.target.checked)}
+                  className="w-4 h-4 accent-blue-600"
+                />
+                MC条件を満たした
+              </label>
+            </div>
+          </div>
+        </div>
 
         {/* Memo */}
         <div>
