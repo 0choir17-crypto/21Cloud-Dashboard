@@ -32,6 +32,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
     if (open) {
       setTicker(initial?.ticker ?? '')
       setCompanyName(initial?.company_name ?? '')
+      // 新規追加時は常に今日の日付。編集時のみ既存の watch_date を保持
       setWatchDate(initial?.watch_date ?? today())
       setScreenTag(initial?.screen_tag ?? '')
       setEntryPrice(initial?.entry_price != null ? String(initial.entry_price) : '')
@@ -44,14 +45,13 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
   async function handleSave() {
     if (!ticker.trim()) { setError('Ticker は必須です'); return }
-    if (!watchDate) { setError('ウォッチ日は必須です'); return }
     setSaving(true)
     setError('')
 
     const record: Record<string, unknown> = {
       ticker: ticker.trim().toUpperCase(),
       company_name: companyName.trim() || null,
-      watch_date: watchDate,
+      watch_date: isEdit ? watchDate : today(),
       screen_tag: screenTag.trim() || null,
       entry_price: entryPrice !== '' ? parseFloat(entryPrice) : null,
       stop_price: stopPrice !== '' ? parseFloat(stopPrice) : null,
@@ -133,17 +133,13 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
             />
           </div>
 
-          {/* Watch Date */}
+          {/* Watch Date（追加日は自動入力） */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Added Date <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={watchDate}
-              onChange={e => setWatchDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <label className="block text-xs font-medium text-gray-600 mb-1">Added Date</label>
+            <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2.5 text-base text-gray-600 font-mono">
+              {isEdit ? watchDate : today()}
+              <span className="ml-2 text-[10px] text-gray-400">自動</span>
+            </div>
           </div>
 
           {/* Screen Tag */}

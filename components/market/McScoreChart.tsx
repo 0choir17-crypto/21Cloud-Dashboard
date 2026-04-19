@@ -64,14 +64,14 @@ export function McScoreChart({ height = 240 }: Props) {
             {
               price: 17,
               color: 'rgba(16, 185, 129, 0.5)',
-              title: 'Bull (≥17)',
               lineStyle: LineStyle.Dashed,
+              axisLabelVisible: false,
             },
             {
               price: 9,
               color: 'rgba(239, 68, 68, 0.5)',
-              title: 'Bear (≤9)',
               lineStyle: LineStyle.Dashed,
+              axisLabelVisible: false,
             },
           ]}
         />
