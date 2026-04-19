@@ -19,6 +19,7 @@ export interface HorizontalLine {
   color: string
   title?: string
   lineStyle?: LineStyle
+  axisLabelVisible?: boolean
 }
 
 export interface TimeSeriesChartProps {
@@ -101,7 +102,7 @@ export function TimeSeriesChart({
         color: line.color,
         lineWidth: 1,
         lineStyle: line.lineStyle ?? LineStyle.Dashed,
-        axisLabelVisible: true,
+        axisLabelVisible: line.axisLabelVisible ?? true,
         title: line.title ?? '',
       })
     })
