@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Trade } from '@/types/trades'
 import { SCREEN_NAME_MAP } from '@/lib/screenNames'
+import { calculateMfeMae } from '@/lib/mfeMae'
 import Modal from '@/components/shared/Modal'
 
 type Props = {
@@ -77,6 +78,16 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
       .eq('id', trade.id)
 
     if (err) { setSaving(false); setError(err.message); return }
+
+    // MFE/MAE 計算（失敗してもクローズは成功扱い）
+    try {
+      const mfeMae = await calculateMfeMae(trade.ticker, trade.entry_date, exitDate, trade.entry_price)
+      if (mfeMae) {
+        await supabase.from('trades').update(mfeMae).eq('id', trade.id)
+      }
+    } catch (e) {
+      console.warn('MFE/MAE計算スキップ:', e)
+    }
 
     // consec_losses 更新
     const { data: riskData } = await supabase
