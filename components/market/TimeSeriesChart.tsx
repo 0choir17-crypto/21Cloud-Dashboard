@@ -58,6 +58,7 @@ export function TimeSeriesChart({
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#64748b',
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: 'rgba(148, 163, 184, 0.12)' },
@@ -106,10 +107,11 @@ export function TimeSeriesChart({
     })
 
     if (yMax !== undefined && yMin !== undefined) {
-      chart.priceScale('right').applyOptions({ autoScale: false })
+      const yMinFixed = yMin
+      const yMaxFixed = yMax
       mainSeries.applyOptions({
         autoscaleInfoProvider: () => ({
-          priceRange: { minValue: yMin, maxValue: yMax },
+          priceRange: { minValue: yMinFixed, maxValue: yMaxFixed },
         }),
       })
     }
