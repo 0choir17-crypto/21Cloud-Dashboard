@@ -141,7 +141,7 @@ export default function TradeList({
           OPEN ({openTrades.length})
         </h3>
         {openTrades.length === 0 ? (
-          <p className="text-sm text-gray-400 pl-4">オープンポジションなし</p>
+          <p className="text-sm text-gray-400 pl-4">No open positions</p>
         ) : (
           <div className="space-y-3">
             {openTrades.map(t => (
@@ -193,7 +193,7 @@ export default function TradeList({
           CLOSED ({closedTrades.length})
         </h3>
         {closedTrades.length === 0 ? (
-          <p className="text-sm text-gray-400 pl-4">クローズ済みトレードなし</p>
+          <p className="text-sm text-gray-400 pl-4">No closed trades</p>
         ) : (
           <div className="space-y-3">
             {closedTrades.map(t => {
@@ -251,7 +251,7 @@ export default function TradeList({
                                 : 'bg-amber-50 border-amber-400 text-amber-800 hover:bg-amber-100'
                           }`}
                         >
-                          {hasReview ? '🔍 再編集' : '🔍 振り返る'}
+                          {hasReview ? '🔍 Re-edit' : '🔍 Review'}
                         </button>
                       </div>
                     </div>

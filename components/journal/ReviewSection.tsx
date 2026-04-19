@@ -60,7 +60,7 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
       {/* ヘッダー */}
       <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-gray-200">
         <span className="text-sm font-semibold text-gray-800">
-          🔍 振り返り: <span className="font-mono">{trade.ticker}</span> {trade.company_name ?? ''}
+          🔍 Review: <span className="font-mono">{trade.ticker}</span> {trade.company_name ?? ''}
         </span>
         <span className="text-xs text-gray-500">
           {trade.entry_date} → {trade.exit_date}
@@ -91,7 +91,7 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
           <p className="text-xs font-semibold text-gray-700 mb-2">📏 MFE / MAE</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
-              <p className="text-[11px] text-gray-500">含み益ピーク (MFE)</p>
+              <p className="text-[11px] text-gray-500">Peak gain (MFE)</p>
               <p className="text-xl font-bold text-emerald-600 mt-0.5">
                 {trade.mfe_pct >= 0 ? '+' : ''}{trade.mfe_pct.toFixed(1)}%
               </p>
@@ -100,7 +100,7 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
               )}
             </div>
             <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
-              <p className="text-[11px] text-gray-500">含み損ボトム (MAE)</p>
+              <p className="text-[11px] text-gray-500">Worst drawdown (MAE)</p>
               <p className="text-xl font-bold text-red-600 mt-0.5">
                 {trade.mae_pct >= 0 ? '+' : ''}{trade.mae_pct.toFixed(1)}%
               </p>
@@ -109,12 +109,12 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
               )}
             </div>
             <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
-              <p className="text-[11px] text-gray-500">取り逃し率</p>
+              <p className="text-[11px] text-gray-500">Missed rate</p>
               <p className="text-xl font-bold text-amber-600 mt-0.5">
                 {calculateMissedRate(trade.mfe_pct, trade.pnl_pct).toFixed(0)}%
               </p>
               <p className="text-[11px] text-gray-400 mt-0.5">
-                MFE {trade.mfe_pct.toFixed(1)}% → 実際 {trade.pnl_pct != null ? `${trade.pnl_pct >= 0 ? '+' : ''}${trade.pnl_pct.toFixed(1)}%` : '—'}
+                MFE {trade.mfe_pct.toFixed(1)}% → Actual {trade.pnl_pct != null ? `${trade.pnl_pct >= 0 ? '+' : ''}${trade.pnl_pct.toFixed(1)}%` : '—'}
               </p>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
 
       {/* エントリー理由 */}
       <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">💭 エントリー時の判断理由</label>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">💭 Entry thesis</label>
         <textarea
           value={entryReason}
           onChange={e => setEntryReason(e.target.value)}
@@ -170,7 +170,7 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
 
       {/* 教訓 */}
       <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">📝 次回の教訓</label>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">📝 Lesson learned</label>
         <textarea
           value={lessonLearned}
           onChange={e => setLessonLearned(e.target.value)}
@@ -186,14 +186,14 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
           onClick={onCancel}
           className="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
         >
-          キャンセル
+          Cancel
         </button>
         <button
           onClick={handleSave}
           disabled={saving}
           className="px-4 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {saving ? '保存中...' : '保存して完了'}
+          {saving ? 'Saving...' : 'Save & Done'}
         </button>
       </div>
     </div>

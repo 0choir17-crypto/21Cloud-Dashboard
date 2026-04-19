@@ -81,7 +81,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? 'ウォッチ編集' : 'ウォッチ追加'}>
+    <Modal open={open} onClose={onClose} title={isEdit ? 'Edit Watch' : 'Add Watch'}>
       <div className="px-6 py-5 space-y-4">
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
@@ -90,7 +90,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
         {/* シグナル情報パネル（Signalsページからの場合のみ表示） */}
         {initial?.rs_composite != null && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">シグナル情報（自動取得）</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Signal data (auto-filled)</p>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
               <span className="text-gray-500">RS: <strong className="text-gray-800">{initial.rs_composite?.toFixed(1)}</strong></span>
               <span className="text-gray-500">RVOL: <strong className={`${(initial.rvol ?? 0) >= 2 ? 'text-emerald-600' : 'text-gray-800'}`}>{initial.rvol?.toFixed(2)}</strong></span>
@@ -123,7 +123,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
           {/* Company Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">銘柄名</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
             <input
               type="text"
               value={companyName}
@@ -136,7 +136,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
           {/* Watch Date */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              ウォッチ日 <span className="text-red-500">*</span>
+              Added Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -148,7 +148,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
           {/* Screen Tag */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">スクリーン名タグ</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Screen Tag</label>
             <input
               type="text"
               value={screenTag}
@@ -160,7 +160,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
           {/* Entry Price */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">買い候補値段</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Signal Price</label>
             <input
               type="number"
               inputMode="numeric"
@@ -173,7 +173,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
           {/* Stop Price */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">ストップ値段</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Stop Price</label>
             <input
               type="number"
               inputMode="numeric"
@@ -186,7 +186,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
           {/* Target R */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Rターゲット</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">R Target</label>
             <input
               type="number"
               inputMode="numeric"
@@ -201,7 +201,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
 
         {/* Memo */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">メモ</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Memo</label>
           <textarea
             value={memo}
             onChange={e => setMemo(e.target.value)}
@@ -216,14 +216,14 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
-            キャンセル
+            Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? '保存中…' : '保存'}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

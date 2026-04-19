@@ -120,7 +120,7 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
     : '—'
 
   return (
-    <Modal open={open} onClose={onClose} title="トレードクローズ">
+    <Modal open={open} onClose={onClose} title="Close Trade">
       <div className="px-6 py-5 space-y-4">
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
@@ -132,7 +132,7 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
             {trade.ticker} {trade.company_name ?? ''}
           </p>
           <p className="text-xs text-gray-500">
-            {screenDisplay} &middot; Entry: {trade.entry_date} &middot; &yen;{trade.entry_price.toLocaleString()} &times; {trade.shares}株
+            {screenDisplay} &middot; Entry: {trade.entry_date} &middot; &yen;{trade.entry_price.toLocaleString()} &times; {trade.shares} sh
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
           {/* Exit Date */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              イグジット日 <span className="text-red-500">*</span>
+              Exit Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -153,7 +153,7 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
           {/* Exit Price */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              イグジット価格 <span className="text-red-500">*</span>
+              Exit Price <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -167,7 +167,7 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
 
           {/* Exit Reason */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Exit理由</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Exit Reason</label>
             <select
               value={exitReason}
               onChange={e => setExitReason(e.target.value)}
@@ -205,14 +205,14 @@ export default function CloseTradeModal({ open, onClose, onSaved, trade }: Props
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
-            キャンセル
+            Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? '確定中...' : '確定'}
+            {saving ? 'Confirming...' : 'Confirm'}
           </button>
         </div>
       </div>

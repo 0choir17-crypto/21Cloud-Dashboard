@@ -102,12 +102,12 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={`クローズ: ${position.ticker}`}>
+    <Modal open={open} onClose={onClose} title={`Close: ${position.ticker}`}>
       <div className="px-6 py-5 space-y-4">
         {/* Position summary */}
         <div className="bg-gray-50 rounded-lg px-4 py-3 text-xs text-gray-600 grid grid-cols-3 gap-2">
-          <div><span className="text-gray-400 block">Entry価格</span>¥{position.entry_price.toLocaleString()}</div>
-          <div><span className="text-gray-400 block">株数</span>{position.shares.toLocaleString()}株</div>
+          <div><span className="text-gray-400 block">Entry Price</span>¥{position.entry_price.toLocaleString()}</div>
+          <div><span className="text-gray-400 block">Shares</span>{position.shares.toLocaleString()} sh</div>
           <div><span className="text-gray-400 block">Stop</span>{position.stop_price != null ? `¥${position.stop_price.toLocaleString()}` : '—'}</div>
         </div>
 
@@ -119,7 +119,7 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
           {/* Exit Price */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              売値 <span className="text-red-500">*</span>
+              Exit Price <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -135,7 +135,7 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
           {/* Exit Date */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              売却日 <span className="text-red-500">*</span>
+              Exit Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -147,7 +147,7 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
 
           {/* Exit Reason */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Exit理由</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Exit Reason</label>
             <select
               value={exitReason}
               onChange={e => setExitReason(e.target.value)}
@@ -164,7 +164,7 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
         {realizedPnl != null && (
           <div className="bg-gray-50 rounded-lg px-4 py-3 grid grid-cols-2 gap-4">
             <div>
-              <span className="text-xs text-gray-400 block mb-0.5">確定損益</span>
+              <span className="text-xs text-gray-400 block mb-0.5">Realized PnL</span>
               <span
                 className={`text-lg font-bold font-mono ${realizedPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}
               >
@@ -173,7 +173,7 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
             </div>
             {rMultiple != null && (
               <div>
-                <span className="text-xs text-gray-400 block mb-0.5">R倍率</span>
+                <span className="text-xs text-gray-400 block mb-0.5">R Multiple</span>
                 <span
                   className={`text-lg font-bold font-mono ${rMultiple >= 0 ? 'text-green-600' : 'text-red-600'}`}
                 >
@@ -189,14 +189,14 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
-            キャンセル
+            Cancel
           </button>
           <button
             onClick={handleClose}
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? '処理中…' : 'クローズ確定'}
+            {saving ? 'Processing...' : 'Confirm Close'}
           </button>
         </div>
       </div>

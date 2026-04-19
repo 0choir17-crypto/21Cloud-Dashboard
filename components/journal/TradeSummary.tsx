@@ -58,8 +58,8 @@ export default function TradeSummary({ trades }: Props) {
         value={closed.length > 0 ? (pf === Infinity ? '∞' : pf.toFixed(2)) : '—'}
       />
       <StatCard
-        label="🔍 未振り返り"
-        value={closed.length > 0 ? `${unreviewedCount}件` : '—'}
+        label="🔍 Unreviewed"
+        value={closed.length > 0 ? `${unreviewedCount}` : '—'}
         tone={unreviewedCount > 0 ? 'warning' : 'muted'}
       />
     </div>

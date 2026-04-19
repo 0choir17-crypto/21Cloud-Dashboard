@@ -10,13 +10,13 @@ type V3Factor = {
 }
 
 const V3_FACTORS: V3Factor[] = [
-  { key: 'f1_idx_momentum',      label: '短期 MOM' },
-  { key: 'f2_idx_trend',         label: '中期トレンド' },
-  { key: 'f3_idx_long_trend',    label: '長期方向性' },
-  { key: 'f4_ema21_slope',       label: 'EMA傾き' },
-  { key: 'f5_sell_pressure',     label: '売り圧力' },
-  { key: 'f6_foreign_flow',      label: '海外投資家' },
-  { key: 'f7_idx_52wh_distance', label: '52WH距離' },
+  { key: 'f1_idx_momentum',      label: 'Short MOM' },
+  { key: 'f2_idx_trend',         label: 'Mid Trend' },
+  { key: 'f3_idx_long_trend',    label: 'Long Trend' },
+  { key: 'f4_ema21_slope',       label: 'EMA Slope' },
+  { key: 'f5_sell_pressure',     label: 'Sell Pressure' },
+  { key: 'f6_foreign_flow',      label: 'Foreign Flow' },
+  { key: 'f7_idx_52wh_distance', label: '52WH Dist' },
 ]
 
 function ScoreDots({ score }: { score: number | null | undefined }) {
@@ -52,34 +52,34 @@ type V1Group = {
 
 const V1_GROUPS: V1Group[] = [
   {
-    title: '指数パフォーマンス',
+    title: 'Index Performance',
     factors: [
-      { key: 'f01_idx_perf_1w',  label: '1週間' },
-      { key: 'f02_idx_perf_1m',  label: '1ヶ月' },
-      { key: 'f03_idx_perf_ytd', label: '年初来' },
-      { key: 'f04_idx_perf_1y',  label: '1年' },
+      { key: 'f01_idx_perf_1w',  label: '1W' },
+      { key: 'f02_idx_perf_1m',  label: '1M' },
+      { key: 'f03_idx_perf_ytd', label: 'YTD' },
+      { key: 'f04_idx_perf_1y',  label: '1Y' },
     ],
   },
   {
-    title: '指数 MA・高値位置',
+    title: 'Index MA / 52W High',
     factors: [
-      { key: 'f05_idx_ma_position', label: 'MA位置' },
-      { key: 'f06_idx_52wh',        label: '52週高値圏' },
+      { key: 'f05_idx_ma_position', label: 'MA Position' },
+      { key: 'f06_idx_52wh',        label: '52W High Zone' },
     ],
   },
   {
-    title: 'セクター',
+    title: 'Sector',
     factors: [
-      { key: 'f07_sec_perf_positive', label: 'セクターパフォーマンス' },
-      { key: 'f08_sec_52wh',          label: 'セクター52週高値圏' },
-      { key: 'f09_sec_ma_position',   label: 'セクターMA位置' },
+      { key: 'f07_sec_perf_positive', label: 'Sector Perf' },
+      { key: 'f08_sec_52wh',          label: 'Sector 52WH Zone' },
+      { key: 'f09_sec_ma_position',   label: 'Sector MA' },
     ],
   },
   {
-    title: 'ブレッド・VIX',
+    title: 'Breadth / VIX',
     factors: [
-      { key: 'f10_breadth_adv_pct', label: '騰落率' },
-      { key: 'f11_breadth_sma50',   label: 'SMA50超え比率' },
+      { key: 'f10_breadth_adv_pct', label: 'Adv %' },
+      { key: 'f11_breadth_sma50',   label: '% Above SMA50' },
       { key: 'f12_vix_condition',   label: 'VIX' },
     ],
   },

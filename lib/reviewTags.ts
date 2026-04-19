@@ -26,9 +26,9 @@ export const REVIEW_TAGS: ReviewTag[] = [
 ]
 
 export const CATEGORY_LABELS: Record<ReviewTagCategory, string> = {
-  entry:    '🎯 エントリー判断',
-  exit:     '🚪 イグジット判断',
-  external: '🌊 外部要因',
+  entry:    '🎯 Entry',
+  exit:     '🚪 Exit',
+  external: '🌊 External',
 }
 
 export function getTagById(id: string): ReviewTag | undefined {

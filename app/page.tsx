@@ -74,7 +74,7 @@ export default function Page() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            {loading ? '更新中...' : 'Refresh'}
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </header>
@@ -89,7 +89,7 @@ export default function Page() {
       {/* ローディング */}
       {loading && !market && (
         <div className="card p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-          <p className="text-lg font-medium">読み込み中…</p>
+          <p className="text-lg font-medium">Loading...</p>
         </div>
       )}
 
@@ -128,9 +128,9 @@ export default function Page() {
             </div>
             {/* 右: 指数カード縦3枚 */}
             <div className="flex flex-col gap-4 h-full">
-              <IndexCard label="日経225"     prefix="nikkei" data={market} className="flex-1" />
+              <IndexCard label="Nikkei 225"  prefix="nikkei" data={market} className="flex-1" />
               <IndexCard label="TOPIX"       prefix="topix"  data={market} className="flex-1" />
-              <IndexCard label="グロース250" prefix="growth" data={market} className="flex-1" />
+              <IndexCard label="Growth 250"  prefix="growth" data={market} className="flex-1" />
             </div>
           </div>
 

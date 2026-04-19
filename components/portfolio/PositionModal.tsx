@@ -143,8 +143,8 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
 
   const isPlan = statusMode === 'plan'
   const title = isEdit
-    ? (isPlan ? 'エントリー計画 編集' : '保有ポジション 編集')
-    : (isPlan ? 'エントリー計画 追加' : 'ポジション追加')
+    ? (isPlan ? 'Edit Entry Plan' : 'Edit Position')
+    : (isPlan ? 'Add Entry Plan' : 'Add Position')
 
   return (
     <Modal open={open} onClose={onClose} title={title}>
@@ -170,7 +170,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
 
           {/* Company Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">銘柄名</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
             <input
               type="text"
               value={companyName}
@@ -182,7 +182,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
 
           {/* Sector */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">セクター</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Sector</label>
             <input
               type="text"
               value={sector}
@@ -195,7 +195,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
           {/* Entry Date */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              {isPlan ? '想定Entry日' : '取得日'} {!isPlan && <span className="text-red-500">*</span>}
+              {isPlan ? 'Planned Entry Date' : 'Entry Date'} {!isPlan && <span className="text-red-500">*</span>}
             </label>
             <input
               type="date"
@@ -208,7 +208,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
           {/* Entry Price */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              {isPlan ? '想定Entry価格' : 'Entry価格'} <span className="text-red-500">*</span>
+              {isPlan ? 'Planned Entry Price' : 'Entry Price'} <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -224,7 +224,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
           {!isPlan && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
-                株数 <span className="text-red-500">*</span>
+                Shares <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -240,7 +240,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
           {/* Cost Basis */}
           {!isPlan && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">取得コスト（手数料込み・任意）</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Cost Basis (incl. fees, optional)</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -254,7 +254,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
 
           {/* Stop Price */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">ストップ値段</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Stop Price</label>
             <input
               type="number"
               inputMode="numeric"
@@ -267,7 +267,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
 
           {/* Stop 21L */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Stop(21L)（任意）</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Stop(21L) (optional)</label>
             <input
               type="number"
               inputMode="numeric"
@@ -280,7 +280,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
 
           {/* Target R */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Rターゲット</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">R Target</label>
             <input
               type="number"
               inputMode="numeric"
@@ -295,7 +295,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
           {/* Init Risk% (calculated, read-only) */}
           {initRiskPct != null && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Init Risk%（自動計算）</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Init Risk% (auto)</label>
               <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2.5 text-base font-mono text-gray-700">
                 {initRiskPct.toFixed(2)}%
               </div>
@@ -306,7 +306,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
         {/* Memo */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            {isPlan ? 'メモ' : '買い理由メモ'}
+            {isPlan ? 'Memo' : 'Buy thesis'}
           </label>
           <textarea
             value={memo}
@@ -322,14 +322,14 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
-            キャンセル
+            Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? '保存中…' : '保存'}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

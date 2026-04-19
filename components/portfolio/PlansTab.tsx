@@ -20,7 +20,7 @@ function fmt(v: number | null | undefined, decimals = 0): string {
 
 function JudgmentBadge({ shares }: { shares: number }) {
   if (shares === 0) return (
-    <span className="inline-block px-2 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded text-xs font-semibold">0株</span>
+    <span className="inline-block px-2 py-0.5 bg-red-50 text-red-600 border border-red-200 rounded text-xs font-semibold">0 sh</span>
   )
   return (
     <span className="inline-block px-2 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded text-xs font-semibold">OK</span>
@@ -60,19 +60,19 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
         <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
           <span>⚠️</span>
           <span>
-            連敗 <strong>{consecLosses}回</strong> → 適用リスク:
-            <strong className="ml-1">{appliedRiskPct.toFixed(2)}%（半減中）</strong>
+            Losing streak <strong>{consecLosses}</strong> → Applied risk:
+            <strong className="ml-1">{appliedRiskPct.toFixed(2)}% (halved)</strong>
           </span>
         </div>
       )}
 
       <div className="flex justify-between items-center mb-4">
-        <span className="text-sm text-gray-500">{plans.length} 件</span>
+        <span className="text-sm text-gray-500">{plans.length} plans</span>
         <button
           onClick={() => setEditPlan({ status: 'plan' } as Trade)}
           className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors min-h-[36px]"
         >
-          + 計画追加
+          + Add Plan
         </button>
       </div>
 
@@ -81,8 +81,8 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
         <table className="w-full min-w-[1100px] text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-t border-[#e8eaed]">
-              {['Ticker','銘柄名','セクター','想定Entry','Stop','Stop(21L)','StopDist%','Risk¥','算出株数','投入額¥','投入%','R目標','判定','操作'].map(h => (
-                <th key={h} className={`px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === 'Ticker' || h === '銘柄名' || h === 'セクター' || h === '操作' ? 'text-left' : 'text-right'}`}>
+              {['Ticker','Name','Sector','Entry','Stop','Stop(21L)','StopDist%','Risk ¥','Shares','Invest ¥','Invest %','R Target','Judge','Actions'].map(h => (
+                <th key={h} className={`px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === 'Ticker' || h === 'Name' || h === 'Sector' || h === 'Actions' ? 'text-left' : 'text-right'}`}>
                   {h}
                 </th>
               ))}
@@ -119,7 +119,7 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
                     {riskYen != null ? `¥${fmt(riskYen)}` : '—'}
                   </td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs font-bold whitespace-nowrap">
-                    {sharesPlan > 0 ? `${sharesPlan.toLocaleString()}株` : '—'}
+                    {sharesPlan > 0 ? `${sharesPlan.toLocaleString()} sh` : '—'}
                   </td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">
                     {investYen != null ? `¥${fmt(investYen)}` : '—'}
@@ -136,11 +136,11 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex justify-end gap-1">
                       <button onClick={() => handlePromote(plan)}
-                        className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100">→ 保有</button>
+                        className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100">→ Hold</button>
                       <button onClick={() => setEditPlan(plan)}
-                        className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">編集</button>
+                        className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">Edit</button>
                       <button onClick={() => setDeletePlan(plan)}
-                        className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100">削除</button>
+                        className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -149,13 +149,13 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
           </tbody>
         </table>
         {plans.length === 0 && (
-          <div className="py-10 text-center text-gray-400 text-sm">エントリー計画はありません</div>
+          <div className="py-10 text-center text-gray-400 text-sm">No entry plans</div>
         )}
       </div>
 
       {/* Mobile cards */}
       <div className="block sm:hidden space-y-3">
-        {plans.length === 0 && <p className="text-center text-gray-400 text-sm py-8">エントリー計画はありません</p>}
+        {plans.length === 0 && <p className="text-center text-gray-400 text-sm py-8">No entry plans</p>}
         {plans.map(plan => {
           const ep = plan.entry_price
           const sp = plan.stop_price
@@ -175,12 +175,12 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
               <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
                 <div><span className="text-gray-400 block">Entry</span>¥{fmt(ep)}</div>
                 <div><span className="text-gray-400 block">Stop</span>{sp != null ? `¥${fmt(sp)}` : '—'}</div>
-                <div><span className="text-gray-400 block">算出株数</span>{sharesPlan > 0 ? `${sharesPlan}株` : '—'}</div>
+                <div><span className="text-gray-400 block">Shares</span>{sharesPlan > 0 ? `${sharesPlan} sh` : '—'}</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handlePromote(plan)} className="flex-1 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg">→ 保有へ</button>
-                <button onClick={() => setEditPlan(plan)} className="px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg">編集</button>
-                <button onClick={() => setDeletePlan(plan)} className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg">削除</button>
+                <button onClick={() => handlePromote(plan)} className="flex-1 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg">→ Hold</button>
+                <button onClick={() => setEditPlan(plan)} className="px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg">Edit</button>
+                <button onClick={() => setDeletePlan(plan)} className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg">Delete</button>
               </div>
             </div>
           )

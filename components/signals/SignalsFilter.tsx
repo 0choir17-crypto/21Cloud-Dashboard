@@ -58,7 +58,7 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
       {/* Filter buttons */}
       <div className="flex flex-wrap gap-2 mb-4">
         <button className={btnClass('all', false, false)} onClick={() => setActiveScreen('all')}>
-          全て（{signals.length}）
+          All ({signals.length})
         </button>
         {allScreens.map(name => {
           const count     = screenCounts.get(name) ?? 0
@@ -75,7 +75,7 @@ export default function SignalsFilter({ signals, marketRegime, scorecardRegime }
               title={isBearRS && disabled ? 'MC Score > 3 のため本日は非発動' : undefined}
             >
               {rec && !disabled && <span className="mr-1">★</span>}
-              {shortName}（{count}）
+              {shortName} ({count})
               {isBearRS && disabled && (
                 <span className="ml-1 text-[10px] text-red-400">MC&gt;3</span>
               )}

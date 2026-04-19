@@ -101,7 +101,7 @@ export default function IndexCard({ label, prefix, data, className }: Props) {
       </div>
 
       <div className="mt-3 pt-3 border-t border-[var(--border)] text-xs text-[var(--text-muted)] flex justify-between">
-        <span>52W高値まで</span>
+        <span>To 52W High</span>
         <span className="font-mono font-medium text-[var(--text-secondary)]">
           {fmt(pct52wh)}%
         </span>

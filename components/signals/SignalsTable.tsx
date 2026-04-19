@@ -113,12 +113,12 @@ function HitTooltip({
           className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-amber-100 text-amber-700 border-amber-300 cursor-help"
           title="複数スクリーンで検出 — 高確度シグナル"
         >
-          {count}x重複
+          {count}x overlap
         </span>
       )}
       {/* ツールチップ */}
       <div className="absolute z-10 right-0 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
-        <p className="font-semibold mb-1">ヒットスクリーン</p>
+        <p className="font-semibold mb-1">Hit Screens</p>
         {screenName.split('|').map(name => {
           const short = SCREEN_NAME_MAP[name.trim()] ?? name.trim()
           const isRec = recommended.includes(short)
@@ -232,8 +232,8 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 border-b border-[#e8eaed]">
-            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">銘柄</th>
-            <SortTh label="セクター"  sortKey="sector_name"  {...sp} align="left" />
+            <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Name</th>
+            <SortTh label="Sector"    sortKey="sector_name"  {...sp} align="left" />
             <SortTh label="RS"        sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
             <SortTh label="1D%"       sortKey="price_chg_1d" tooltip={COLUMN_TOOLTIPS.price_chg_1d} {...sp} />
             <SortTh label="5D%"       sortKey="price_chg_5d" tooltip={COLUMN_TOOLTIPS.price_chg_5d} {...sp} />
@@ -355,7 +355,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                 {/* Entry */}
                 <td className="px-3 py-2.5 text-center whitespace-nowrap">
                   {openTickers.has(sig.code) ? (
-                    <span className="text-[10px] font-medium text-gray-400">保有中</span>
+                    <span className="text-[10px] font-medium text-gray-400">Holding</span>
                   ) : (
                     <button
                       onClick={() => setEntryTarget({
