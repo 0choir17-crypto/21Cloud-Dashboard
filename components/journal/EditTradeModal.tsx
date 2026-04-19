@@ -201,7 +201,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
   if (!trade) return null
 
   return (
-    <Modal open={open} onClose={onClose} title="トレード編集">
+    <Modal open={open} onClose={onClose} title="Edit Trade">
       <div className="px-6 py-5 space-y-4">
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
@@ -211,7 +211,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
           {/* Ticker */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              銘柄コード <span className="text-red-500">*</span>
+              Ticker <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -223,7 +223,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
 
           {/* Company Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">銘柄名</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
             <input
               type="text"
               value={companyName}
@@ -234,24 +234,24 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
 
           {/* Screen Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">スクリーン</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Screen</label>
             <select
               value={screenName}
               onChange={e => setScreenName(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option value="">-- 選択 --</option>
+              <option value="">-- Select --</option>
               {SCREEN_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-              <option value="other">その他</option>
+              <option value="other">Other</option>
             </select>
           </div>
 
           {/* Entry Date */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              エントリー日 <span className="text-red-500">*</span>
+              Entry Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -264,7 +264,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
           {/* Entry Price */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              エントリー価格 <span className="text-red-500">*</span>
+              Entry Price <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -278,7 +278,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
           {/* Shares */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              株数 <span className="text-red-500">*</span>
+              Shares <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -294,13 +294,13 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
         <div className="bg-gray-50 rounded-lg px-4 py-3">
           <span className="text-xs font-medium text-gray-500">MC Score: </span>
           {mcLoading ? (
-            <span className="text-xs text-gray-400">取得中...</span>
+            <span className="text-xs text-gray-400">Loading...</span>
           ) : mcScore != null ? (
             <span className="text-sm font-semibold text-gray-800">
               {mcScore}/21 ({REGIME_LABEL[mcRegime ?? ''] ?? mcRegime ?? '—'})
             </span>
           ) : (
-            <span className="text-xs text-gray-400">取得できません</span>
+            <span className="text-xs text-gray-400">Not available</span>
           )}
         </div>
 
@@ -308,11 +308,11 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
         {isClosed && (
           <>
             <div className="border-t border-gray-200 pt-4">
-              <p className="text-xs font-semibold text-gray-500 mb-3">イグジット情報</p>
+              <p className="text-xs font-semibold text-gray-500 mb-3">Exit</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    イグジット日 <span className="text-red-500">*</span>
+                    Exit Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -323,7 +323,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    イグジット価格 <span className="text-red-500">*</span>
+                    Exit Price <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -360,7 +360,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
 
         {/* Signal Snapshot */}
         <div className="border-t border-gray-200 pt-4">
-          <p className="text-xs font-semibold text-gray-500 mb-3">📝 シグナルスナップショット</p>
+          <p className="text-xs font-semibold text-gray-500 mb-3">📝 Signal Snapshot</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Signal Price</label>
@@ -405,7 +405,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">EMA21乖離 (R)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">EMA21 Dist (R)</label>
               <input
                 type="number"
                 step="0.1"
@@ -442,7 +442,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
                   onChange={e => setMcMetAtEntry(e.target.checked)}
                   className="w-4 h-4 accent-blue-600"
                 />
-                MC条件を満たした
+                MC Met
               </label>
             </div>
           </div>
@@ -450,7 +450,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
 
         {/* Memo */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">メモ</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Memo</label>
           <textarea
             value={memo}
             onChange={e => setMemo(e.target.value)}
@@ -465,14 +465,14 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
-            キャンセル
+            Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? '保存中...' : '更新'}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

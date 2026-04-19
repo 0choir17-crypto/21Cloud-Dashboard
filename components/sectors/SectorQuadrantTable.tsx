@@ -153,7 +153,7 @@ export default function SectorQuadrantTable({ sectors }: { sectors: SectorData[]
   })
 
   const FILTER_BUTTONS: { key: QuadrantFilter; label: string }[] = [
-    { key: 'all',       label: '全て' },
+    { key: 'all',       label: 'All' },
     { key: 'leader',    label: '🟢 Leader' },
     { key: 'improving', label: '🔵 Improving' },
     { key: 'weakening', label: '🟡 Weakening' },

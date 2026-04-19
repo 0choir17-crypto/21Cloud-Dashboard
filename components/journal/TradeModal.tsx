@@ -154,7 +154,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="新規トレード">
+    <Modal open={open} onClose={onClose} title="New Trade">
       <div className="px-6 py-5 space-y-4">
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
@@ -164,7 +164,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
           {/* Ticker */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              銘柄コード <span className="text-red-500">*</span>
+              Ticker <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -177,7 +177,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
 
           {/* Company Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">銘柄名</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
             <input
               type="text"
               value={companyName}
@@ -189,24 +189,24 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
 
           {/* Screen Name */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">スクリーン</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Screen</label>
             <select
               value={screenName}
               onChange={e => setScreenName(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option value="">-- 選択 --</option>
+              <option value="">-- Select --</option>
               {SCREEN_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-              <option value="other">その他</option>
+              <option value="other">Other</option>
             </select>
           </div>
 
           {/* Entry Date */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              エントリー日 <span className="text-red-500">*</span>
+              Entry Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -219,7 +219,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
           {/* Entry Price */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              エントリー価格 <span className="text-red-500">*</span>
+              Entry Price <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -234,7 +234,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
           {/* Shares */}
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              株数 <span className="text-red-500">*</span>
+              Shares <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -250,7 +250,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
         {/* シグナル情報パネル（Signalsページからの場合のみ表示） */}
         {initial?.rs_at_entry != null && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">シグナル情報（自動取得）</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Signal data (auto-filled)</p>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
               <span className="text-gray-500">RS: <strong className="text-gray-800">{initial.rs_at_entry?.toFixed(1)}</strong></span>
               <span className="text-gray-500">RVOL: <strong className={`${(initial.rvol_at_entry ?? 0) >= 2 ? 'text-emerald-600' : 'text-gray-800'}`}>{initial.rvol_at_entry?.toFixed(2)}</strong></span>
@@ -270,19 +270,19 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
         <div className="bg-gray-50 rounded-lg px-4 py-3">
           <span className="text-xs font-medium text-gray-500">MC Score: </span>
           {mcLoading ? (
-            <span className="text-xs text-gray-400">取得中...</span>
+            <span className="text-xs text-gray-400">Loading...</span>
           ) : mcScore != null ? (
             <span className="text-sm font-semibold text-gray-800">
               {mcScore}/21 ({regimeLabel[mcRegime ?? ''] ?? mcRegime ?? '—'})
             </span>
           ) : (
-            <span className="text-xs text-gray-400">取得できません</span>
+            <span className="text-xs text-gray-400">Not available</span>
           )}
         </div>
 
         {/* Memo */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">メモ</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Memo</label>
           <textarea
             value={memo}
             onChange={e => setMemo(e.target.value)}
@@ -297,14 +297,14 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px]"
           >
-            キャンセル
+            Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? '保存中...' : '保存'}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

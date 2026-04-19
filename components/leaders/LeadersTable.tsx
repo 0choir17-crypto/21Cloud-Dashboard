@@ -132,7 +132,7 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
       {/* サマリー + フィルター */}
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          本日のリーダー: <strong style={{ color: 'var(--text-primary)' }}>{sorted.length}</strong> 銘柄
+          Today&apos;s leaders: <strong style={{ color: 'var(--text-primary)' }}>{sorted.length}</strong>
         </span>
         <select
           value={sectorFilter}
@@ -140,7 +140,7 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
           className="text-sm border border-[var(--border)] rounded-lg px-3 py-1.5 bg-white"
           style={{ color: 'var(--text-primary)' }}
         >
-          <option value="all">全セクター</option>
+          <option value="all">All Sectors</option>
           {sectors.map(s => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -153,8 +153,8 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
           <thead>
             <tr className="bg-gray-50 border-b border-[#e8eaed]">
               {/* 銘柄 (Signals と同じ: Code+Name 1セル, ソート不可) */}
-              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">銘柄</th>
-              <SortTh label="セクター"   sortKey="sector"       {...sp} align="left" />
+              <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Name</th>
+              <SortTh label="Sector"     sortKey="sector"       {...sp} align="left" />
               <SortTh label="RS"         sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
               <SortTh label="1D%"        sortKey="daily_pct"    tooltip={COLUMN_TOOLTIPS.daily_pct}    {...sp} />
               <SortTh label="1W%"        sortKey="weekly_pct"   tooltip={COLUMN_TOOLTIPS.weekly_pct}   {...sp} />
@@ -163,7 +163,7 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
               <SortTh label="EMA21(R)"   sortKey="dist_ema21_r" tooltip={COLUMN_TOOLTIPS.dist_ema21_r} {...sp} />
               <SortTh label="10WMA(R)"   sortKey="dist_wma10_r" tooltip={COLUMN_TOOLTIPS.dist_wma10_r} {...sp} />
               <SortTh label="50SMA(R)"   sortKey="dist_sma50_r" tooltip={COLUMN_TOOLTIPS.dist_sma50_r} {...sp} />
-              <SortTh label="売買代金"   sortKey="turnover_50d" tooltip={COLUMN_TOOLTIPS.turnover_50d} {...sp} />
+              <SortTh label="Turnover"   sortKey="turnover_50d" tooltip={COLUMN_TOOLTIPS.turnover_50d} {...sp} />
             </tr>
           </thead>
           <tbody>
@@ -215,7 +215,7 @@ export default function LeadersTable({ leaders }: { leaders: DailyLeader[] }) {
                 <td className="px-3 py-2.5 text-right whitespace-nowrap"><AtrDistCell value={row.dist_sma50_r} /></td>
                 {/* 売買代金50d */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">
-                  {row.turnover_50d != null ? `${row.turnover_50d.toFixed(1)}億` : '—'}
+                  {row.turnover_50d != null ? `¥${row.turnover_50d.toFixed(1)}B` : '—'}
                 </td>
               </tr>
             ))}

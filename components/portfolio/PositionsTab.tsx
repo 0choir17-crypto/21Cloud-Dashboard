@@ -86,12 +86,12 @@ export default function TradesTab({ positions, onRefresh }: Props) {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <span className="text-sm text-gray-500">{openTrades.length} ポジション</span>
+        <span className="text-sm text-gray-500">{openTrades.length} positions</span>
         <button
           onClick={() => setEditPos({} as Trade)}
           className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors min-h-[36px]"
         >
-          + ポジション追加
+          + Add Position
         </button>
       </div>
 
@@ -100,8 +100,8 @@ export default function TradesTab({ positions, onRefresh }: Props) {
         <table className="w-full min-w-[1200px] text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-t border-[#e8eaed]">
-              {['Ticker','銘柄名','セクター','Entry日','Entry価格','株数','Stop','Stop(21L)','InitRisk%','現在価格','含み損益¥','含み損益%','TrailDist%','R目標','操作'].map(h => (
-                <th key={h} className={`px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === '操作' ? 'text-right' : h === 'Ticker' || h === '銘柄名' || h === 'セクター' || h === '操作' ? 'text-left' : 'text-right'}`}>
+              {['Ticker','Name','Sector','Entry Date','Entry Price','Shares','Stop','Stop(21L)','InitRisk%','Current','Unrealized ¥','Unrealized %','TrailDist%','R Target','Actions'].map(h => (
+                <th key={h} className={`px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === 'Actions' ? 'text-right' : h === 'Ticker' || h === 'Name' || h === 'Sector' ? 'text-left' : 'text-right'}`}>
                   {h}
                 </th>
               ))}
@@ -150,11 +150,11 @@ export default function TradesTab({ positions, onRefresh }: Props) {
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex justify-end gap-1">
                       <button onClick={() => setClosePos(pos)}
-                        className="px-2 py-1 text-xs font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded hover:bg-orange-100">クローズ</button>
+                        className="px-2 py-1 text-xs font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded hover:bg-orange-100">Close</button>
                       <button onClick={() => setEditPos(pos)}
-                        className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">編集</button>
+                        className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">Edit</button>
                       <button onClick={() => setDeletePos(pos)}
-                        className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100">削除</button>
+                        className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -163,14 +163,14 @@ export default function TradesTab({ positions, onRefresh }: Props) {
           </tbody>
         </table>
         {openTrades.length === 0 && (
-          <div className="py-10 text-center text-gray-400 text-sm">保有ポジションはありません</div>
+          <div className="py-10 text-center text-gray-400 text-sm">No open positions</div>
         )}
       </div>
 
       {/* Mobile cards */}
       <div className="block sm:hidden space-y-3">
         {openTrades.length === 0 && (
-          <p className="text-center text-gray-400 text-sm py-8">保有ポジションはありません</p>
+          <p className="text-center text-gray-400 text-sm py-8">No open positions</p>
         )}
         {openTrades.map(pos => {
           const curPrice = prices[pos.ticker] ?? null
@@ -191,19 +191,19 @@ export default function TradesTab({ positions, onRefresh }: Props) {
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
                 <div><span className="text-gray-400 block">Entry</span>¥{fmt(pos.entry_price)}</div>
-                <div><span className="text-gray-400 block">株数</span>{fmt(pos.shares)}</div>
-                <div><span className="text-gray-400 block">現在値</span>{curPrice != null ? `¥${fmt(curPrice)}` : '—'}</div>
+                <div><span className="text-gray-400 block">Shares</span>{fmt(pos.shares)}</div>
+                <div><span className="text-gray-400 block">Current</span>{curPrice != null ? `¥${fmt(curPrice)}` : '—'}</div>
                 <div><span className="text-gray-400 block">Stop</span>{pos.stop_price != null ? `¥${fmt(pos.stop_price)}` : '—'}</div>
                 <div><span className="text-gray-400 block">InitRisk</span>{pos.init_risk_pct != null ? `${pos.init_risk_pct.toFixed(1)}%` : '—'}</div>
-                <div><span className="text-gray-400 block">R目標</span>{pos.target_r != null ? `${pos.target_r}R` : '—'}</div>
+                <div><span className="text-gray-400 block">R Target</span>{pos.target_r != null ? `${pos.target_r}R` : '—'}</div>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setClosePos(pos)}
-                  className="flex-1 py-2 text-xs font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg">クローズ</button>
+                  className="flex-1 py-2 text-xs font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg">Close</button>
                 <button onClick={() => setEditPos(pos)}
-                  className="px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg">編集</button>
+                  className="px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg">Edit</button>
                 <button onClick={() => setDeletePos(pos)}
-                  className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg">削除</button>
+                  className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg">Delete</button>
               </div>
             </div>
           )

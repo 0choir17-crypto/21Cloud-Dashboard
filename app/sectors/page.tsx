@@ -128,7 +128,7 @@ export default function SectorsPage() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            {loading ? '更新中...' : 'Refresh'}
+            {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </header>
@@ -139,7 +139,7 @@ export default function SectorsPage() {
           className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-8 text-center"
           style={{ color: 'var(--text-muted)' }}
         >
-          <p className="text-lg font-medium">読み込み中…</p>
+          <p className="text-lg font-medium">Loading...</p>
         </div>
       )}
 

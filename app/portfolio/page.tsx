@@ -12,10 +12,10 @@ import RiskTab from '@/components/portfolio/RiskTab'
 type Tab = 'positions' | 'plans' | 'history' | 'risk'
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'positions', label: '保有ポジション' },
-  { key: 'plans',     label: 'エントリー計画' },
-  { key: 'history',   label: 'トレード履歴' },
-  { key: 'risk',      label: 'リスク管理' },
+  { key: 'positions', label: 'Positions' },
+  { key: 'plans',     label: 'Plans' },
+  { key: 'history',   label: 'History' },
+  { key: 'risk',      label: 'Risk' },
 ]
 
 export default function PortfolioPage() {
@@ -61,7 +61,7 @@ export default function PortfolioPage() {
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <span className="hidden sm:block">
-            保有: <strong>{openPositions.length}</strong> 計画: <strong>{plans.length}</strong>
+            Positions: <strong>{openPositions.length}</strong> Plans: <strong>{plans.length}</strong>
           </span>
         </div>
       </header>
@@ -97,7 +97,7 @@ export default function PortfolioPage() {
 
       {/* Tab content */}
       {loading ? (
-        <div className="text-center py-16 text-gray-400 text-sm">読み込み中…</div>
+        <div className="text-center py-16 text-gray-400 text-sm">Loading...</div>
       ) : (
         <>
           {activeTab === 'positions' && (

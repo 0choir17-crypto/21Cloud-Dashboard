@@ -21,7 +21,7 @@ function CustomTooltip({ active, payload }: any) {
   return (
     <div className="bg-white border border-[#e8eaed] rounded-lg px-3 py-2 shadow-sm text-xs">
       <p className="font-medium text-gray-700 mb-1">{d?.name}</p>
-      <p className="text-gray-500">SMA50乖離: <span className="font-mono">{(d?.x ?? 0).toFixed(2)}%</span></p>
+      <p className="text-gray-500">SMA50 Dist: <span className="font-mono">{(d?.x ?? 0).toFixed(2)}%</span></p>
       <p className="text-gray-500">5D%: <span className="font-mono">{(d?.y ?? 0).toFixed(2)}%</span></p>
     </div>
   )
@@ -67,7 +67,7 @@ export default function SectorRRG({ sectors }: Props) {
   return (
     <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
       <p className="text-sm font-semibold text-gray-500 mb-4">
-        セクター RRG（X: SMA50乖離% / Y: 5D%）
+        Sector RRG (X: SMA50 Dist % / Y: 5D %)
       </p>
       <div className="relative">
         <ResponsiveContainer width="100%" height={420}>
@@ -76,10 +76,10 @@ export default function SectorRRG({ sectors }: Props) {
             <XAxis
               type="number"
               dataKey="x"
-              name="SMA50乖離%"
+              name="SMA50 Dist %"
               tick={{ fontSize: 11 }}
               tickFormatter={v => `${v}%`}
-              label={{ value: 'SMA50乖離%', position: 'insideBottom', offset: -15, fontSize: 11, fill: '#9ca3af' }}
+              label={{ value: 'SMA50 Dist %', position: 'insideBottom', offset: -15, fontSize: 11, fill: '#9ca3af' }}
             />
             <YAxis
               type="number"
@@ -99,10 +99,10 @@ export default function SectorRRG({ sectors }: Props) {
           </ScatterChart>
         </ResponsiveContainer>
         {/* 4象限ラベル */}
-        <div className="absolute top-6 right-8 text-[11px] font-semibold text-green-700 pointer-events-none">🟢 リーダー</div>
-        <div className="absolute top-6  left-16 text-[11px] font-semibold text-blue-700  pointer-events-none">🔵 改善中</div>
-        <div className="absolute bottom-12 right-8 text-[11px] font-semibold text-amber-700 pointer-events-none">🟡 弱体化</div>
-        <div className="absolute bottom-12 left-16 text-[11px] font-semibold text-red-700   pointer-events-none">🔴 遅行</div>
+        <div className="absolute top-6 right-8 text-[11px] font-semibold text-green-700 pointer-events-none">🟢 Leader</div>
+        <div className="absolute top-6  left-16 text-[11px] font-semibold text-blue-700  pointer-events-none">🔵 Improving</div>
+        <div className="absolute bottom-12 right-8 text-[11px] font-semibold text-amber-700 pointer-events-none">🟡 Weakening</div>
+        <div className="absolute bottom-12 left-16 text-[11px] font-semibold text-red-700   pointer-events-none">🔴 Lagging</div>
       </div>
     </div>
   )

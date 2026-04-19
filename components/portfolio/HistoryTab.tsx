@@ -74,10 +74,10 @@ export default function HistoryTab({ history }: Props) {
       {/* Stats summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: '勝率', value: winRate != null ? `${winRate.toFixed(1)}%` : '—', color: winRate != null && winRate >= 50 ? 'text-green-600' : 'text-red-500' },
-          { label: '平均R', value: avgR != null ? `${avgR >= 0 ? '+' : ''}${avgR.toFixed(2)}R` : '—', color: avgR != null && avgR >= 0 ? 'text-green-600' : 'text-red-500' },
+          { label: 'Win Rate', value: winRate != null ? `${winRate.toFixed(1)}%` : '—', color: winRate != null && winRate >= 50 ? 'text-green-600' : 'text-red-500' },
+          { label: 'Avg R', value: avgR != null ? `${avgR >= 0 ? '+' : ''}${avgR.toFixed(2)}R` : '—', color: avgR != null && avgR >= 0 ? 'text-green-600' : 'text-red-500' },
           { label: 'Profit Factor', value: profitFactor != null ? profitFactor.toFixed(2) : '—', color: profitFactor != null && profitFactor >= 1.5 ? 'text-green-600' : 'text-gray-700' },
-          { label: '合計損益', value: trades.length > 0 ? `${totalPnl >= 0 ? '+' : ''}¥${fmt(totalPnl)}` : '—', color: totalPnl >= 0 ? 'text-green-600' : 'text-red-600' },
+          { label: 'Total PnL', value: trades.length > 0 ? `${totalPnl >= 0 ? '+' : ''}¥${fmt(totalPnl)}` : '—', color: totalPnl >= 0 ? 'text-green-600' : 'text-red-600' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-xl border border-[#e8eaed] shadow-sm px-4 py-3">
             <p className="text-xs text-gray-400 mb-1">{label}</p>
@@ -88,12 +88,12 @@ export default function HistoryTab({ history }: Props) {
 
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-6">
         {[
-          { label: 'トレード数', value: String(trades.length) },
-          { label: '勝ち', value: String(wins.length) },
-          { label: '負け', value: String(losses.length) },
-          { label: '平均保有日数', value: avgHoldDays != null ? `${avgHoldDays.toFixed(1)}日` : '—' },
-          { label: '最大利益', value: maxWin != null ? `+¥${fmt(maxWin)}` : '—' },
-          { label: '最大損失', value: maxLoss != null ? `¥${fmt(maxLoss)}` : '—' },
+          { label: 'Trades', value: String(trades.length) },
+          { label: 'Wins', value: String(wins.length) },
+          { label: 'Losses', value: String(losses.length) },
+          { label: 'Avg Hold', value: avgHoldDays != null ? `${avgHoldDays.toFixed(1)}d` : '—' },
+          { label: 'Max Win', value: maxWin != null ? `+¥${fmt(maxWin)}` : '—' },
+          { label: 'Max Loss', value: maxLoss != null ? `¥${fmt(maxLoss)}` : '—' },
         ].map(({ label, value }) => (
           <div key={label} className="bg-white rounded-xl border border-[#e8eaed] shadow-sm px-4 py-3">
             <p className="text-xs text-gray-400 mb-1">{label}</p>
@@ -107,8 +107,8 @@ export default function HistoryTab({ history }: Props) {
         <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-t border-[#e8eaed]">
-              {['Ticker','銘柄名','取得日','売却日','買値','売値','株数','損益','R倍率','Exit理由','メモ'].map(h => (
-                <th key={h} className={`px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === 'Ticker' || h === '銘柄名' || h === 'メモ' ? 'text-left' : 'text-right'}`}>
+              {['Ticker','Name','Entry Date','Exit Date','Entry','Exit','Shares','PnL','R','Exit Reason','Memo'].map(h => (
+                <th key={h} className={`px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === 'Ticker' || h === 'Name' || h === 'Memo' ? 'text-left' : 'text-right'}`}>
                   {h}
                 </th>
               ))}
@@ -138,13 +138,13 @@ export default function HistoryTab({ history }: Props) {
           </tbody>
         </table>
         {history.length === 0 && (
-          <div className="py-10 text-center text-gray-400 text-sm">トレード履歴はありません</div>
+          <div className="py-10 text-center text-gray-400 text-sm">No trade history</div>
         )}
       </div>
 
       {/* Mobile cards */}
       <div className="block sm:hidden space-y-3">
-        {history.length === 0 && <p className="text-center text-gray-400 text-sm py-8">トレード履歴はありません</p>}
+        {history.length === 0 && <p className="text-center text-gray-400 text-sm py-8">No trade history</p>}
         {history.map(h => (
           <div key={h.id} className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-4">
             <div className="flex justify-between items-start mb-2">
@@ -156,15 +156,15 @@ export default function HistoryTab({ history }: Props) {
               <ExitBadge reason={h.exit_reason} />
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-2">
-              <div><span className="text-gray-400 block">取得日</span>{h.entry_date ?? '—'}</div>
-              <div><span className="text-gray-400 block">売却日</span>{h.exit_date ?? '—'}</div>
-              <div><span className="text-gray-400 block">株数</span>{fmt(h.shares)}</div>
-              <div><span className="text-gray-400 block">買値</span>{h.entry_price != null ? `¥${fmt(h.entry_price)}` : '—'}</div>
-              <div><span className="text-gray-400 block">売値</span>{h.exit_price != null ? `¥${fmt(h.exit_price)}` : '—'}</div>
-              <div><span className="text-gray-400 block">R倍率</span><RCell value={h.r_multiple} /></div>
+              <div><span className="text-gray-400 block">Entry</span>{h.entry_date ?? '—'}</div>
+              <div><span className="text-gray-400 block">Exit</span>{h.exit_date ?? '—'}</div>
+              <div><span className="text-gray-400 block">Shares</span>{fmt(h.shares)}</div>
+              <div><span className="text-gray-400 block">Buy</span>{h.entry_price != null ? `¥${fmt(h.entry_price)}` : '—'}</div>
+              <div><span className="text-gray-400 block">Sell</span>{h.exit_price != null ? `¥${fmt(h.exit_price)}` : '—'}</div>
+              <div><span className="text-gray-400 block">R</span><RCell value={h.r_multiple} /></div>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-400">損益</span>
+              <span className="text-xs text-gray-400">PnL</span>
               <PnlCell value={h.pnl} />
             </div>
           </div>

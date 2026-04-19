@@ -83,7 +83,7 @@ export default function McScoreChart({ trades }: Props) {
     <div className="space-y-6 mb-6">
       {/* MC Score帯別WRチャート */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">MC Score帯別 勝率</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Win Rate by MC Score Band</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -106,7 +106,7 @@ export default function McScoreChart({ trades }: Props) {
       {regimeData.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <h3 className="text-sm font-semibold text-gray-700 px-4 py-3 border-b border-gray-100">
-            MC Regime別 パフォーマンス
+            Performance by MC Regime
           </h3>
           <table className="w-full text-sm">
             <thead>

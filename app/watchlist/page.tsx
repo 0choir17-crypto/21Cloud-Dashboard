@@ -107,36 +107,36 @@ export default function WatchlistPage() {
           onClick={() => setAddOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors min-h-[44px]"
         >
-          <span className="text-lg leading-none">+</span> ウォッチ追加
+          <span className="text-lg leading-none">+</span> Add Watch
         </button>
       </header>
 
       {/* Desktop Table */}
       <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm overflow-x-auto hidden sm:block">
-        <div className="px-4 pt-4 pb-2 text-xs text-gray-400">{items.length} 件</div>
+        <div className="px-4 pt-4 pb-2 text-xs text-gray-400">{items.length} items</div>
         <table className="w-full min-w-[1200px] text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-t border-[#e8eaed]">
               <th className={`${thClass('ticker')} text-left`} onClick={() => handleSort('ticker')}>
                 Ticker{indicator('ticker')}
               </th>
-              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">銘柄名</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">Name</th>
               <th className={`${thClass('watch_date')} text-left`} onClick={() => handleSort('watch_date')}>
-                ウォッチ日{indicator('watch_date')}
+                Added{indicator('watch_date')}
               </th>
               <th className={`${thClass('screen_tag')} text-left`} onClick={() => handleSort('screen_tag')}>
-                スクリーン{indicator('screen_tag')}
+                Screen{indicator('screen_tag')}
               </th>
-              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">買い候補値</th>
-              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">ストップ</th>
-              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">R目標</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">Signal Price</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">Stop</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">R Target</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">RS</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">RVOL</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">ADR%</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">EMA21(R)</th>
               <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">Sector</th>
-              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">メモ</th>
-              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">操作</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left whitespace-nowrap">Memo</th>
+              <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -191,21 +191,21 @@ export default function WatchlistPage() {
                     <button
                       onClick={() => setPromoteItem(item)}
                       className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100 transition-colors"
-                      title="ポートフォリオへ昇格"
+                      title="Promote to Portfolio"
                     >
-                      → PF
+                      → Portfolio
                     </button>
                     <button
                       onClick={() => setEditItem(item)}
                       className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
                     >
-                      編集
+                      Edit
                     </button>
                     <button
                       onClick={() => setDeleteItem(item)}
                       className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
                     >
-                      削除
+                      Delete
                     </button>
                   </div>
                 </td>
@@ -215,17 +215,17 @@ export default function WatchlistPage() {
         </table>
         {items.length === 0 && !loading && (
           <div className="py-12 text-center text-gray-400 text-sm">
-            ウォッチリストは空です。「ウォッチ追加」から登録してください。
+            ウォッチリストは空です。「Add Watch」から登録してください。
           </div>
         )}
         {loading && (
-          <div className="py-12 text-center text-gray-400 text-sm">読み込み中…</div>
+          <div className="py-12 text-center text-gray-400 text-sm">Loading...</div>
         )}
       </div>
 
       {/* Mobile Card Layout */}
       <div className="block sm:hidden space-y-3">
-        {loading && <p className="text-center text-gray-400 text-sm py-8">読み込み中…</p>}
+        {loading && <p className="text-center text-gray-400 text-sm py-8">Loading...</p>}
         {!loading && items.length === 0 && (
           <p className="text-center text-gray-400 text-sm py-8">ウォッチリストは空です。</p>
         )}
@@ -248,10 +248,10 @@ export default function WatchlistPage() {
               <ScreenTagBadge tag={item.screen_tag} />
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-2">
-              <div><span className="text-gray-400 block">ウォッチ日</span>{item.watch_date}</div>
-              <div><span className="text-gray-400 block">買い候補</span>{fmt(item.entry_price)}</div>
-              <div><span className="text-gray-400 block">ストップ</span>{fmt(item.stop_price)}</div>
-              <div><span className="text-gray-400 block">R目標</span>{item.target_r != null ? `${item.target_r}R` : '—'}</div>
+              <div><span className="text-gray-400 block">Added</span>{item.watch_date}</div>
+              <div><span className="text-gray-400 block">Signal</span>{fmt(item.entry_price)}</div>
+              <div><span className="text-gray-400 block">Stop</span>{fmt(item.stop_price)}</div>
+              <div><span className="text-gray-400 block">R Target</span>{item.target_r != null ? `${item.target_r}R` : '—'}</div>
             </div>
             {item.rs_composite != null && (
               <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
@@ -266,19 +266,19 @@ export default function WatchlistPage() {
                 onClick={() => setPromoteItem(item)}
                 className="flex-1 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
               >
-                → ポートフォリオへ
+                → Portfolio
               </button>
               <button
                 onClick={() => setEditItem(item)}
                 className="px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100"
               >
-                編集
+                Edit
               </button>
               <button
                 onClick={() => setDeleteItem(item)}
                 className="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100"
               >
-                削除
+                Delete
               </button>
             </div>
           </div>

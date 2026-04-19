@@ -42,7 +42,7 @@ export default function NavBar() {
           >
             {availableDates.map(d => (
               <option key={d} value={d}>
-                {d}{d === availableDates[0] ? ' (最新)' : ''}
+                {d}{d === availableDates[0] ? ' (Latest)' : ''}
               </option>
             ))}
           </select>
@@ -51,7 +51,7 @@ export default function NavBar() {
               onClick={resetToLatest}
               className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-white hover:bg-amber-600 transition-colors font-medium"
             >
-              最新に戻す
+              Back to Latest
             </button>
           )}
         </div>

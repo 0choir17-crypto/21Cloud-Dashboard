@@ -45,10 +45,10 @@ export default function BreadthPanel({ market }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        {/* 騰落数 */}
+        {/* Adv/Dec */}
         <div>
           <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
-            騰落数
+            Adv / Dec
           </p>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -72,14 +72,14 @@ export default function BreadthPanel({ market }: Props) {
           </div>
         </div>
 
-        {/* 騰落レシオ */}
+        {/* Adv/Dec Ratio */}
         <div>
           <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
-            騰落レシオ
+            Adv/Dec Ratio
           </p>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">10日</span>
+              <span className="text-[var(--text-secondary)]">10D</span>
               <span
                 className="font-mono font-semibold"
                 style={{ color: adRatio10Color }}
@@ -88,7 +88,7 @@ export default function BreadthPanel({ market }: Props) {
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">25日</span>
+              <span className="text-[var(--text-secondary)]">25D</span>
               <span
                 className="font-mono font-semibold"
                 style={{ color: adRatio25Color }}
@@ -97,31 +97,31 @@ export default function BreadthPanel({ market }: Props) {
               </span>
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-1">
-              ＜70: 売られ過ぎ　＞120: 買われ過ぎ
+              &lt;70: oversold　&gt;120: overbought
             </p>
           </div>
         </div>
 
-        {/* 新高値・新安値 */}
+        {/* New Highs / Lows */}
         <div>
           <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
-            新高値・新安値
+            New Highs / Lows
           </p>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">新高値 (NH)</span>
+              <span className="text-[var(--text-secondary)]">New High (NH)</span>
               <span className="font-mono font-semibold text-[var(--positive)]">
                 {fmtInt(market?.new_highs)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">新安値 (NL)</span>
+              <span className="text-[var(--text-secondary)]">New Low (NL)</span>
               <span className="font-mono font-semibold text-[var(--negative)]">
                 {fmtInt(market?.new_lows)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[var(--text-secondary)]">NH-NL差</span>
+              <span className="text-[var(--text-secondary)]">NH-NL Diff</span>
               <span
                 className="font-mono font-semibold"
                 style={{
@@ -139,10 +139,10 @@ export default function BreadthPanel({ market }: Props) {
           </div>
         </div>
 
-        {/* SMA超え比率 */}
+        {/* % Above SMA */}
         <div>
           <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
-            SMA超え比率
+            % Above SMA
           </p>
           <div className="space-y-4">
             <div>

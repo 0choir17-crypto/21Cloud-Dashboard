@@ -413,7 +413,7 @@ export default function GuidePage() {
             <li><strong className="text-gray-900">Divergence</strong> — 指数↑ × Breadth↓ の天井警告フラグ</li>
           </ul>
           <div className="mt-4 rounded-lg bg-gray-50 border border-[#e8eaed] p-4">
-            <p className="text-xs font-semibold text-gray-700 mb-2">スクリーン発動カテゴリ</p>
+            <p className="text-xs font-semibold text-gray-700 mb-2">Screen Activation Category</p>
             <ul className="space-y-1.5 text-xs text-gray-600">
               <li><span className="inline-block w-16 font-semibold text-blue-600">Always-on</span>MC スコアに関係なく常に発動（4本）</li>
               <li><span className="inline-block w-16 font-semibold text-red-600">Bear</span>MC スコアが閾値以下で発動 — 下落相場で有効（3本）</li>
