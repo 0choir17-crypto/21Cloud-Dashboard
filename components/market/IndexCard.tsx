@@ -1,4 +1,5 @@
 import { MarketConditions } from '@/types/market'
+import { IndexChart } from './IndexChart'
 
 type Prefix = 'topix' | 'nikkei' | 'growth'
 
@@ -74,37 +75,47 @@ export default function IndexCard({ label, prefix, data, className }: Props) {
         </div>
       </div>
 
-      <div
-        className="text-3xl font-bold mb-4 font-mono"
-        style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono, monospace)' }}
-      >
-        {fmtPrice(price)}
-      </div>
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Left: existing numeric info */}
+        <div className="flex-shrink-0 md:w-[220px]">
+          <div
+            className="text-3xl font-bold mb-4 font-mono"
+            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono, monospace)' }}
+          >
+            {fmtPrice(price)}
+          </div>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-[var(--text-muted)]">1W</span>
-          <ChangePill value={chg1w} />
-        </div>
-        <div className="flex justify-between">
-          <span className="text-[var(--text-muted)]">1M</span>
-          <ChangePill value={chg1m} />
-        </div>
-        <div className="flex justify-between">
-          <span className="text-[var(--text-muted)]">YTD</span>
-          <ChangePill value={chgYtd} />
-        </div>
-        <div className="flex justify-between">
-          <span className="text-[var(--text-muted)]">1Y</span>
-          <ChangePill value={chg1y} />
-        </div>
-      </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">1W</span>
+              <ChangePill value={chg1w} />
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">1M</span>
+              <ChangePill value={chg1m} />
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">YTD</span>
+              <ChangePill value={chgYtd} />
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--text-muted)]">1Y</span>
+              <ChangePill value={chg1y} />
+            </div>
+          </div>
 
-      <div className="mt-3 pt-3 border-t border-[var(--border)] text-xs text-[var(--text-muted)] flex justify-between">
-        <span>To 52W High</span>
-        <span className="font-mono font-medium text-[var(--text-secondary)]">
-          {fmt(pct52wh)}%
-        </span>
+          <div className="mt-3 pt-3 border-t border-[var(--border)] text-xs text-[var(--text-muted)] flex justify-between">
+            <span>To 52W High</span>
+            <span className="font-mono font-medium text-[var(--text-secondary)]">
+              {fmt(pct52wh)}%
+            </span>
+          </div>
+        </div>
+
+        {/* Right: index chart */}
+        <div className="flex-1 min-w-0">
+          <IndexChart prefix={prefix} displayName={label} height={260} />
+        </div>
       </div>
     </div>
   )
