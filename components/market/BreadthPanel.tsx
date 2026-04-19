@@ -1,4 +1,7 @@
 import { MarketConditions } from '@/types/market'
+import { AdvDecRatioChart } from './AdvDecRatioChart'
+import { NhNlDiffChart } from './NhNlDiffChart'
+import { PctAboveSmaChart } from './PctAboveSmaChart'
 
 type Props = { market: MarketConditions | null }
 
@@ -100,6 +103,7 @@ export default function BreadthPanel({ market }: Props) {
               &lt;70: oversold　&gt;120: overbought
             </p>
           </div>
+          <AdvDecRatioChart height={180} />
         </div>
 
         {/* New Highs / Lows */}
@@ -137,6 +141,7 @@ export default function BreadthPanel({ market }: Props) {
               </span>
             </div>
           </div>
+          <NhNlDiffChart height={180} />
         </div>
 
         {/* % Above SMA */}
@@ -176,6 +181,7 @@ export default function BreadthPanel({ market }: Props) {
               />
             </div>
           </div>
+          <PctAboveSmaChart height={180} />
         </div>
 
       </div>
