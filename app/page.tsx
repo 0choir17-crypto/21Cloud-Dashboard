@@ -8,6 +8,7 @@ import ScoreGauge from '@/components/market/ScoreGauge'
 import FactorGrid from '@/components/market/FactorGrid'
 import IndexCard from '@/components/market/IndexCard'
 import BreadthPanel from '@/components/market/BreadthPanel'
+import { McScoreChart } from '@/components/market/McScoreChart'
 
 export default function Page() {
   const { selectedDate, isLatest } = useDate()
@@ -134,7 +135,12 @@ export default function Page() {
             </div>
           </div>
 
-          {/* ③ Market Breadth */}
+          {/* ③ MC Score 時系列 */}
+          <div className="mb-8">
+            <McScoreChart height={240} />
+          </div>
+
+          {/* ④ Market Breadth */}
           <BreadthPanel market={market} />
         </>
       )}
