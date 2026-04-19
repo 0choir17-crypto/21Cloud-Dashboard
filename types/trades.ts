@@ -43,4 +43,12 @@ export interface Trade {
   lesson_learned?: string | null
   entry_reason?: string | null
   reviewed_at?: string | null
+
+  // MFE / MAE (P2)
+  mfe_price?: number | null
+  mfe_date?: string | null
+  mfe_pct?: number | null
+  mae_price?: number | null
+  mae_date?: string | null
+  mae_pct?: number | null
 }

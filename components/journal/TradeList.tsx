@@ -4,17 +4,15 @@ import { Trade } from '@/types/trades'
 import { SCREEN_NAME_MAP } from '@/lib/screenNames'
 import { getTagById } from '@/lib/reviewTags'
 import ReviewSection from './ReviewSection'
-import SignalEditSection from './SignalEditSection'
 
-export type ExpandedRow = { tradeId: number; type: 'review' | 'signal' } | null
+export type ExpandedReview = number | null
 
 type Props = {
   trades: Trade[]
   onClose: (trade: Trade) => void
   onEdit: (trade: Trade) => void
-  expandedRow: ExpandedRow
+  expandedReview: ExpandedReview
   onToggleReview: (tradeId: number) => void
-  onToggleSignalEdit: (tradeId: number) => void
   onSectionSaved: () => void
   onSectionCancel: () => void
 }
@@ -120,9 +118,8 @@ export default function TradeList({
   trades,
   onClose,
   onEdit,
-  expandedRow,
+  expandedReview,
   onToggleReview,
-  onToggleSignalEdit,
   onSectionSaved,
   onSectionCancel,
 }: Props) {
@@ -131,8 +128,8 @@ export default function TradeList({
     .filter(t => t.status === 'closed')
     .sort((a, b) => (b.exit_date ?? '').localeCompare(a.exit_date ?? ''))
 
-  function isExpanded(trade: Trade, type: 'review' | 'signal'): boolean {
-    return expandedRow?.tradeId === trade.id && expandedRow?.type === type
+  function isReviewExpanded(trade: Trade): boolean {
+    return expandedReview === trade.id
   }
 
   return (
@@ -168,38 +165,21 @@ export default function TradeList({
                     {/* 3行目: シグナルスナップショット */}
                     <SignalSnapshotLine t={t} />
                   </div>
-                  <div className="flex flex-wrap gap-2 md:flex-col md:items-end">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onEdit(t)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onClose(t)}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
-                      >
-                        Close
-                      </button>
-                    </div>
+                  <div className="flex gap-2 self-end md:self-auto">
                     <button
-                      onClick={() => onToggleSignalEdit(t.id)}
-                      className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-colors ${
-                        isExpanded(t, 'signal')
-                          ? 'bg-amber-100 border-amber-400 text-amber-800'
-                          : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                      }`}
+                      onClick={() => onEdit(t)}
+                      className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                      📝 シグナル編集
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onClose(t)}
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+                    >
+                      Close
                     </button>
                   </div>
                 </div>
-
-                {/* Inline expansion (OPEN: signal-edit only) */}
-                {isExpanded(t, 'signal') && (
-                  <SignalEditSection trade={t} onSaved={onSectionSaved} onCancel={onSectionCancel} />
-                )}
               </div>
             ))}
           </div>
@@ -262,19 +242,9 @@ export default function TradeList({
                           Edit
                         </button>
                         <button
-                          onClick={() => onToggleSignalEdit(t.id)}
-                          className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-colors ${
-                            isExpanded(t, 'signal')
-                              ? 'bg-amber-100 border-amber-400 text-amber-800'
-                              : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          📝 シグナル編集
-                        </button>
-                        <button
                           onClick={() => onToggleReview(t.id)}
                           className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-colors ${
-                            isExpanded(t, 'review')
+                            isReviewExpanded(t)
                               ? 'bg-blue-100 border-blue-400 text-blue-800'
                               : hasReview
                                 ? 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -288,11 +258,8 @@ export default function TradeList({
                   </div>
 
                   {/* Inline expansion */}
-                  {isExpanded(t, 'review') && (
+                  {isReviewExpanded(t) && (
                     <ReviewSection trade={t} onSaved={onSectionSaved} onCancel={onSectionCancel} />
-                  )}
-                  {isExpanded(t, 'signal') && (
-                    <SignalEditSection trade={t} onSaved={onSectionSaved} onCancel={onSectionCancel} />
                   )}
                 </div>
               )

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Trade } from '@/types/trades'
-import { REVIEW_TAGS, CATEGORY_LABELS, ReviewTagCategory, groupTagsByCategory } from '@/lib/reviewTags'
+import { CATEGORY_LABELS, ReviewTagCategory, groupTagsByCategory } from '@/lib/reviewTags'
+import { calculateMissedRate } from '@/lib/mfeMae'
 
 type Props = {
   trade: Trade
@@ -75,6 +76,46 @@ export default function ReviewSection({ trade, onSaved, onCancel }: Props) {
 
       {error && (
         <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded">{error}</p>
+      )}
+
+      {/* MFE / MAE */}
+      {trade.mfe_pct != null && trade.mae_pct != null ? (
+        <div>
+          <p className="text-xs font-semibold text-gray-700 mb-2">📏 MFE / MAE</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+              <p className="text-[11px] text-gray-500">含み益ピーク (MFE)</p>
+              <p className="text-xl font-bold text-emerald-600 mt-0.5">
+                {trade.mfe_pct >= 0 ? '+' : ''}{trade.mfe_pct.toFixed(1)}%
+              </p>
+              {trade.mfe_date && (
+                <p className="text-[11px] text-gray-400 mt-0.5">{trade.mfe_date}</p>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+              <p className="text-[11px] text-gray-500">含み損ボトム (MAE)</p>
+              <p className="text-xl font-bold text-red-600 mt-0.5">
+                {trade.mae_pct >= 0 ? '+' : ''}{trade.mae_pct.toFixed(1)}%
+              </p>
+              {trade.mae_date && (
+                <p className="text-[11px] text-gray-400 mt-0.5">{trade.mae_date}</p>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg px-3 py-2.5">
+              <p className="text-[11px] text-gray-500">取り逃し率</p>
+              <p className="text-xl font-bold text-amber-600 mt-0.5">
+                {calculateMissedRate(trade.mfe_pct, trade.pnl_pct).toFixed(0)}%
+              </p>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                MFE {trade.mfe_pct.toFixed(1)}% → 実際 {trade.pnl_pct != null ? `${trade.pnl_pct >= 0 ? '+' : ''}${trade.pnl_pct.toFixed(1)}%` : '—'}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-xs text-gray-500 bg-white border border-gray-200 rounded-lg px-3 py-2">
+          📏 MFE/MAEデータなし（保有期間中の終値データが不足している可能性）
+        </div>
       )}
 
       {/* タグ選択 */}
