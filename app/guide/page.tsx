@@ -427,6 +427,146 @@ export default function GuidePage() {
         </div>
       </section>
 
+      {/* ── MC v4 — 8 Factors ──────────────────────────────────────────────── */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+          8 Factors (v4) — 各ファクターの中身
+        </h2>
+        <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
+          <p className="text-sm text-gray-600 mb-4">
+            FactorGrid に表示される 8 ファクターは TOPIX / 日経225 / グロース250 の 3 指数と全銘柄ブレッド・需給データを源に計算され、
+            それぞれ過去 252 営業日の自分の分布に対する <strong className="text-gray-900">パーセンタイルランク (0-100)</strong> として表示されます。
+            数値が高いほど「過去 1 年で見て上位」を意味します。
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-[#e8eaed]">
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">ID</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">名称</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-700">重み</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">何を測っているか</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">入力</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e8eaed]">
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-emerald-700">M1</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">短期モメンタム</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">20%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    直近 1 週間の指数リターンと値上がり銘柄比率を組み合わせた短期勢い
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    0.6 × avg(chg_1w) + 0.4 × (adv_pct−50)/10
+                  </td>
+                </tr>
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-emerald-700">M2</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">中期トレンド</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">10%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    3 指数のうち何本が SMA50 上にあるか + 全銘柄の SMA50 越え比率
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    above_count(0-3) + pct_above_sma50/100
+                  </td>
+                </tr>
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-emerald-700">M3</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">EMA21 真 slope</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">20%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    EMA21 自身の 5 日変化率を 3 指数で平均。トレンド転換を 1〜3 日早く検知
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    mean[3idx] of (EMA21_t − EMA21_t-5) / EMA21_t-5
+                  </td>
+                </tr>
+                <tr className="bg-amber-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-amber-700">C1</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">長期確認統合</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">5%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    YTD・1 年リターン・52 週高値からの距離を統合した長期コンファーム
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    0.35 × YTD + 0.35 × 1Y + 0.30 × pct_52wh
+                  </td>
+                </tr>
+                <tr className="bg-blue-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-blue-700">B1</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">ブレッド独立</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">15%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    値上がり銘柄比率 (adv_pct) と SMA50 上比率の単純平均。指数とは独立した市場の幅
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    0.5 × adv_pct + 0.5 × pct_above_sma50
+                  </td>
+                </tr>
+                <tr className="bg-violet-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-violet-700">S1</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">フロー (売買 + 海外勢)</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">15%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    売り圧力 5 日平均 (低いほど良い) と海外投資家ネット買い 4 週平均 (高いほど良い) を平均
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    avg(rank↓ sell_pressure_5d, rank↑ frgn_bal_4w_avg)
+                  </td>
+                </tr>
+                <tr className="bg-violet-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-violet-700">S2</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">IV (恐怖指数)</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">10%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    日経 225 オプション ATM 5 銘柄の BaseVol 加重平均。低い = 落ち着き = 高スコア。
+                    5 日で 10% 超急騰したら −20 ペナルティ
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    rank↓ market_iv, then penalty if Δ5d &gt; +10%
+                  </td>
+                </tr>
+                <tr className="bg-violet-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-violet-700">S3</td>
+                  <td className="px-3 py-2 text-gray-800 font-semibold">空売り + 先物 Basis</td>
+                  <td className="px-3 py-2 text-right font-mono text-gray-700">5%</td>
+                  <td className="px-3 py-2 text-gray-600">
+                    業種別空売り比率 (低いほどリスクオン) と TOPIX 先物 Basis% (Contango = 強気) を平均
+                  </td>
+                  <td className="px-3 py-2 text-xs text-gray-500 font-mono">
+                    avg(rank↓ short_ratio, rank↑ basis_pct)
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 rounded-lg bg-gray-50 border border-[#e8eaed] p-4">
+            <p className="text-xs font-semibold text-gray-700 mb-2">Tier 構造</p>
+            <ul className="space-y-1 text-xs text-gray-600">
+              <li><span className="inline-block w-32 font-semibold text-emerald-700">Tier 1 (50%)</span>Core Price Action — M1 + M2 + M3</li>
+              <li><span className="inline-block w-32 font-semibold text-amber-700">Tier 2 ( 5%)</span>Confirming — C1</li>
+              <li><span className="inline-block w-32 font-semibold text-blue-700">Tier 3 (15%)</span>Independent Breadth — B1</li>
+              <li><span className="inline-block w-32 font-semibold text-violet-700">Tier 4 (30%)</span>Sentiment & Risk — S1 + S2 + S3</li>
+            </ul>
+            <p className="text-xs text-gray-500 mt-3">
+              スコアの色は <code className="bg-white px-1 rounded">≥80</code> 緑 (strong_bull) /{' '}
+              <code className="bg-white px-1 rounded">≥60</code> 薄緑 (bull) /{' '}
+              <code className="bg-white px-1 rounded">40-59</code> グレー (neutral) /{' '}
+              <code className="bg-white px-1 rounded">≤39</code> 赤系 (bear) で MC v4 の regime 境界に整合。
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              <strong>valid_weight</strong>: 各日に有効だったファクターの重み合計。
+              現状 daily_screener が IV / 空売り / Basis を取得していないため S2 + S3 (15%) が欠損し、
+              通常 85% で推移。Premium データ取得追加で 100% に上がる予定。
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ── Glossary ──────────────────────────────────────────────────────── */}
       <section className="mb-8">
         <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
