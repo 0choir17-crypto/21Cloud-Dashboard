@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DailySignal } from '@/types/signals'
-import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended, isPremiumScreen } from '@/lib/screenNames'
+import { SCREEN_NAME_MAP, getRecommendedScreens, isRecommended } from '@/lib/screenNames'
 import Tooltip from '@/components/shared/Tooltip'
 import WatchlistModal from '@/components/watchlist/WatchlistModal'
 import TradeModal from '@/components/journal/TradeModal'
@@ -108,14 +108,6 @@ function HitTooltip({
       >
         {value ?? '—'}
       </span>
-      {isOverlap && (
-        <span
-          className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-amber-100 text-amber-700 border-amber-300 cursor-help"
-          title="複数スクリーンで検出 — 高確度シグナル"
-        >
-          {count}x overlap
-        </span>
-      )}
       {/* ツールチップ */}
       <div className="absolute z-10 right-0 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
         <p className="font-semibold mb-1">Hit Screens</p>
@@ -305,28 +297,14 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.high_52w_pct)}</td>
                 {/* Stop% */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.stop_pct)}</td>
-                {/* HIT + tooltip + MC badge */}
+                {/* HIT — 丸バッジのみ。詳細はホバーツールチップで */}
                 <td className="px-3 py-3 text-right">
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end">
                     <HitTooltip
                       value={sig.hit_count}
                       screenName={sig.screen_name}
                       recommended={recommended}
                     />
-                    {sig.mc_condition && sig.mc_condition !== 'always_on' && (
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${
-                        mcNotMet
-                          ? 'bg-gray-100 text-gray-400 border-gray-200'
-                          : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                      }`}>
-                        {sig.mc_condition}
-                      </span>
-                    )}
-                    {isPremiumScreen(sig.screen_name) && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border bg-[#EEEDFE] text-[#3C3489] border-[#D4D1F7]">
-                        Premium
-                      </span>
-                    )}
                   </div>
                 </td>
                 {/* WL (Watch) */}
