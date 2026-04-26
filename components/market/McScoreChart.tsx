@@ -50,28 +50,35 @@ export function McScoreChart({ height = 240 }: Props) {
         <TimeSeriesChart
           data={data}
           color="#10b981"
-          name="MC Score"
+          name="MC v4"
           height={height}
           yMin={0}
-          yMax={21}
+          yMax={100}
           horizontalLines={[
+            // regime 境界 (mc_v4_config.py: 80/60/40/20)
             {
-              price: 21,
-              color: 'rgba(148, 163, 184, 0.5)',
-              title: 'Max 21',
+              price: 80,
+              color: 'rgba(99, 153, 34, 0.5)',
+              title: 'Strong Bull 80',
+              lineStyle: LineStyle.Dashed,
+            },
+            {
+              price: 60,
+              color: 'rgba(151, 196, 89, 0.4)',
               lineStyle: LineStyle.Dotted,
-            },
-            {
-              price: 17,
-              color: 'rgba(16, 185, 129, 0.5)',
-              lineStyle: LineStyle.Dashed,
               axisLabelVisible: false,
             },
             {
-              price: 9,
-              color: 'rgba(239, 68, 68, 0.5)',
-              lineStyle: LineStyle.Dashed,
+              price: 40,
+              color: 'rgba(180, 178, 169, 0.4)',
+              lineStyle: LineStyle.Dotted,
               axisLabelVisible: false,
+            },
+            {
+              price: 20,
+              color: 'rgba(226, 75, 74, 0.5)',
+              title: 'Strong Bear 20',
+              lineStyle: LineStyle.Dashed,
             },
           ]}
         />
