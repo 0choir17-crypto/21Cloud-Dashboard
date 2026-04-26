@@ -77,4 +77,17 @@ export type MarketConditions = {
   f5_sell_pressure?: number | null
   f6_foreign_flow?: number | null
   f7_idx_52wh_distance?: number | null
+  // MC Score v4 (0-100, 8ファクター, Phase 2 Step 5 — Shadow Mode + 過去3ヶ月 backfill)
+  mc_v4?: number | null
+  mc_regime_v4?: 'strong_bull' | 'bull' | 'neutral' | 'bear' | 'strong_bear' | null
+  mc_divergence_flag_v4?: number | null
+  mc_v4_valid_weight_pct?: number | null
+  mc_v4_m1?: number | null
+  mc_v4_m2?: number | null
+  mc_v4_m3?: number | null
+  mc_v4_c1?: number | null
+  mc_v4_b1?: number | null
+  mc_v4_s1?: number | null
+  mc_v4_s2?: number | null
+  mc_v4_s3?: number | null
 }

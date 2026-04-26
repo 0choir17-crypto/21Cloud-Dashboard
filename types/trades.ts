@@ -13,6 +13,9 @@ export interface Trade {
   result: 'WIN' | 'LOSS' | null
   mc_score: number | null
   mc_regime: string | null
+  // 'v3' (0-21) or 'v4' (0-100). Default 'v3' for legacy rows captured before
+  // the v4 cutover (2026-04-26). New trades default to 'v4'.
+  mc_score_version?: 'v3' | 'v4' | null
   memo: string | null
   status: 'plan' | 'open' | 'closed'
   created_at: string

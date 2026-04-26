@@ -32,26 +32,44 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
   const [memo, setMemo] = useState('')
   const [mcScore, setMcScore] = useState<number | null>(null)
   const [mcRegime, setMcRegime] = useState<string | null>(null)
+  // 'v3' (0-21) / 'v4' (0-100) — DB の mc_score_version 列とミラー
+  const [mcVersion, setMcVersion] = useState<'v3' | 'v4'>('v4')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // entry_date 変更時に MC Score を自動取得
+  // entry_date 変更時に MC Score を自動取得 (v4 優先、v3 フォールバック)
   const fetchMcScore = useCallback(async (date: string) => {
     const { data } = await supabase
       .from('market_conditions')
-      .select('positive_pct, scorecard_regime, mc_score')
+      .select('positive_pct, scorecard_regime, mc_score, mc_v4, mc_regime_v4')
       .lte('date', date)
       .order('date', { ascending: false })
       .limit(1)
       .single()
     if (data) {
-      const v3Score = (data as Record<string, unknown>).mc_score as number | null | undefined
-      setMcScore(v3Score ?? (data.positive_pct ?? null))
+      const d = data as Record<string, unknown>
+      const v4 = d.mc_v4 as number | null | undefined
+      const v3 = d.mc_score as number | null | undefined
       const regimeMap: Record<string, string> = {
         strong_bull: 'Strong Bull', bull: 'Bull', neutral: 'Neutral',
         bear: 'Bear', strong_bear: 'Strong Bear',
       }
-      setMcRegime(data.scorecard_regime ? (regimeMap[data.scorecard_regime] ?? data.scorecard_regime) : null)
+      const v4Regime = d.mc_regime_v4 as string | null | undefined
+      const baseRegime = d.scorecard_regime as string | null | undefined
+      if (v4 != null) {
+        setMcScore(v4)
+        const r = v4Regime ?? baseRegime ?? null
+        setMcRegime(r ? (regimeMap[r] ?? r) : null)
+        setMcVersion('v4')
+      } else if (v3 != null) {
+        setMcScore(v3)
+        setMcRegime(baseRegime ? (regimeMap[baseRegime] ?? baseRegime) : null)
+        setMcVersion('v3')
+      } else {
+        setMcScore((d.positive_pct as number | null) ?? null)
+        setMcRegime(baseRegime ? (regimeMap[baseRegime] ?? baseRegime) : null)
+        setMcVersion('v3')
+      }
     }
   }, [])
 
@@ -77,6 +95,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
       setMemo(initial?.memo ?? '')
       setMcScore(initial?.mc_score ?? null)
       setMcRegime(initial?.mc_regime ?? null)
+      setMcVersion((initial?.mc_score_version as 'v3' | 'v4' | undefined) ?? 'v4')
       setError('')
       // 新規作成時: entry_date の MC Score を自動取得
       if (!initial?.id) {
@@ -116,6 +135,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
       memo: memo.trim() || null,
       mc_score: mcScore,
       mc_regime: mcRegime,
+      mc_score_version: mcVersion,
       status: statusMode,
       updated_at: new Date().toISOString(),
       // シグナルスナップショット（新規作成時のみ、Watchlist昇格等で渡された場合）

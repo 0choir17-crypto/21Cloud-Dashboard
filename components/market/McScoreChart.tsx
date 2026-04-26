@@ -31,11 +31,11 @@ export function McScoreChart({ height = 240 }: Props) {
     <div>
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-gray-500">
-          MC Score — Last 180 days
+          MC v4 Score — Last 180 days
         </h3>
         {latest !== null && (
           <span className="text-sm font-mono text-[var(--text-secondary)]">
-            Latest: {latest.toFixed(0)}/21
+            Latest: {latest.toFixed(0)}/100
           </span>
         )}
       </div>

@@ -53,9 +53,17 @@ function screenBadgeClass(rawScreenName: string | null): string {
   return 'bg-blue-50 text-blue-700'
 }
 
-// MC Score → 色
-function mcScoreClass(score: number | null): string {
+// MC Score → 色 (v3 と v4 でスケールが違うので version で閾値を切り替える)
+//   v3 (0-21): 17+ = emerald (~80%), 4- = red (~20%)
+//   v4 (0-100): 80+ = emerald (= strong_bull 境界), 20- = red (= strong_bear 境界)
+function mcScoreClass(score: number | null, version: 'v3' | 'v4' = 'v3'): string {
   if (score == null) return 'text-gray-400'
+  if (version === 'v4') {
+    if (score >= 80) return 'text-emerald-600 font-semibold'
+    if (score <= 20) return 'text-red-600 font-semibold'
+    return 'text-gray-600'
+  }
+  // v3 デフォルト
   if (score >= 17) return 'text-emerald-600 font-semibold'
   if (score <= 4)  return 'text-red-600 font-semibold'
   return 'text-gray-600'
@@ -79,12 +87,26 @@ function SignalSnapshotLine({ t }: { t: Trade }) {
   )
 }
 
-function McBadge({ score, regime }: { score: number | null; regime: string | null }) {
+function McBadge({
+  score,
+  regime,
+  version,
+}: {
+  score: number | null
+  regime: string | null
+  version?: 'v3' | 'v4' | null
+}) {
   if (score == null) return <span className="text-xs text-gray-400">MC: —</span>
+  // version 未指定は legacy 行 → v3 として扱う
+  const v: 'v3' | 'v4' = version === 'v4' ? 'v4' : 'v3'
+  const denom = v === 'v4' ? 100 : 21
   return (
     <span className="inline-flex items-center gap-1 text-xs">
       <span className="text-gray-500">MC:</span>
-      <span className={mcScoreClass(score)}>{Math.round(score)}/21</span>
+      <span className={mcScoreClass(score, v)}>
+        {Math.round(score)}/{denom}
+      </span>
+      <span className="text-[9px] uppercase tracking-wider text-gray-400">{v}</span>
       <RegimeBadge regime={regime} />
     </span>
   )
@@ -178,7 +200,7 @@ export default function TradeList({
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
                       <span>{t.entry_date}</span>
                       <span>&yen;{t.entry_price.toLocaleString()} &times; {t.shares}株</span>
-                      <McBadge score={t.mc_score} regime={t.mc_regime} />
+                      <McBadge score={t.mc_score} regime={t.mc_regime} version={t.mc_score_version} />
                     </div>
                     {/* 3行目: シグナルスナップショット */}
                     <SignalSnapshotLine t={t} />
@@ -257,7 +279,7 @@ export default function TradeList({
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
                         <span>{t.entry_date} → {t.exit_date}</span>
                         <span>&yen;{t.entry_price.toLocaleString()} → &yen;{t.exit_price?.toLocaleString()}</span>
-                        <McBadge score={t.mc_score} regime={t.mc_regime} />
+                        <McBadge score={t.mc_score} regime={t.mc_regime} version={t.mc_score_version} />
                       </div>
                       {/* 3行目: シグナルスナップショット */}
                       <SignalSnapshotLine t={t} />

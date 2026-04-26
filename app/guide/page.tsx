@@ -404,13 +404,14 @@ export default function GuidePage() {
         </h2>
         <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
           <p className="text-sm text-gray-600 mb-3">
-            画面上部のバッジはマーケット全体の状態を示します。MC は21要素のスコアカードで市場環境を0〜21点で評価します。
+            画面上部のバッジはマーケット全体の状態を示します。MC v4 は 8 ファクター加重平均で市場環境を 0〜100 点で評価します
+            （v4 未集計の古い日付は v3 にフォールバック）。
           </p>
           <ul className="space-y-2 text-sm text-gray-700">
             <li><strong className="text-gray-900">Trend</strong> — TOPIXの位置関係（Bull / Neutral / Bear）</li>
-            <li><strong className="text-gray-900">Scorecard</strong> — MC スコアカード（0-21）。数値が高いほど強気環境</li>
+            <li><strong className="text-gray-900">Scorecard</strong> — MC v4 スコア（0-100）。レジーム境界 80 / 60 / 40 / 20 で strong_bull / bull / neutral / bear / strong_bear</li>
             <li><strong className="text-gray-900">Breadth</strong> — 値上がり銘柄比率の強度（Strong / Normal / Weak）</li>
-            <li><strong className="text-gray-900">Divergence</strong> — 指数↑ × Breadth↓ の天井警告フラグ</li>
+            <li><strong className="text-gray-900">Divergence</strong> — 指数↑ × Breadth↓ の天井警告フラグ（v4 では現状無効化中。効果検証で統計的有意性なしのため）</li>
           </ul>
           <div className="mt-4 rounded-lg bg-gray-50 border border-[#e8eaed] p-4">
             <p className="text-xs font-semibold text-gray-700 mb-2">Screen Activation Category</p>
@@ -419,6 +420,9 @@ export default function GuidePage() {
               <li><span className="inline-block w-16 font-semibold text-red-600">Bear</span>MC スコアが閾値以下で発動 — 下落相場で有効（3本）</li>
               <li><span className="inline-block w-16 font-semibold text-green-600">Bull</span>MC スコアが閾値以上で発動 — 上昇相場で有効（3本）</li>
             </ul>
+            <p className="text-xs text-gray-500 mt-3">
+              ※ Screen 判定は Shadow Mode のため現状 v3 (0-21) ベース。v4 観察期間後に v4 ベースで再最適化予定。
+            </p>
           </div>
         </div>
       </section>

@@ -29,8 +29,9 @@ type Props = {
   positivePct?: number
   marketRegime?: string
   breadthRegime?: string
-  // MC Score v3
-  mcScore?: number | null
+  // MC Score: v4 (0-100) \u3092\u512a\u5148\u3001\u306a\u3051\u308c\u3070 v3 (0-21) \u306b\u30d5\u30a9\u30fc\u30eb\u30d0\u30c3\u30af
+  mcV4Score?: number | null
+  mcV3Score?: number | null
   mcScoreV1?: number | null
   divergenceFlag?: number | null
 }
@@ -38,17 +39,24 @@ type Props = {
 export default function ScoreGauge({
   regime, positiveCount, totalCount, positivePct,
   marketRegime, breadthRegime,
-  mcScore, mcScoreV1, divergenceFlag,
+  mcV4Score, mcV3Score, mcScoreV1, divergenceFlag,
 }: Props) {
   const config = regime ? REGIME_CONFIG[regime] : { color: '#9ca3af', label: '\u2014' }
 
-  // v3 available: use mc_score (0-21), else fallback to v1 positive_pct (0-100)
-  const isV3 = mcScore != null
-  const scoreDisplay = isV3 ? mcScore : (positiveCount ?? null)
-  const maxScore = isV3 ? 21 : (totalCount ?? 12)
-  const pct = isV3
-    ? (mcScore / 21) * 100
-    : (positivePct ?? 0)
+  // v4 (0-100) \u2192 v3 (0-21) \u2192 v1 (0-100) \u306e\u512a\u5148\u9806\u4f4d\u3067\u30d5\u30a9\u30fc\u30eb\u30d0\u30c3\u30af
+  const isV4 = mcV4Score != null
+  const isV3 = !isV4 && mcV3Score != null
+  const scoreDisplay = isV4
+    ? mcV4Score
+    : isV3
+      ? mcV3Score
+      : (positiveCount ?? null)
+  const maxScore = isV4 ? 100 : isV3 ? 21 : (totalCount ?? 12)
+  const pct = isV4
+    ? (mcV4Score ?? 0)
+    : isV3
+      ? ((mcV3Score ?? 0) / 21) * 100
+      : (positivePct ?? 0)
 
   const trendCfg   = marketRegime  ? MARKET_REGIME_CONFIG[marketRegime]   : null
   const breadthCfg = breadthRegime ? BREADTH_REGIME_CONFIG[breadthRegime] : null
@@ -150,7 +158,7 @@ export default function ScoreGauge({
           border: `1px solid ${config.color}40`,
         }}
       >
-        {isV3 ? `MC: ${mcScore}/21` : config.label}
+        {isV4 ? `MC v4: ${mcV4Score}/100` : isV3 ? `MC v3: ${mcV3Score}/21` : config.label}
       </span>
 
       {/* Divergence warning */}

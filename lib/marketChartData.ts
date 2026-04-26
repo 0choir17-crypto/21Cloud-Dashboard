@@ -12,16 +12,25 @@ function startDateStr(lookbackDays: number): string {
 export async function fetchMcScoreTimeSeries(
   lookbackDays: number = DEFAULT_LOOKBACK_DAYS,
 ): Promise<TimeSeriesPoint[]> {
+  // v4 (0-100) を優先取得。v4 が未書き込みの古い日付は v3 (0-21) を 100 換算で表示。
   const { data, error } = await supabase
     .from('market_conditions')
-    .select('date, mc_score')
+    .select('date, mc_v4, mc_score')
     .gte('date', startDateStr(lookbackDays))
     .order('date', { ascending: true })
 
   if (error || !data) return []
 
-  return (data as { date: string; mc_score: number | null }[])
-    .map((r) => ({ time: r.date, value: Number(r.mc_score) }))
+  return (data as { date: string; mc_v4: number | null; mc_score: number | null }[])
+    .map((r) => {
+      // v4 があればそのまま 0-100、なければ v3 を 0-21 → 0-100 に正規化して欠損を埋める
+      const v = r.mc_v4 != null
+        ? Number(r.mc_v4)
+        : r.mc_score != null
+          ? (Number(r.mc_score) / 21) * 100
+          : Number.NaN
+      return { time: r.date, value: v }
+    })
     .filter((p) => Number.isFinite(p.value))
 }
 

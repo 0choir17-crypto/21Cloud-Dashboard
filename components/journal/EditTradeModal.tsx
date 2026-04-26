@@ -38,6 +38,8 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
   const [memo, setMemo] = useState('')
   const [mcScore, setMcScore] = useState<number | null>(null)
   const [mcRegime, setMcRegime] = useState<string | null>(null)
+  // 'v3' (0-21) / 'v4' (0-100) — DB の mc_score_version 列とミラー
+  const [mcVersion, setMcVersion] = useState<'v3' | 'v4'>('v3')
   const [mcLoading, setMcLoading] = useState(false)
 
   // CLOSED trades: exit fields
@@ -78,6 +80,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
       setMemo(trade.memo ?? '')
       setMcScore(trade.mc_score)
       setMcRegime(trade.mc_regime)
+      setMcVersion((trade.mc_score_version as 'v3' | 'v4' | undefined) ?? 'v3')
       setExitDate(trade.exit_date ?? '')
       setExitPrice(trade.exit_price != null ? String(trade.exit_price) : '')
       setSignalPrice(toStr(trade.signal_price))
@@ -102,21 +105,36 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
 
     async function fetchMc() {
       setMcLoading(true)
+      // entry_date が変わったら v4 優先で再 capture
       const { data } = await supabase
         .from('market_conditions')
-        .select('positive_pct, scorecard_regime, mc_score')
+        .select('positive_pct, scorecard_regime, mc_score, mc_v4, mc_regime_v4')
         .lte('date', entryDate)
         .order('date', { ascending: false })
         .limit(1)
         .single()
 
       if (!cancelled && data) {
-        const v3Score = (data as Record<string, unknown>).mc_score as number | null | undefined
-        setMcScore(v3Score ?? (data.positive_pct ?? null))
-        setMcRegime(data.scorecard_regime ?? null)
+        const d = data as Record<string, unknown>
+        const v4 = d.mc_v4 as number | null | undefined
+        const v3 = d.mc_score as number | null | undefined
+        if (v4 != null) {
+          setMcScore(v4)
+          setMcRegime((d.mc_regime_v4 as string | null) ?? (d.scorecard_regime as string | null) ?? null)
+          setMcVersion('v4')
+        } else if (v3 != null) {
+          setMcScore(v3)
+          setMcRegime((d.scorecard_regime as string | null) ?? null)
+          setMcVersion('v3')
+        } else {
+          setMcScore((d.positive_pct as number | null) ?? null)
+          setMcRegime((d.scorecard_regime as string | null) ?? null)
+          setMcVersion('v3')
+        }
       } else if (!cancelled) {
         setMcScore(null)
         setMcRegime(null)
+        // 既存 trade のバージョンは保持 (entry_date で取れなかっただけ)
       }
       if (!cancelled) setMcLoading(false)
     }
@@ -161,6 +179,7 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
       shares: parseInt(shares, 10),
       mc_score: mcScore,
       mc_regime: mcRegime ? (REGIME_MAP[mcRegime] ?? mcRegime) : null,
+      mc_score_version: mcVersion,
       memo: memo.trim() || null,
       signal_price: toNum(signalPrice),
       rs_at_entry: toNum(rsAtEntry),
@@ -297,7 +316,9 @@ export default function EditTradeModal({ open, onClose, onSaved, trade }: Props)
             <span className="text-xs text-gray-400">Loading...</span>
           ) : mcScore != null ? (
             <span className="text-sm font-semibold text-gray-800">
-              {mcScore}/21 ({REGIME_LABEL[mcRegime ?? ''] ?? mcRegime ?? '—'})
+              {mcScore}/{mcVersion === 'v4' ? 100 : 21}
+              <span className="text-[10px] text-gray-500 ml-1">({mcVersion})</span>
+              {' '}({REGIME_LABEL[mcRegime ?? ''] ?? mcRegime ?? '—'})
             </span>
           ) : (
             <span className="text-xs text-gray-400">Not available</span>

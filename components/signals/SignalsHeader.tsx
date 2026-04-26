@@ -51,7 +51,8 @@ type Props = {
   scorecardRegime?: string | null
   positiveCount?:   number | null
   totalCount?:      number | null
-  mcScore?:         number | null
+  mcV4Score?:       number | null
+  mcV3Score?:       number | null
   divergenceFlag?:  number | null
 }
 
@@ -61,16 +62,20 @@ export default function SignalsHeader({
   scorecardRegime,
   positiveCount,
   totalCount,
-  mcScore,
+  mcV4Score,
+  mcV3Score,
   divergenceFlag,
 }: Props) {
-  // v3: show mc_score/21, fallback to v1 positive_count/total_count
-  const isV3 = mcScore != null
-  const scorecardSuffix = isV3
-    ? ` ${mcScore}/21`
-    : (positiveCount != null && totalCount != null
-        ? ` ${positiveCount}/${totalCount}`
-        : undefined)
+  // v4 (0-100) → v3 (0-21) → v1 (positive_count/total_count) の優先順位
+  const isV4 = mcV4Score != null
+  const isV3 = !isV4 && mcV3Score != null
+  const scorecardSuffix = isV4
+    ? ` ${mcV4Score}/100`
+    : isV3
+      ? ` ${mcV3Score}/21`
+      : (positiveCount != null && totalCount != null
+          ? ` ${positiveCount}/${totalCount}`
+          : undefined)
 
   return (
     <div className="flex flex-wrap gap-3 mb-6">

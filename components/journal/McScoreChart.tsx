@@ -10,17 +10,27 @@ type Props = {
   trades: Trade[]
 }
 
+// v4 (0-100) スケールでの buckets。regime 境界 80/60/40/20 に合わせて 5 区分。
+// v3 trade (0-21) は scoreToV4 で 100/21 倍に変換して同じ bucket に収める。
 const BUCKETS = [
-  { label: '0-3',   min: 0,  max: 3 },
-  { label: '3-6',   min: 3,  max: 6 },
-  { label: '6-9',   min: 6,  max: 9 },
-  { label: '9-12',  min: 9,  max: 12 },
-  { label: '12-15', min: 12, max: 15 },
-  { label: '15-18', min: 15, max: 18 },
-  { label: '18-21', min: 18, max: 22 },
+  { label: '0-20',   min: 0,  max: 20  },  // strong_bear
+  { label: '20-40',  min: 20, max: 40  },  // bear
+  { label: '40-60',  min: 40, max: 60  },  // neutral
+  { label: '60-80',  min: 60, max: 80  },  // bull
+  { label: '80-100', min: 80, max: 101 },  // strong_bull (max=101 で 100 を含む)
 ]
 
 const REGIME_ORDER = ['Strong Bull', 'Bull', 'Neutral', 'Bear', 'Strong Bear']
+
+/**
+ * trade の MC score を v4 スケール (0-100) に正規化。
+ * mc_score_version='v4' ならそのまま、それ以外 (v3 / null) は 100/21 倍。
+ */
+function scoreToV4(t: Trade): number | null {
+  if (t.mc_score == null) return null
+  if (t.mc_score_version === 'v4') return t.mc_score
+  return (t.mc_score / 21) * 100
+}
 
 function getBarColor(wr: number): string {
   if (wr >= 70) return '#10b981'      // emerald-500
@@ -36,12 +46,13 @@ export default function McScoreChart({ trades }: Props) {
     [trades]
   )
 
-  // MC Score帯別WRデータ
+  // MC Score帯別WRデータ (全 trade を v4 スケールに正規化して bucketing)
   const chartData = useMemo(() => {
     return BUCKETS.map(b => {
-      const inBucket = closed.filter(t =>
-        t.mc_score != null && t.mc_score >= b.min && t.mc_score < b.max
-      )
+      const inBucket = closed.filter(t => {
+        const v = scoreToV4(t)
+        return v != null && v >= b.min && v < b.max
+      })
       const bucketWins = inBucket.filter(t => t.result === 'WIN')
       const winRate = inBucket.length > 0 ? (bucketWins.length / inBucket.length) * 100 : 0
       return {
