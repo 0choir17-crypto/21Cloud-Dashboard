@@ -115,15 +115,10 @@ export default function Page() {
               <p className="text-sm font-semibold text-gray-500 mb-4">Market Scorecard</p>
               <ScoreGauge
                 regime={market.mc_regime_v4 ?? market.scorecard_regime}
-                positiveCount={market.positive_count}
-                totalCount={market.total_count}
-                positivePct={market.positive_pct}
                 marketRegime={market.market_regime}
                 breadthRegime={market.breadth_regime}
                 mcV4Score={market.mc_v4}
-                mcV3Score={market.mc_score ?? market.mc_score_v3}
-                mcScoreV1={market.mc_score_v1}
-                divergenceFlag={market.mc_divergence_flag_v4 ?? market.divergence_flag}
+                divergenceFlag={market.mc_divergence_flag_v4}
               />
               <hr className="my-4 border-[#e8eaed]" />
               <FactorGrid market={market} />

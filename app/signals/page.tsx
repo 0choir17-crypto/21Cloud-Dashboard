@@ -14,8 +14,7 @@ const COLUMNS = `
   high_52w_pct, stop_pct, hit_count,
   cockpit_rs, mansfield_rs,
   short_interest_ratio, short_position_change,
-  mc_met, mc_condition,
-  mc_score, mc_score_v1, divergence_flag
+  mc_met, mc_condition
 `
 
 export default function SignalsPage() {
@@ -26,13 +25,6 @@ export default function SignalsPage() {
     market_regime: string
     breadth_regime: string
     scorecard_regime: string
-    positive_count: number
-    total_count: number
-    mc_score?: number | null
-    mc_score_v3?: number | null
-    mc_score_v1?: number | null
-    divergence_flag?: number | null
-    // v4 (Phase 2 Step 5)
     mc_v4?: number | null
     mc_regime_v4?: string | null
     mc_divergence_flag_v4?: number | null
@@ -54,7 +46,7 @@ export default function SignalsPage() {
     // market_conditions: selectedDate に一致、なければ最新
     let marketQuery = supabase
       .from('market_conditions')
-      .select('date, market_regime, breadth_regime, scorecard_regime, positive_count, total_count, mc_score, mc_score_v3, mc_score_v1, divergence_flag, mc_v4, mc_regime_v4, mc_divergence_flag_v4')
+      .select('date, market_regime, breadth_regime, scorecard_regime, mc_v4, mc_regime_v4, mc_divergence_flag_v4')
 
     if (isLatest) {
       marketQuery = marketQuery.order('date', { ascending: false }).limit(1)
@@ -128,11 +120,8 @@ export default function SignalsPage() {
         marketRegime={market?.market_regime}
         breadthRegime={market?.breadth_regime}
         scorecardRegime={market?.mc_regime_v4 ?? market?.scorecard_regime}
-        positiveCount={market?.positive_count}
-        totalCount={market?.total_count}
         mcV4Score={market?.mc_v4}
-        mcV3Score={market?.mc_score ?? market?.mc_score_v3}
-        divergenceFlag={market?.mc_divergence_flag_v4 ?? market?.divergence_flag}
+        divergenceFlag={market?.mc_divergence_flag_v4}
       />
 
       {/* ローディング */}

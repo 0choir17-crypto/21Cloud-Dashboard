@@ -24,40 +24,23 @@ const BREADTH_REGIME_CONFIG: Record<string, { color: string; label: string }> = 
 
 type Props = {
   regime?: Regime
-  positiveCount?: number
-  totalCount?: number
-  positivePct?: number
   marketRegime?: string
   breadthRegime?: string
-  // MC Score: v4 (0-100) \u3092\u512a\u5148\u3001\u306a\u3051\u308c\u3070 v3 (0-21) \u306b\u30d5\u30a9\u30fc\u30eb\u30d0\u30c3\u30af
+  // MC v4 Score (0-100). null \u306e\u65e5\u4ed8\u306f "\u2014" \u8868\u793a
   mcV4Score?: number | null
-  mcV3Score?: number | null
-  mcScoreV1?: number | null
   divergenceFlag?: number | null
 }
 
 export default function ScoreGauge({
-  regime, positiveCount, totalCount, positivePct,
+  regime,
   marketRegime, breadthRegime,
-  mcV4Score, mcV3Score, mcScoreV1, divergenceFlag,
+  mcV4Score, divergenceFlag,
 }: Props) {
   const config = regime ? REGIME_CONFIG[regime] : { color: '#9ca3af', label: '\u2014' }
 
-  // v4 (0-100) \u2192 v3 (0-21 \u2192 0-100 \u306b\u6b63\u898f\u5316) \u2192 v1 (positive_count) \u306e\u512a\u5148\u9806\u4f4d\u3067\u30d5\u30a9\u30fc\u30eb\u30d0\u30c3\u30af
-  const isV4 = mcV4Score != null
-  const isV3 = !isV4 && mcV3Score != null
-  const v3Normalized = isV3 ? ((mcV3Score ?? 0) / 21) * 100 : null
-  const scoreDisplay = isV4
-    ? Number(mcV4Score).toFixed(1)
-    : isV3
-      ? (v3Normalized as number).toFixed(1)
-      : (positiveCount ?? null)
-  const maxScore = isV4 || isV3 ? 100 : (totalCount ?? 12)
-  const pct = isV4
-    ? (mcV4Score ?? 0)
-    : isV3
-      ? ((mcV3Score ?? 0) / 21) * 100
-      : (positivePct ?? 0)
+  const hasScore = mcV4Score != null
+  const scoreDisplay = hasScore ? Number(mcV4Score).toFixed(1) : null
+  const pct = hasScore ? (mcV4Score as number) : 0
 
   const trendCfg   = marketRegime  ? MARKET_REGIME_CONFIG[marketRegime]   : null
   const breadthCfg = breadthRegime ? BREADTH_REGIME_CONFIG[breadthRegime] : null
@@ -134,7 +117,7 @@ export default function ScoreGauge({
           fill="#6b7280"
           fontFamily="var(--font-mono, monospace)"
         >
-          {scoreDisplay ?? '\u2014'} / {maxScore}
+          {scoreDisplay ?? '\u2014'} / 100
         </text>
 
         {/* Pct label */}
@@ -159,11 +142,7 @@ export default function ScoreGauge({
           border: `1px solid ${config.color}40`,
         }}
       >
-        {isV4
-          ? `MC v4: ${Number(mcV4Score).toFixed(1)}/100`
-          : isV3
-            ? `MC v3 → ${(v3Normalized as number).toFixed(1)}/100`
-            : config.label}
+        {hasScore ? `MC v4: ${Number(mcV4Score).toFixed(1)}/100` : config.label}
       </span>
 
       {/* Divergence warning */}
