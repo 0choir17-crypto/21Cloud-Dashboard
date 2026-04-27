@@ -44,8 +44,6 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
   const [memo, setMemo] = useState('')
   const [mcScore, setMcScore] = useState<number | null>(null)
   const [mcRegime, setMcRegime] = useState<string | null>(null)
-  // 'v4' (新規) / 'v3' (v4 不在の古い日付に fallback) — DB 列 mc_score_version へ保存
-  const [mcVersion, setMcVersion] = useState<'v3' | 'v4'>('v4')
   const [mcLoading, setMcLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -62,22 +60,20 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       setMemo('')
       setMcScore(null)
       setMcRegime(null)
-      setMcVersion('v4')
       setError('')
     }
   }, [open, initial])
 
-  // entry_date 変更時に MC Score を自動取得
+  // entry_date 変更時に MC v4 Score を自動取得
   useEffect(() => {
     if (!open || !entryDate) return
     let cancelled = false
 
     async function fetchMc() {
       setMcLoading(true)
-      // entry_date 以前の最新データを取得 (v4 を優先、v3 にフォールバック)
       const { data } = await supabase
         .from('market_conditions')
-        .select('positive_pct, scorecard_regime, mc_score, mc_v4, mc_regime_v4')
+        .select('mc_v4, mc_regime_v4, scorecard_regime')
         .lte('date', entryDate)
         .order('date', { ascending: false })
         .limit(1)
@@ -86,27 +82,17 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       if (!cancelled && data) {
         const d = data as Record<string, unknown>
         const v4 = d.mc_v4 as number | null | undefined
-        const v3 = d.mc_score as number | null | undefined
         if (v4 != null) {
-          // 新規 trade のデフォルト経路: v4 (0-100) を記録
           setMcScore(v4)
           setMcRegime((d.mc_regime_v4 as string | null) ?? (d.scorecard_regime as string | null) ?? null)
-          setMcVersion('v4')
-        } else if (v3 != null) {
-          // v4 未集計の古い日付 → v3 にフォールバック
-          setMcScore(v3)
-          setMcRegime((d.scorecard_regime as string | null) ?? null)
-          setMcVersion('v3')
         } else {
-          // どちらもなければ positive_pct (v1) を v3 として記録
-          setMcScore((d.positive_pct as number | null) ?? null)
-          setMcRegime((d.scorecard_regime as string | null) ?? null)
-          setMcVersion('v3')
+          // v4 未集計の日付は空欄のまま (手入力で対応)
+          setMcScore(null)
+          setMcRegime((d.mc_regime_v4 as string | null) ?? (d.scorecard_regime as string | null) ?? null)
         }
       } else if (!cancelled) {
         setMcScore(null)
         setMcRegime(null)
-        setMcVersion('v4')
       }
       if (!cancelled) setMcLoading(false)
     }
@@ -142,7 +128,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       shares: parseInt(shares, 10),
       mc_score: mcScore,
       mc_regime: mcRegime ? (regimeMap[mcRegime] ?? mcRegime) : null,
-      mc_score_version: mcVersion,
+      mc_score_version: 'v4',
       memo: memo.trim() || null,
       status: 'open',
       // シグナルスナップショット（Signalsページから渡された場合のみ値が入る）
@@ -293,8 +279,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
             <span className="text-xs text-gray-400">Loading...</span>
           ) : mcScore != null ? (
             <span className="text-sm font-semibold text-gray-800">
-              {mcScore}/{mcVersion === 'v4' ? 100 : 21}
-              <span className="text-[10px] text-gray-500 ml-1">({mcVersion})</span>
+              {Number(mcScore).toFixed(1)}/100
               {' '}({regimeLabel[mcRegime ?? ''] ?? mcRegime ?? '—'})
             </span>
           ) : (
