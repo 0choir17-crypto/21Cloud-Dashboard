@@ -4,18 +4,22 @@ import { useEffect, useState } from 'react'
 import { LineStyle } from 'lightweight-charts'
 import { TimeSeriesChart, type TimeSeriesPoint } from './TimeSeriesChart'
 import { fetchMcScoreTimeSeries } from '@/lib/marketChartData'
+import { useDate } from '@/contexts/DateContext'
 
 interface Props {
   height?: number
 }
 
 export function McScoreChart({ height = 240 }: Props) {
+  const { selectedDate, isLatest } = useDate()
   const [data, setData] = useState<TimeSeriesPoint[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!selectedDate) return
     let cancelled = false
-    fetchMcScoreTimeSeries(180).then((result) => {
+    setLoading(true)
+    fetchMcScoreTimeSeries(180, selectedDate).then((result) => {
       if (cancelled) return
       setData(result)
       setLoading(false)
@@ -23,7 +27,7 @@ export function McScoreChart({ height = 240 }: Props) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [selectedDate])
 
   const latest = data.length > 0 ? data[data.length - 1].value : null
 
@@ -35,7 +39,7 @@ export function McScoreChart({ height = 240 }: Props) {
         </h3>
         {latest !== null && (
           <span className="text-sm font-mono text-[var(--text-secondary)]">
-            Latest: {latest.toFixed(0)}/100
+            {isLatest ? 'Latest' : 'Selected'}: {latest.toFixed(1)}/100
           </span>
         )}
       </div>

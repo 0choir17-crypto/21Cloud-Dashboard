@@ -47,7 +47,7 @@ export default function ScoreGauge({
   const isV4 = mcV4Score != null
   const isV3 = !isV4 && mcV3Score != null
   const scoreDisplay = isV4
-    ? mcV4Score
+    ? Number(mcV4Score).toFixed(1)
     : isV3
       ? mcV3Score
       : (positiveCount ?? null)
@@ -158,7 +158,7 @@ export default function ScoreGauge({
           border: `1px solid ${config.color}40`,
         }}
       >
-        {isV4 ? `MC v4: ${mcV4Score}/100` : isV3 ? `MC v3: ${mcV3Score}/21` : config.label}
+        {isV4 ? `MC v4: ${Number(mcV4Score).toFixed(1)}/100` : isV3 ? `MC v3: ${mcV3Score}/21` : config.label}
       </span>
 
       {/* Divergence warning */}

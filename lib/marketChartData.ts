@@ -3,21 +3,28 @@ import type { TimeSeriesPoint } from '@/components/market/TimeSeriesChart'
 
 const DEFAULT_LOOKBACK_DAYS = 180
 
-function startDateStr(lookbackDays: number): string {
-  const d = new Date()
+function startDateStr(lookbackDays: number, endDate?: string): string {
+  const d = endDate ? new Date(endDate) : new Date()
   d.setDate(d.getDate() - lookbackDays)
   return d.toISOString().slice(0, 10)
 }
 
 export async function fetchMcScoreTimeSeries(
   lookbackDays: number = DEFAULT_LOOKBACK_DAYS,
+  endDate?: string,
 ): Promise<TimeSeriesPoint[]> {
   // v4 (0-100) を優先取得。v4 が未書き込みの古い日付は v3 (0-21) を 100 換算で表示。
-  const { data, error } = await supabase
+  let query = supabase
     .from('market_conditions')
     .select('date, mc_v4, mc_score')
-    .gte('date', startDateStr(lookbackDays))
+    .gte('date', startDateStr(lookbackDays, endDate))
     .order('date', { ascending: true })
+
+  if (endDate) {
+    query = query.lte('date', endDate)
+  }
+
+  const { data, error } = await query
 
   if (error || !data) return []
 
