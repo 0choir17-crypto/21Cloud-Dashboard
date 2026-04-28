@@ -56,6 +56,7 @@ export function IndexChart({ prefix, displayName, height = 260, lookbackDays = 1
           return
         }
         const points = (rows as unknown as Record<string, unknown>[])
+          .filter((r) => r[priceCol] != null)
           .map((r) => ({
             time: r.date as string,
             value: Number(r[priceCol]),
