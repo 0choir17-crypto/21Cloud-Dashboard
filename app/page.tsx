@@ -22,7 +22,8 @@ export default function Page() {
     let query = supabase.from('market_conditions').select('*')
 
     if (isLatest) {
-      query = query.order('date', { ascending: false }).limit(1)
+      // 当日行は mc_v4 / 8 factors が未集計の場合があるので、v4 が入っている直近行を採用
+      query = query.not('mc_v4', 'is', null).order('date', { ascending: false }).limit(1)
     } else {
       query = query.eq('date', selectedDate).limit(1)
     }

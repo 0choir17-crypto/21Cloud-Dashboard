@@ -49,7 +49,8 @@ export default function SignalsPage() {
       .select('date, market_regime, breadth_regime, scorecard_regime, mc_v4, mc_regime_v4, mc_divergence_flag_v4')
 
     if (isLatest) {
-      marketQuery = marketQuery.order('date', { ascending: false }).limit(1)
+      // 当日行は mc_v4 が未集計の場合があるので、v4 が入っている直近行を採用
+      marketQuery = marketQuery.not('mc_v4', 'is', null).order('date', { ascending: false }).limit(1)
     } else {
       marketQuery = marketQuery.eq('date', selectedDate).limit(1)
     }
