@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 
-// ── Screen Guide Data (v4) ───────────────────────────────────────────────────
+// ── Screen Guide Data (Phase 2.1, 2026-05-05) ───────────────────────────────
+// 採用 2 screens (本リポ commit a47852a): DIV_DY_Incr_EpsGr + FCT_ValueQuality_CRS
+// 旧 11 screens は Phase 2.1 で archive (legacy 表示のみ).
 type ScreenGuideEntry = {
   rank: number
   name: string
@@ -26,180 +28,50 @@ type ScreenGuideEntry = {
 const SCREEN_GUIDE_V4: ScreenGuideEntry[] = [
   {
     rank: 1,
-    name: 'Gap Up',
-    dbName: 'EVT_SMA10_ADR_Gap3',
-    type: 'always_on',
-    kind: 'event',
-    holdDays: 10,
-    mcCondition: 'Always-on',
-    conditions: 'SMA10から-1.5R以下 & ADR≤3.5% & ギャップアップ≥3% & RS≥70 & 信用買い残比率5d≤0.25',
-    role: '移動平均線より下に沈んだ低ボラ銘柄が、材料で急騰した初動を捉える',
-    backtest: {
-      oos_pf: 55.49, oos_wr: 95.2, oos_n: 433, spd: 0.3,
-      wf: '4/5',
-      regime_note: 'v5 R1: margin_buy_ratio_5d≤0.25追加（breakdown filter）',
-    },
-  },
-  {
-    rank: 2,
-    name: 'RS Dip',
-    dbName: 'FCT_RS_Divergence',
-    type: 'always_on',
-    kind: 'factor',
-    holdDays: 15,
-    mcCondition: 'Always-on',
-    conditions: 'RS≥80 & SMA10から-3R以上急落',
-    role: 'TOPIXに対して相対的に強い銘柄が、一時的に深く売られた後の反発を狙う',
-    backtest: {
-      oos_pf: 36.82, oos_wr: 92.7, oos_n: 1943, spd: 1.6,
-      wf: '5/5',
-      regime_note: 'v4新規: RS高位×深い急落の反発',
-    },
-  },
-  {
-    rank: 3,
-    name: '21EMA Pullback',
-    dbName: 'FCT_EMA21_SMA10_CRS',
-    type: 'always_on',
-    kind: 'factor',
-    holdDays: 15,
-    mcCondition: 'Always-on',
-    conditions: 'EMA21から-2R以下 & SMA10から-1.5R以下 & RS≥80 & 空売り比率≤5 & DuPont Leverage<2.0',
-    role: '21日指数移動平均から深く調整した相対強度の高い銘柄を捕捉',
-    backtest: {
-      oos_pf: 33.06, oos_wr: 90.7, oos_n: 2729, spd: 2.2,
-      wf: '5/5',
-      regime_note: 'v4: RS 70→80, ema21 -2.0, dist10 -1.5, hold 15d. dupont_leverage<2.0追加',
-    },
-  },
-  {
-    rank: 4,
-    name: '10/50SMA Pullback',
-    dbName: 'FCT_SMA10_SMA50_CRS',
-    type: 'always_on',
-    kind: 'factor',
-    holdDays: 20,
-    mcCondition: 'Always-on',
-    conditions: 'SMA10から-1.5R以下 & SMA50から-1R以下 & RS≥75 & 空売り残変化≤0 & DuPont Leverage≥2.0 & 現物買い比率5d≥0.7',
-    role: '短期・中期MAから同時調整。空売り残の減少がリバーサルシグナル',
-    backtest: {
-      oos_pf: 20.39, oos_wr: 86.0, oos_n: 3060, spd: 2.5,
-      wf: '5/5',
-      regime_note: 'v5 R1: cash_buy_ratio_5d≥0.7追加. R2: RS 80→75 (WF 4/5→5/5)',
-    },
-  },
-  {
-    rank: 5,
-    name: 'CWH',
-    dbName: 'EVT_CWH_BPS_EPS',
-    type: 'bull',
-    kind: 'event',
-    holdDays: 40,
-    mcCondition: 'MC≥17',
-    conditions: 'カップ深さ-30〜-8% & 出来高収縮≤0.5 & 52W高値-10%以内 & BPS≥2240 & EPS≥95 & RS≥70 & DuPont Leverage≥2.0 & 信用買い残比率5d≤0.25',
-    role: 'クラシックなMinerviniパターン。出来高が収縮してエネルギーを蓄積した銘柄のブレイクアウト',
-    backtest: {
-      oos_pf: 4.42, oos_wr: 61.0, oos_n: 508, spd: 0.4,
-      wf: '5/5',
-      regime_note: 'v5 R1: margin_buy_ratio_5d≤0.25追加. R2: cup_depth -40→-30 (WF 2/5→4/5)',
-    },
-  },
-  {
-    rank: 6,
-    name: 'RVOL 2x',
-    dbName: 'EVT_RVOL2x_BPS_EpsGr',
-    type: 'bear',
-    kind: 'event',
-    holdDays: 15,
-    mcCondition: 'MC≤9',
-    conditions: '出来高≥2倍 & BPS≥1500 & EPS成長≥20% & SMA10から0.0R以内 & RS≥80 & DuPont Leverage≥2.0 & 信用買い残比率5d≤0.3',
-    role: '割安かつ高成長のファンダメンタルを持つ銘柄に、異常出来高が発生した日を検出',
-    backtest: {
-      oos_pf: 16.65, oos_wr: 78.1, oos_n: 122, spd: 0.4,
-      wf: '5/5',
-      regime_note: 'v5 R1: margin_buy_ratio_5d≤0.3追加. R2: BPS 2240→1500, eps_gr 25→20, RS 70→80, dist10 0.5→0.0 (PF 4.21→16.65)',
-    },
-  },
-  {
-    rank: 7,
-    name: 'Value',
-    dbName: 'FCT_ValueQuality_CRS',
-    type: 'bull',
-    kind: 'factor',
-    holdDays: 40,
-    mcCondition: 'MC≥20',
-    conditions: 'PBR≤0.5 & EPS≥100 & ADR≤3% & RS≥80',
-    role: 'バリュー×クオリティの複合スクリーン。低PBRだが収益力がある銘柄',
-    backtest: {
-      oos_pf: 4.20, oos_wr: 67.5, oos_n: 17817, spd: 14.4,
-      wf: '4/5',
-      regime_note: 'v4: RS 80, pbr 0.5, eps 100. MC≥20で発動',
-    },
-  },
-  {
-    rank: 8,
-    name: 'VCS Coil',
-    dbName: 'FCT_RS_VCS_Coil',
-    type: 'bull',
-    kind: 'factor',
-    holdDays: 40,
-    mcCondition: 'MC≥18',
-    conditions: 'RS≥80 & VCS≥80 & ADR≤3% & DuPont Leverage<2.0',
-    role: 'ボラティリティが収縮した相対強度の高い銘柄。ブレイクアウト前のwatch候補',
-    backtest: {
-      oos_pf: 2.78, oos_wr: 58.1, oos_n: 8369, spd: 6.7,
-      wf: '5/5',
-      regime_note: 'v4新規: 既存スクリーンと直交するコンセプト. MC≥18で発動. dupont_leverage<2.0追加',
-    },
-  },
-  {
-    rank: 9,
-    name: 'BearRS',
-    dbName: 'BearRS_Leader',
-    type: 'bear',
-    kind: 'factor',
-    holdDays: 30,
-    mcCondition: 'MC≤4',
-    conditions: 'MC≤4 & RS≥70 & Low≤21EMA',
-    role: 'Bear環境(MC≤4)で相対強度の高い銘柄を、21EMAへの押し目で拾うスクリーン',
-    backtest: {
-      oos_pf: 3.36, oos_wr: 63.1, oos_n: 53522, spd: 42.5,
-      wf: '4/5',
-      regime_note: 'MC≤4のみ発動。固定30日保有',
-    },
-  },
-  {
-    rank: 10,
     name: 'Div Bear',
     dbName: 'DIV_DY_Incr_EpsGr',
     type: 'bear',
     kind: 'factor',
     holdDays: 20,
-    mcCondition: 'MC≤1',
-    conditions: '配当利回り≥2% & 増配 & EPS成長≥30% & MC≤1',
-    role: 'Extreme Bear環境(MC≤1)で配当利回り・増配・EPS成長の3条件を満たすディフェンシブ銘柄を検出',
+    mcCondition: 'mc_v4 ∈ [very_bear, bear, neutral]',
+    conditions: '配当利回り≥2% & 増配 (dividend_increase≥1) & EPS YoY≥30%',
+    role:
+      'Bear / Neutral 環境でディフェンシブな増配・配当利回りグロース銘柄を検出。' +
+      'Phase 2.0 regime pool scan で全 5 regime 候補入り、PF_med=4.28 / WF=5/5 で本番採用。',
     backtest: {
-      oos_pf: 5.69, oos_wr: 68.0, oos_n: 320, spd: 0.3,
+      oos_pf: 4.46,
+      oos_wr: 69.1,
+      oos_n: 8211,
+      spd: 6.7,
       wf: '5/5',
-      regime_note: 'MC≤1のみ発動。Premium配当データ使用',
+      regime_note: 'Phase 2.1 採用. mc_v4 ∈ [very_bear, bear, neutral] で発動.',
     },
   },
   {
-    rank: 11,
-    name: 'ShortCover',
-    dbName: 'EVT_BearRS_ShortCover',
+    rank: 2,
+    name: 'Value',
+    dbName: 'FCT_ValueQuality_CRS',
     type: 'bear',
-    kind: 'event',
-    holdDays: 15,
-    mcCondition: 'MC≤3',
-    conditions: 'cockpit_rs<35 & RS 5日下落≥8pt & short_sell>0.30 & dist_ema21≤-10 & pct_52wh≤-30 & margin_buy<0.20',
-    role: 'Bear深押し+高空売り反発型（T-5統合版）。5日間でRSが8pt以上下落した低RS銘柄の逆張りシグナル',
+    kind: 'factor',
+    holdDays: 40,
+    mcCondition: 'mc_v4 ∈ [very_bear, bear]',
+    conditions: 'PBR≤0.5 & EPS≥100 & ADR≤3% & cockpit_rs≥80',
+    role:
+      'Bear 環境で低 PBR×高 EPS×高 RS のバリュー×クオリティ複合銘柄を検出。' +
+      'Phase 2.0 regime pool scan で very_bear/bear 採用基準達, PF_med=2.38.',
     backtest: {
-      oos_pf: 35.62, oos_wr: 37.66, oos_n: 1901, spd: 0.2,
-      wf: '5/5',
-      regime_note: 'MC≤3のみ発動。Phase X-2 T-5統合版。baseline PF14.85から+140%改善',
+      oos_pf: 4.20,
+      oos_wr: 67.5,
+      oos_n: 17817,
+      spd: 14.4,
+      wf: '4/5',
+      regime_note:
+        'Phase 2.1 採用 (mc_v3 旧設定 MC≥20 → mc_v4 ∈ [very_bear, bear] に再分類).',
     },
   },
+  // 旧 11 screens は Phase 2.1 で archive. lib/screenNames.ts LEGACY_SCREEN_NAMES
+  // に display name のみ残置, 詳細定義は本リポ git history (commit a47852a 以前) と
+  // 21-Cloudl-Database scripts/archive/screens_archived_20260503.json を参照.
 ]
 
 // ── Sort logic ────────────────────────────────────────────────────────────────

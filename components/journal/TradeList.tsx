@@ -33,24 +33,19 @@ function RegimeBadge({ regime }: { regime: string | null }) {
   )
 }
 
-// スクリーン種別 → バッジ色
+// スクリーン種別 → バッジ色 (Phase 2.1 採用 2 + legacy グレー)
 function screenBadgeClass(rawScreenName: string | null): string {
   if (!rawScreenName) return 'bg-gray-100 text-gray-600'
   const first = rawScreenName.split('|')[0].trim()
-  // Bear系
-  if (first === 'BearRS_Leader' || first === 'DIV_DY_Incr_EpsGr' || first === 'EVT_BearRS_ShortCover') {
+  // Phase 2.1 採用 (bear/neutral 限定)
+  if (first === 'DIV_DY_Incr_EpsGr') {
     return 'bg-red-50 text-red-700'
   }
-  // Bull系（MC特化）
-  if (first === 'EVT_CWH_BPS_EPS' || first === 'FCT_RS_VCS_Coil' || first === 'FCT_ValueQuality_CRS') {
+  if (first === 'FCT_ValueQuality_CRS') {
     return 'bg-purple-50 text-purple-700'
   }
-  // MC特化 Bear: RVOL 2x (MC≤9)
-  if (first === 'EVT_RVOL2x_BPS_EpsGr') {
-    return 'bg-amber-50 text-amber-700'
-  }
-  // Always-on
-  return 'bg-blue-50 text-blue-700'
+  // Phase 2.1 で archive された旧 screens (過去 signal 互換用 grey)
+  return 'bg-gray-100 text-gray-500'
 }
 
 // MC v4 Score (0-100) → 色: 80+ = emerald (strong_bull), 20- = red (strong_bear)
