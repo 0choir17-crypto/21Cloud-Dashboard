@@ -11,6 +11,8 @@ import VcpFilter, {
   FilterPreset,
 } from '@/components/vcp/VcpFilter'
 import VcpTable from '@/components/vcp/VcpTable'
+import ViewToggle, { ViewMode } from '@/components/chart/ViewToggle'
+import StockChartView from '@/components/chart/StockChartView'
 
 const COLUMNS = `
   date, code, name, sector,
@@ -26,6 +28,8 @@ export default function VcpPage() {
   const [latestVcpDate, setLatestVcpDate] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [preset, setPreset] = useState<FilterPreset>('all')
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
+  const [selectedCode, setSelectedCode] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -94,6 +98,17 @@ export default function VcpPage() {
   const mcV4 = useMemo(
     () => rows.find(r => r.mc_v4 != null)?.mc_v4 ?? null,
     [rows],
+  )
+
+  // Effective code: prefer user pick, else top of the filtered list
+  const effectiveCode = useMemo(() => {
+    if (selectedCode && rows.some(r => r.code === selectedCode)) return selectedCode
+    return filtered[0]?.code ?? null
+  }, [selectedCode, rows, filtered])
+
+  const selectedRow = useMemo(
+    () => rows.find(r => r.code === effectiveCode) ?? null,
+    [rows, effectiveCode],
   )
 
   return (
@@ -183,8 +198,40 @@ export default function VcpPage() {
       ) : (
         <>
           <VcpStats rows={rows} />
-          <VcpFilter preset={preset} onChange={setPreset} counts={counts} />
-          <VcpTable rows={filtered} />
+
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <VcpFilter preset={preset} onChange={setPreset} counts={counts} />
+            <div className="flex items-center gap-2">
+              {viewMode === 'chart' && filtered.length > 0 && (
+                <select
+                  value={effectiveCode ?? ''}
+                  onChange={e => setSelectedCode(e.target.value || null)}
+                  className="text-xs font-mono px-2 py-1.5 rounded border bg-white border-[var(--border)]"
+                >
+                  {filtered.map(r => (
+                    <option key={r.code} value={r.code}>
+                      {r.code} {r.name ? `— ${r.name}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <ViewToggle mode={viewMode} onChange={setViewMode} />
+            </div>
+          </div>
+
+          {viewMode === 'table' ? (
+            <VcpTable rows={filtered} />
+          ) : effectiveCode ? (
+            <StockChartView
+              code={effectiveCode}
+              name={selectedRow?.name ?? null}
+              sector={selectedRow?.sector ?? null}
+            />
+          ) : (
+            <div className="card p-6 text-center text-[var(--text-muted)] text-sm">
+              銘柄を選択してください
+            </div>
+          )}
         </>
       )}
     </main>
