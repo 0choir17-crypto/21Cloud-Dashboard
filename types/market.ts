@@ -90,4 +90,18 @@ export type MarketConditions = {
   mc_v4_s1?: number | null
   mc_v4_s2?: number | null
   mc_v4_s3?: number | null
+  // MC v4 Dynamics — 3 軸 (Velocity / Duration / Shock)
+  mc_v4_delta_1d?: number | null
+  mc_v4_delta_5d?: number | null
+  mc_v4_delta_10d?: number | null
+  mc_v4_volatility_20d?: number | null
+  panic_flag_10?: number | null
+  panic_flag_15?: number | null
+  panic_flag_20?: number | null
+  relief_flag_10?: number | null
+  relief_flag_15?: number | null
+  relief_flag_20?: number | null
+  regime_shift_event?: number | null
+  days_since_regime_shift?: number | null
+  regime_run_length?: number | null
 }

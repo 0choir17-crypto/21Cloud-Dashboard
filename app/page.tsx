@@ -8,6 +8,7 @@ import ScoreGauge from '@/components/market/ScoreGauge'
 import FactorGrid from '@/components/market/FactorGrid'
 import IndexCard from '@/components/market/IndexCard'
 import BreadthPanel from '@/components/market/BreadthPanel'
+import DynamicsCards from '@/components/market/DynamicsCards'
 import { McScoreChart } from '@/components/market/McScoreChart'
 
 export default function Page() {
@@ -134,7 +135,10 @@ export default function Page() {
             </div>
           </div>
 
-          {/* ③ Market Breadth */}
+          {/* ③ MC v4 Dynamics — Velocity / Duration / Shock */}
+          <DynamicsCards market={market} />
+
+          {/* ④ Market Breadth */}
           <BreadthPanel market={market} />
         </>
       )}
