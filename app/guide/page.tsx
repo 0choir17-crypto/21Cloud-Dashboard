@@ -115,6 +115,10 @@ const GLOSSARY = [
   { term: 'MC',    desc: 'Market Condition v3\u300221\u8981\u7d20\u306e\u30b9\u30b3\u30a2\u30ab\u30fc\u30c9\u3067\u5e02\u5834\u74b0\u5883\u30920\u301c21\u70b9\u3067\u8a55\u4fa1\u3002\u9ad8\u3044=\u5f37\u6c17\u3001\u4f4e\u3044=\u5f31\u6c17' },
   { term: 'DuPont Leverage', desc: '\u7dcf\u8cc7\u7523\u00f7\u81ea\u5df1\u8cc7\u672c\u3002\u8ca1\u52d9\u30ec\u30d0\u30ec\u30c3\u30b8\u306e\u6307\u6a19\u30022.0\u4ee5\u4e0a\u306f\u904e\u5270\u50b5\u52d9\u30ea\u30b9\u30af\u3068\u3057\u3066\u30d5\u30a3\u30eb\u30bf\u30fc' },
   { term: 'Divergence', desc: '\u6307\u6570\u304c\u4e0a\u6607\u3057\u3066\u3044\u308b\u306e\u306bBreadth\u304c\u60aa\u5316\u3057\u3066\u3044\u308b\u72b6\u614b\u3002\u5929\u4e95\u306e\u8b66\u544a\u30b7\u30b0\u30ca\u30eb' },
+  { term: 'Velocity',   desc: 'MC v4 \u30b9\u30b3\u30a2\u306e\u5909\u5316\u901f\u5ea6\u30021d / 5d / 10d \u306e\u5dee\u5206\u3068 20d \u6a19\u6e96\u504f\u5dee\u3067\u300c\u3069\u3046\u52d5\u3044\u3066\u3044\u308b\u304b\u300d\u3092\u6e2c\u308b' },
+  { term: 'Duration',   desc: '\u73fe\u30ec\u30b8\u30fc\u30e0\u306e\u7d99\u7d9a\u671f\u9593\u3002run_length = \u9023\u7d9a\u6ede\u5728\u65e5\u6570\u3001shift_event = 1 \u306f\u5f53\u65e5\u8ee2\u63db' },
+  { term: 'Shock',      desc: '\u6025\u5909\u52d5\u691c\u77e5\u30d5\u30e9\u30b0\u3002Panic = \u6025\u843d\u30fb\u6025\u4e0b\u9650\u3001Relief = \u6025\u56de\u5fa9\u3002\u3044\u305a\u308c\u3082 OFF \u3067 Calm' },
+  { term: 'Regime Run Length', desc: '\u73fe\u5728\u306e MC v4 regime (strong_bull / bull / neutral / bear / strong_bear) \u306b\u9023\u7d9a\u3067\u6ede\u5728\u3057\u3066\u3044\u308b\u55b6\u696d\u65e5\u6570' },
 ]
 
 // ── Sortable header ───────────────────────────────────────────────────────────
@@ -434,6 +438,125 @@ export default function GuidePage() {
               <strong>valid_weight</strong>: 各日に有効だったファクターの重み合計。
               現状 daily_screener が IV / 空売り / Basis を取得していないため S2 + S3 (15%) が欠損し、
               通常 85% で推移。Premium データ取得追加で 100% に上がる予定。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── MC v4 Dynamics — 3 Axes ───────────────────────────────────────── */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+          Dynamics (v4) — Velocity / Duration / Shock
+        </h2>
+        <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-5">
+          <p className="text-sm text-gray-600 mb-4">
+            8 Factors が「現在の市場が <strong className="text-gray-900">どこにいるか</strong>」を測るのに対し、
+            Dynamics は「<strong className="text-gray-900">どう動いているか</strong>」を 3 軸 13 列で捉えます。
+            ダッシュボード上段 (Scorecard / IndexCards) の下に <code className="bg-gray-100 px-1 rounded">Velocity / Duration / Shock</code>{' '}
+            の 3 Card で表示。
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-[#e8eaed]">
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">軸</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">列名</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">単位</th>
+                  <th className="text-left px-3 py-2 font-semibold text-gray-700">何を測っているか</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e8eaed]">
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-emerald-700" rowSpan={4}>Velocity</td>
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">mc_v4_delta_1d</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">±score</td>
+                  <td className="px-3 py-2 text-gray-600">前日比の MC v4 変化。当日勢いの大小</td>
+                </tr>
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">mc_v4_delta_5d</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">±score</td>
+                  <td className="px-3 py-2 text-gray-600">5 営業日変化。週内のレジーム傾き</td>
+                </tr>
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">mc_v4_delta_10d</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">±score</td>
+                  <td className="px-3 py-2 text-gray-600">10 営業日変化。中期トレンド方向</td>
+                </tr>
+                <tr className="bg-emerald-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">mc_v4_volatility_20d</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">stdev</td>
+                  <td className="px-3 py-2 text-gray-600">過去 20 日の MC v4 標準偏差。レジーム揺れの大きさ</td>
+                </tr>
+                <tr className="bg-amber-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-amber-700" rowSpan={3}>Duration</td>
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">regime_run_length</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">days</td>
+                  <td className="px-3 py-2 text-gray-600">現レジームに連続滞在している営業日数</td>
+                </tr>
+                <tr className="bg-amber-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">days_since_regime_shift</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">days</td>
+                  <td className="px-3 py-2 text-gray-600">直近のレジーム転換からの経過日数</td>
+                </tr>
+                <tr className="bg-amber-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">regime_shift_event</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">当日にレジーム転換が起きたか (1 = shift, 0 = no shift)</td>
+                </tr>
+                <tr className="bg-rose-50/30">
+                  <td className="px-3 py-2 font-mono font-bold text-rose-700" rowSpan={6}>Shock</td>
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">panic_flag_10</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">10 日窓のパニック (急落・急変動) 検知</td>
+                </tr>
+                <tr className="bg-rose-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">panic_flag_15</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">15 日窓のパニック検知</td>
+                </tr>
+                <tr className="bg-rose-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">panic_flag_20</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">20 日窓のパニック検知</td>
+                </tr>
+                <tr className="bg-rose-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">relief_flag_10</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">10 日窓のリリーフ (急回復・急騰) 検知</td>
+                </tr>
+                <tr className="bg-rose-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">relief_flag_15</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">15 日窓のリリーフ検知</td>
+                </tr>
+                <tr className="bg-rose-50/30">
+                  <td className="px-3 py-2 font-mono text-xs text-gray-700">relief_flag_20</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">flag</td>
+                  <td className="px-3 py-2 text-gray-600">20 日窓のリリーフ検知</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 rounded-lg bg-gray-50 border border-[#e8eaed] p-4">
+            <p className="text-xs font-semibold text-gray-700 mb-2">読み方</p>
+            <ul className="space-y-1.5 text-xs text-gray-600">
+              <li>
+                <span className="inline-block w-20 font-semibold text-emerald-700">Velocity</span>
+                1d &gt; 0 で当日反発、5d/10d 全て正なら中期も上向き。Volatility 20d は揺れの絶対量で、急騰急落どちらでも増える
+              </li>
+              <li>
+                <span className="inline-block w-20 font-semibold text-amber-700">Duration</span>
+                run_length が長いほど現レジームが安定。shift_event = 1 の日はレジーム転換当日 = エントリー機会の可能性
+              </li>
+              <li>
+                <span className="inline-block w-20 font-semibold text-rose-700">Shock</span>
+                Card 上部の表示は最短窓 (10d) を優先。Panic 検知中 → リスクオフ、Relief 検知中 → 回復過程、いずれも OFF → Calm
+              </li>
+            </ul>
+            <p className="text-xs text-gray-500 mt-3">
+              ※ 現状は最新日のみ表示。過去日選択時の Dynamics 表示は別 task で対応予定。
             </p>
           </div>
         </div>
