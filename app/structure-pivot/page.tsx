@@ -16,6 +16,8 @@ import StructurePivotFilter, {
 import StructurePivotTable from '@/components/structurePivot/StructurePivotTable'
 import StructurePivotLegend from '@/components/structurePivot/StructurePivotLegend'
 import StockChartView from '@/components/chart/StockChartView'
+import StockGrid, { type GridEntry } from '@/components/chart/StockGrid'
+import ViewToggle, { type ViewMode } from '@/components/chart/ViewToggle'
 
 const INITIAL_FILTERS: StructurePivotFilters = {
   signal: 'all',
@@ -38,6 +40,7 @@ export default function StructurePivotPage() {
   const [latestPivotDate, setLatestPivotDate] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<StructurePivotFilters>(INITIAL_FILTERS)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
 
   const detailRef = useRef<HTMLDivElement | null>(null)
@@ -94,6 +97,41 @@ export default function StructurePivotPage() {
     }
     return c
   }, [response.rows])
+
+  // Card view needs an explicitly sorted list (table view has its own sort)
+  const TIER_ORDER: Record<string, number> = useMemo(
+    () => ({ S: 0, A: 1, B: 2 }),
+    [],
+  )
+  const SIGNAL_ORDER: Record<string, number> = useMemo(
+    () => ({ HL_BREAK: 0, SETUP_LONG: 1 }),
+    [],
+  )
+  const sortedForCards: StructurePivotRow[] = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const ta = TIER_ORDER[a.quality_tier] ?? 9
+      const tb = TIER_ORDER[b.quality_tier] ?? 9
+      if (ta !== tb) return ta - tb
+      const sa = SIGNAL_ORDER[a.signal_type] ?? 9
+      const sb = SIGNAL_ORDER[b.signal_type] ?? 9
+      if (sa !== sb) return sa - sb
+      return (b.days_in_setup ?? 0) - (a.days_in_setup ?? 0)
+    })
+  }, [filtered, TIER_ORDER, SIGNAL_ORDER])
+
+  const gridEntries: GridEntry[] = useMemo(
+    () =>
+      sortedForCards.map(r => ({
+        code: r.code,
+        name: r.name,
+        sector: r.sector,
+        overrides: {
+          rs: r.cockpit_rs ?? null,
+          adrPct: r.adr_pct ?? null,
+        },
+      })),
+    [sortedForCards],
+  )
 
   const tierCounts: Record<TierFilter, number> = useMemo(() => {
     const c: Record<TierFilter, number> = {
@@ -222,23 +260,34 @@ export default function StructurePivotPage() {
         </div>
       ) : (
         <>
-          <StructurePivotFilter
-            filters={filters}
-            onChange={setFilters}
-            signalCounts={signalCounts}
-            tierCounts={tierCounts}
-          />
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <StructurePivotFilter
+              filters={filters}
+              onChange={setFilters}
+              signalCounts={signalCounts}
+              tierCounts={tierCounts}
+            />
+            <ViewToggle mode={viewMode} onChange={setViewMode} />
+          </div>
 
           <p className="mb-2 text-xs text-gray-500">
             Showing {filtered.length} of {response.rows.length} rows
             {filtered.length < response.rows.length && ' (filtered)'}
           </p>
 
-          <StructurePivotTable
-            rows={filtered}
-            onSelect={handleSelect}
-            selectedCode={selectedCode}
-          />
+          {viewMode === 'cards' ? (
+            <StockGrid
+              entries={gridEntries}
+              selectedCode={selectedCode}
+              onSelect={handleSelect}
+            />
+          ) : (
+            <StructurePivotTable
+              rows={filtered}
+              onSelect={handleSelect}
+              selectedCode={selectedCode}
+            />
+          )}
 
           {selectedCode && selectedRow && (
             <div ref={detailRef} className="mt-6">
