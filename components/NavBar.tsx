@@ -9,7 +9,7 @@ export default function NavBar() {
   const { selectedDate, setSelectedDate, isLatest, availableDates, resetToLatest } = useDate()
 
   // 日付ピッカー対象ページ
-  const datePages = ['/', '/signals', '/leaders']
+  const datePages = ['/', '/signals', '/vcp']
   const showPicker = datePages.includes(pathname)
 
   const linkClass = (path: string) =>
@@ -60,7 +60,7 @@ export default function NavBar() {
       <span className="text-gray-300 select-none flex-shrink-0">|</span>
       <Link href="/" className={linkClass('/')}>Market</Link>
       <Link href="/sectors" className={linkClass('/sectors')}>Sectors</Link>
-      <Link href="/leaders" className={linkClass('/leaders')}>Leaders</Link>
+      <Link href="/vcp" className={linkClass('/vcp')}>VCP</Link>
       <Link href="/signals" className={linkClass('/signals')}>Signals</Link>
       <Link href="/watchlist" className={linkClass('/watchlist')}>Watchlist</Link>
       <Link href="/portfolio" className={linkClass('/portfolio')}>Portfolio</Link>
