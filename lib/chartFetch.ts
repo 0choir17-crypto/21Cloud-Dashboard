@@ -3,6 +3,11 @@ import type { ChartApiResponse, OhlcvBar } from '@/types/chart'
 
 const CODE_RE = /^\d{4}$/
 
+export interface FetchChartOptions {
+  /** Limit to the most recent N trading days (server-side via DB ORDER + LIMIT, then re-sorted ASC). Omit/null = full history. */
+  lookbackDays?: number | null
+}
+
 /**
  * Client-side chart fetcher.
  *
@@ -12,20 +17,33 @@ const CODE_RE = /^\d{4}$/
  * shape that a `GET /api/chart/[code]` route would emit, so a future server
  * variant can be swapped in without touching call sites.
  */
-export async function fetchChart(code: string): Promise<ChartApiResponse> {
+export async function fetchChart(
+  code: string,
+  opts: FetchChartOptions = {},
+): Promise<ChartApiResponse> {
   if (!CODE_RE.test(code)) {
     throw new Error('invalid code (must be 4-digit numeric)')
   }
 
-  const { data, error } = await supabase
+  const lookback = opts.lookbackDays ?? null
+
+  // For limited lookback we order DESC and limit, then reverse client-side.
+  let query = supabase
     .from('chart_ohlcv_cache')
     .select('date, open, high, low, close, volume')
     .eq('code', code)
-    .order('date', { ascending: true })
 
+  query = lookback != null
+    ? query.order('date', { ascending: false }).limit(lookback)
+    : query.order('date', { ascending: true })
+
+  const { data, error } = await query
   if (error) throw new Error(error.message)
 
-  const ohlcv: OhlcvBar[] = (data ?? [])
+  const rows = data ?? []
+  const sorted = lookback != null ? [...rows].reverse() : rows
+
+  const ohlcv: OhlcvBar[] = sorted
     .filter(
       r =>
         r.date &&

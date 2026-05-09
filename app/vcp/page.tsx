@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DailyVcpScreen } from '@/types/vcp'
 import { useDate } from '@/contexts/DateContext'
@@ -12,6 +12,7 @@ import VcpFilter, {
 } from '@/components/vcp/VcpFilter'
 import VcpTable from '@/components/vcp/VcpTable'
 import ViewToggle, { ViewMode } from '@/components/chart/ViewToggle'
+import StockGrid, { GridEntry } from '@/components/chart/StockGrid'
 import StockChartView from '@/components/chart/StockChartView'
 
 const COLUMNS = `
@@ -28,8 +29,10 @@ export default function VcpPage() {
   const [latestVcpDate, setLatestVcpDate] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [preset, setPreset] = useState<FilterPreset>('all')
-  const [viewMode, setViewMode] = useState<ViewMode>('table')
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
+
+  const detailRef = useRef<HTMLDivElement | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -100,16 +103,37 @@ export default function VcpPage() {
     [rows],
   )
 
-  // Effective code: prefer user pick, else top of the filtered list
-  const effectiveCode = useMemo(() => {
-    if (selectedCode && rows.some(r => r.code === selectedCode)) return selectedCode
-    return filtered[0]?.code ?? null
-  }, [selectedCode, rows, filtered])
+  const gridEntries: GridEntry[] = useMemo(
+    () =>
+      filtered.map(r => ({
+        code: r.code,
+        name: r.name,
+        sector: r.sector,
+        overrides: {
+          rs: r.cockpit_rs ?? null,
+          adrPct: r.adr_pct ?? null,
+          pivotPct: r.pct_from_20d_high ?? null,
+          distSma50: r.dist_sma50 ?? null,
+        },
+      })),
+    [filtered],
+  )
 
   const selectedRow = useMemo(
-    () => rows.find(r => r.code === effectiveCode) ?? null,
-    [rows, effectiveCode],
+    () => rows.find(r => r.code === selectedCode) ?? null,
+    [rows, selectedCode],
   )
+
+  // Smooth-scroll to detail when a card / row is selected
+  useEffect(() => {
+    if (selectedCode && detailRef.current) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [selectedCode])
+
+  const handleSelect = (code: string) => {
+    setSelectedCode(prev => (prev === code ? null : code))
+  }
 
   return (
     <main
@@ -201,35 +225,37 @@ export default function VcpPage() {
 
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <VcpFilter preset={preset} onChange={setPreset} counts={counts} />
-            <div className="flex items-center gap-2">
-              {viewMode === 'chart' && filtered.length > 0 && (
-                <select
-                  value={effectiveCode ?? ''}
-                  onChange={e => setSelectedCode(e.target.value || null)}
-                  className="text-xs font-mono px-2 py-1.5 rounded border bg-white border-[var(--border)]"
-                >
-                  {filtered.map(r => (
-                    <option key={r.code} value={r.code}>
-                      {r.code} {r.name ? `— ${r.name}` : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
-              <ViewToggle mode={viewMode} onChange={setViewMode} />
-            </div>
+            <ViewToggle mode={viewMode} onChange={setViewMode} />
           </div>
 
-          {viewMode === 'table' ? (
-            <VcpTable rows={filtered} />
-          ) : effectiveCode ? (
-            <StockChartView
-              code={effectiveCode}
-              name={selectedRow?.name ?? null}
-              sector={selectedRow?.sector ?? null}
+          {viewMode === 'cards' ? (
+            <StockGrid
+              entries={gridEntries}
+              selectedCode={selectedCode}
+              onSelect={handleSelect}
             />
           ) : (
-            <div className="card p-6 text-center text-[var(--text-muted)] text-sm">
-              銘柄を選択してください
+            <VcpTable rows={filtered} />
+          )}
+
+          {selectedCode && (
+            <div ref={detailRef} className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
+                  Detail — {selectedCode}
+                </h2>
+                <button
+                  onClick={() => setSelectedCode(null)}
+                  className="text-xs px-2 py-1 rounded border border-[var(--border)] bg-white hover:bg-gray-50 text-[var(--text-secondary)]"
+                >
+                  閉じる ✕
+                </button>
+              </div>
+              <StockChartView
+                code={selectedCode}
+                name={selectedRow?.name ?? null}
+                sector={selectedRow?.sector ?? null}
+              />
             </div>
           )}
         </>

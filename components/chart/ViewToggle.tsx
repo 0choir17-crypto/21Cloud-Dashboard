@@ -1,6 +1,6 @@
 'use client'
 
-export type ViewMode = 'table' | 'chart'
+export type ViewMode = 'cards' | 'table'
 
 export default function ViewToggle({
   mode,
@@ -15,24 +15,24 @@ export default function ViewToggle({
       style={{ borderColor: 'var(--border)' }}
     >
       <button
-        onClick={() => onChange('table')}
+        onClick={() => onChange('cards')}
         className={`px-3 py-1.5 transition-colors ${
-          mode === 'table'
+          mode === 'cards'
             ? 'bg-[var(--accent)] text-white'
             : 'bg-white text-[var(--text-secondary)] hover:bg-gray-50'
         }`}
       >
-        Table
+        Cards
       </button>
       <button
-        onClick={() => onChange('chart')}
+        onClick={() => onChange('table')}
         className={`px-3 py-1.5 transition-colors border-l ${
-          mode === 'chart'
+          mode === 'table'
             ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
             : 'bg-white text-[var(--text-secondary)] border-[var(--border)] hover:bg-gray-50'
         }`}
       >
-        Chart
+        Table
       </button>
     </div>
   )
