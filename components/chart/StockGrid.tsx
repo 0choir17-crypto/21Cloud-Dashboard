@@ -88,7 +88,7 @@ export default function StockGrid({
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {visible.map(entry => {
           const bars = cache.get(entry.code)
           if (bars == null) {
