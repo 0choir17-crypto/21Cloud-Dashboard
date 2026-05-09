@@ -306,7 +306,7 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
                 </td>
                 <td className="px-2 py-2.5 text-right font-mono text-xs whitespace-nowrap">
                   {row.turnover_50d_oku != null
-                    ? `¥${row.turnover_50d_oku.toFixed(1)}`
+                    ? `${row.turnover_50d_oku.toFixed(1)}億`
                     : '—'}
                 </td>
                 <td className="px-2 py-2.5 text-right whitespace-nowrap">
