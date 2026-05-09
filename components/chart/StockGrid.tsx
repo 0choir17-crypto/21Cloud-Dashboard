@@ -16,7 +16,7 @@ interface Props {
   entries: GridEntry[]
   /** Initial number of cards rendered. The user can expand via "もっと見る". */
   pageSize?: number
-  /** Trading days of history to load per card (default ≈ 1.5 years). */
+  /** Trading days of history to load per card (default ≈ 6 months). */
   lookbackDays?: number | null
   selectedCode?: string | null
   onSelect?: (code: string) => void
@@ -27,7 +27,7 @@ type Cache = Map<string, OhlcvBar[]>
 export default function StockGrid({
   entries,
   pageSize = 12,
-  lookbackDays = 380,
+  lookbackDays = 126,
   selectedCode,
   onSelect,
 }: Props) {
