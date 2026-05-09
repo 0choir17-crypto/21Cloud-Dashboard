@@ -16,7 +16,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
     'Cockpit RS: TOPIX 比のパーセンタイル順位。weighted across 21d/63d/126d/252d.',
   adr_pct:
     'Average Daily Range (%): 直近20日の高低差平均。',
-  turnover_50d_oku: '50日平均売買代金（億円）。',
+  turnover_50d_oku: '50日平均売買代金（B = billion JPY = 10億円）。',
   pct_from_20d_high:
     '過去 20 日 High pivot からの乖離 %. 負=ベース中 / 0付近=エントリ候補 / 正=ブレイク中. 5%超は chasing 警戒.',
   dist_sma50: '50日線からの乖離 (%).',
@@ -306,7 +306,7 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
                 </td>
                 <td className="px-2 py-2.5 text-right font-mono text-xs whitespace-nowrap">
                   {row.turnover_50d_oku != null
-                    ? `¥${row.turnover_50d_oku.toFixed(1)}`
+                    ? `${(row.turnover_50d_oku / 10).toFixed(2)}B`
                     : '—'}
                 </td>
                 <td className="px-2 py-2.5 text-right whitespace-nowrap">
