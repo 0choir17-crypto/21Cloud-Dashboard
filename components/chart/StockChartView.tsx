@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { ChartApiResponse, OhlcvBar } from '@/types/chart'
+import type { OhlcvBar } from '@/types/chart'
 import { computeCockpit } from '@/lib/cockpit'
+import { fetchChart } from '@/lib/chartFetch'
 import PriceChart from './PriceChart'
 import CockpitPanel from './CockpitPanel'
 
@@ -33,14 +34,10 @@ export default function StockChartView({ code, name, sector }: Props) {
   useEffect(() => {
     let cancelled = false
 
-    fetch(`/api/chart/${code}`)
-      .then(async r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        return (await r.json()) as ChartApiResponse
-      })
+    fetchChart(code)
       .then(json => {
         if (cancelled) return
-        setState({ status: 'ok', code, bars: json.ohlcv ?? [] })
+        setState({ status: 'ok', code, bars: json.ohlcv })
       })
       .catch(err => {
         if (cancelled) return
