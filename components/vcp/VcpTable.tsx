@@ -227,14 +227,14 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
               </th>
               <SortTh label="Sector" sortKey="sector" {...sp} align="left" />
               <SortTh label="VCS" sortKey="vcs_score" tooltip={COLUMN_TOOLTIPS.vcs_score} {...sp} />
-              <SortTh label="dT" sortKey="vcs_days_tight" tooltip={COLUMN_TOOLTIPS.vcs_days_tight} {...sp} />
-              <SortTh label="CRS" sortKey="cockpit_rs" tooltip={COLUMN_TOOLTIPS.cockpit_rs} {...sp} />
+              <SortTh label="Tight(day)" sortKey="vcs_days_tight" tooltip={COLUMN_TOOLTIPS.vcs_days_tight} {...sp} />
+              <SortTh label="RS" sortKey="cockpit_rs" tooltip={COLUMN_TOOLTIPS.cockpit_rs} {...sp} />
               <SortTh label="ADR%" sortKey="adr_pct" tooltip={COLUMN_TOOLTIPS.adr_pct} {...sp} />
-              <SortTh label="Turn(億)" sortKey="turnover_50d_oku" tooltip={COLUMN_TOOLTIPS.turnover_50d_oku} {...sp} />
+              <SortTh label="Turnover(50d)" sortKey="turnover_50d_oku" tooltip={COLUMN_TOOLTIPS.turnover_50d_oku} {...sp} />
               <SortTh label="Pivot%" sortKey="pct_from_20d_high" tooltip={COLUMN_TOOLTIPS.pct_from_20d_high} {...sp} />
-              <SortTh label="d50%" sortKey="dist_sma50" tooltip={COLUMN_TOOLTIPS.dist_sma50} {...sp} />
-              <SortTh label="d200%" sortKey="dist_sma200" tooltip={COLUMN_TOOLTIPS.dist_sma200} {...sp} />
-              <SortTh label="MA" sortKey="ma_stack" tooltip={COLUMN_TOOLTIPS.ma_stack} {...sp} />
+              <SortTh label="50sma%" sortKey="dist_sma50" tooltip={COLUMN_TOOLTIPS.dist_sma50} {...sp} />
+              <SortTh label="200sma%" sortKey="dist_sma200" tooltip={COLUMN_TOOLTIPS.dist_sma200} {...sp} />
+              <SortTh label="Stage2" sortKey="ma_stack" tooltip={COLUMN_TOOLTIPS.ma_stack} {...sp} />
               <SortTh label="52wH%" sortKey="high_52w_pct" tooltip={COLUMN_TOOLTIPS.high_52w_pct} {...sp} />
             </tr>
           </thead>
@@ -345,7 +345,7 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
                 Code / Name
               </th>
               <SortTh label="VCS" sortKey="vcs_score" tooltip={COLUMN_TOOLTIPS.vcs_score} {...sp} />
-              <SortTh label="dT" sortKey="vcs_days_tight" tooltip={COLUMN_TOOLTIPS.vcs_days_tight} {...sp} />
+              <SortTh label="Tight(day)" sortKey="vcs_days_tight" tooltip={COLUMN_TOOLTIPS.vcs_days_tight} {...sp} />
               <SortTh label="Pivot%" sortKey="pct_from_20d_high" tooltip={COLUMN_TOOLTIPS.pct_from_20d_high} {...sp} />
             </tr>
           </thead>
