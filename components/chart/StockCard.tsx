@@ -1,11 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type {
-  CounterTrendBar,
-  OhlcvBar,
-  StructurePivotPhase,
-} from '@/types/chart'
+import type { OhlcvBar, StructurePivotPhase } from '@/types/chart'
 import { ema, sma } from '@/lib/indicators'
 import MiniChart from './MiniChart'
 
@@ -26,7 +22,6 @@ interface Props {
   sector?: string | null
   bars: OhlcvBar[]
   structurePivotPhases?: StructurePivotPhase[]
-  counterTrend?: CounterTrendBar[]
   overrides?: CardOverrides
   selected?: boolean
   onSelect?: (code: string) => void
@@ -153,7 +148,6 @@ export default function StockCard({
   sector,
   bars,
   structurePivotPhases,
-  counterTrend,
   overrides,
   selected,
   onSelect,
@@ -249,7 +243,6 @@ export default function StockCard({
       <MiniChart
         bars={bars}
         structurePivotPhases={structurePivotPhases}
-        counterTrend={counterTrend}
         height={180}
       />
     </div>

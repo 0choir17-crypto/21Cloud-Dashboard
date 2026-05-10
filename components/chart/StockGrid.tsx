@@ -1,18 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type {
-  CounterTrendBar,
-  OhlcvBar,
-  StructurePivotPhase,
-} from '@/types/chart'
+import type { OhlcvBar, StructurePivotPhase } from '@/types/chart'
 import { fetchChart } from '@/lib/chartFetch'
 import StockCard, { CardOverrides } from './StockCard'
 
 type CacheEntry = {
   bars: OhlcvBar[]
   structurePivotPhases: StructurePivotPhase[]
-  counterTrend: CounterTrendBar[]
 }
 
 export interface GridEntry {
@@ -71,13 +66,11 @@ export default function StockGrid({
             code,
             bars: res.ohlcv,
             structurePivotPhases: res.structurePivotPhases ?? [],
-            counterTrend: res.counterTrend ?? [],
           }))
           .catch(() => ({
             code,
             bars: [] as OhlcvBar[],
             structurePivotPhases: [] as StructurePivotPhase[],
-            counterTrend: [] as CounterTrendBar[],
           })),
       ),
     ).then(results => {
@@ -89,7 +82,6 @@ export default function StockGrid({
           next.set(r.code, {
             bars: r.bars,
             structurePivotPhases: r.structurePivotPhases,
-            counterTrend: r.counterTrend,
           })
         }
         return next
@@ -146,7 +138,6 @@ export default function StockGrid({
               sector={entry.sector ?? undefined}
               bars={cached.bars}
               structurePivotPhases={cached.structurePivotPhases}
-              counterTrend={cached.counterTrend}
               overrides={entry.overrides}
               selected={selectedCode === entry.code}
               onSelect={onSelect}

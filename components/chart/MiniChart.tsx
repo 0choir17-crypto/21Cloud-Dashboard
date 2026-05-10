@@ -10,18 +10,13 @@ import {
   LineSeries,
   createChart,
 } from 'lightweight-charts'
-import type {
-  CounterTrendBar,
-  OhlcvBar,
-  StructurePivotPhase,
-} from '@/types/chart'
+import type { OhlcvBar, StructurePivotPhase } from '@/types/chart'
 import { ema, sma, toSeries } from '@/lib/indicators'
 import { drawStructurePivot } from '@/lib/structurePivotDraw'
 
 interface Props {
   bars: OhlcvBar[]
   structurePivotPhases?: StructurePivotPhase[]
-  counterTrend?: CounterTrendBar[]
   height?: number
 }
 
@@ -37,7 +32,6 @@ const SMA50_COLOR = '#faa1a4'
 export default function MiniChart({
   bars,
   structurePivotPhases,
-  counterTrend,
   height = 180,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -158,25 +152,10 @@ export default function MiniChart({
       scaleMargins: { top: 0.78, bottom: 0 },
     })
 
-    /* Structure Pivot overlay — current phase only on minis (no clutter),
-       no Counter Trend (orange line is hard to parse at this size),
-       compact mode strips marker text. clipBefore = first visible bar's
-       date so phases that started before the lookback window have their
-       anchor dates pulled inward to the leftmost candle on this chart;
-       otherwise lightweight-charts drops out-of-axis points and the
-       horizontal Pivot line ends up at the wrong y-position. */
-    drawStructurePivot(
-      chart,
-      candleSeries,
-      structurePivotPhases,
-      counterTrend,
-      {
-        currentOnly: true,
-        showCounterTrend: false,
-        compact: true,
-        clipBefore: bars[0]?.date,
-      },
-    )
+    /* Structure Pivot overlay — current phase Pivot horizontal + label */
+    drawStructurePivot(chart, candleSeries, structurePivotPhases, {
+      clipBefore: bars[0]?.date,
+    })
 
     chart.timeScale().fitContent()
     chartRef.current = chart
@@ -193,7 +172,7 @@ export default function MiniChart({
       chart.remove()
       chartRef.current = null
     }
-  }, [bars, height, structurePivotPhases, counterTrend])
+  }, [bars, height, structurePivotPhases])
 
   if (bars.length === 0) {
     return (
