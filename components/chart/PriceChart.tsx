@@ -8,17 +8,23 @@ import {
   HistogramSeries,
   IChartApi,
   LineSeries,
-  LineStyle,
   createChart,
-  createSeriesMarkers,
 } from 'lightweight-charts'
-import type { OhlcvBar, StructurePivotBar } from '@/types/chart'
+import type {
+  CounterTrendBar,
+  OhlcvBar,
+  StructurePivotPhase,
+} from '@/types/chart'
 import { ema, sma, toSeries } from '@/lib/indicators'
+import { drawStructurePivot } from '@/lib/structurePivotDraw'
 
 interface Props {
   bars: OhlcvBar[]
-  structurePivot?: StructurePivotBar[]
-  showStructurePivot?: boolean
+  structurePivotPhases?: StructurePivotPhase[]
+  counterTrend?: CounterTrendBar[]
+  showPivotHistory?: boolean
+  showCounterTrend?: boolean
+  currentOnly?: boolean
   height?: number
 }
 
@@ -31,14 +37,14 @@ const CLOUD_PURPLE = 'rgba(139, 92, 246, 0.18)'
 const SMA10_COLOR = '#fbbf24'
 const EMA21_COLOR = '#9c9c9c'
 const SMA50_COLOR = '#faa1a4'
-const SP_HL_COLOR = '#f44336'
-const SP_PIVOT_COLOR = '#2196f3'
-const SP_BREAK_COLOR = '#4caf50'
 
 export default function PriceChart({
   bars,
-  structurePivot,
-  showStructurePivot = true,
+  structurePivotPhases,
+  counterTrend,
+  showPivotHistory = true,
+  showCounterTrend = true,
+  currentOnly = false,
   height = 540,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -177,61 +183,12 @@ export default function PriceChart({
       scaleMargins: { top: 0.78, bottom: 0 },
     })
 
-    /* ---- Structure Pivot overlay (LL-HL setup) */
-    if (showStructurePivot && structurePivot && structurePivot.length > 0) {
-      // Build per-phase line data. A "phase" is a contiguous run of bars
-      // where struct_long_active=true AND the underlying value is constant
-      // (i.e. the same HL / break_val). Boundaries get whitespace points so
-      // the dashed line draws as discrete horizontal segments instead of
-      // jumping vertically when a new HL is confirmed mid-setup.
-      const buildPhaseData = (pick: (sp: StructurePivotBar) => number | null) =>
-        structurePivot.map((sp, i) => {
-          if (!sp.active) return { time: sp.date }
-          const v = pick(sp)
-          if (v == null) return { time: sp.date }
-          const prev = structurePivot[i - 1]
-          // Drop the bar at the transition so segments don't connect
-          if (prev && prev.active) {
-            const pv = pick(prev)
-            if (pv != null && pv !== v) return { time: sp.date }
-          }
-          return { time: sp.date, value: v }
-        })
-
-      const hlSeries = chart.addSeries(LineSeries, {
-        color: SP_HL_COLOR,
-        lineWidth: 2,
-        lineStyle: LineStyle.Dashed,
-        priceLineVisible: false,
-        lastValueVisible: false,
-        crosshairMarkerVisible: false,
-      })
-      hlSeries.setData(buildPhaseData(sp => sp.curr_pivot))
-
-      const pivotSeries = chart.addSeries(LineSeries, {
-        color: SP_PIVOT_COLOR,
-        lineWidth: 2,
-        lineStyle: LineStyle.Dashed,
-        priceLineVisible: false,
-        lastValueVisible: false,
-        crosshairMarkerVisible: false,
-      })
-      pivotSeries.setData(buildPhaseData(sp => sp.break_val))
-
-      // BREAK markers — green up-arrow under bars where struct_long_just_broke=true
-      const breakMarkers = structurePivot
-        .filter(sp => sp.just_broke)
-        .map(sp => ({
-          time: sp.date,
-          position: 'belowBar' as const,
-          color: SP_BREAK_COLOR,
-          shape: 'arrowUp' as const,
-          text: 'BREAK',
-        }))
-      if (breakMarkers.length > 0) {
-        createSeriesMarkers(candleSeries, breakMarkers)
-      }
-    }
+    /* ---- Structure Pivot overlay (phase-based) */
+    drawStructurePivot(chart, candleSeries, structurePivotPhases, counterTrend, {
+      showHistory: showPivotHistory,
+      showCounterTrend,
+      currentOnly,
+    })
 
     chart.timeScale().fitContent()
     chartRef.current = chart
@@ -248,7 +205,15 @@ export default function PriceChart({
       chart.remove()
       chartRef.current = null
     }
-  }, [bars, height, structurePivot, showStructurePivot])
+  }, [
+    bars,
+    height,
+    structurePivotPhases,
+    counterTrend,
+    showPivotHistory,
+    showCounterTrend,
+    currentOnly,
+  ])
 
   if (bars.length === 0) {
     return (

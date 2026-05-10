@@ -1,7 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { OhlcvBar, StructurePivotBar } from '@/types/chart'
+import type {
+  CounterTrendBar,
+  OhlcvBar,
+  StructurePivotPhase,
+} from '@/types/chart'
 import { computeCockpit } from '@/lib/cockpit'
 import { fetchChart } from '@/lib/chartFetch'
 import PriceChart from './PriceChart'
@@ -28,14 +32,17 @@ type FetchState =
       status: 'ok'
       code: string
       bars: OhlcvBar[]
-      structurePivot: StructurePivotBar[]
+      structurePivotPhases: StructurePivotPhase[]
+      counterTrend: CounterTrendBar[]
     }
   | { status: 'error'; code: string; error: string }
 
 export default function StockChartView({ code, name, sector }: Props) {
   const [state, setState] = useState<FetchState>({ status: 'loading', code })
   const [lookback, setLookback] = useState<LookbackKey>('1Y')
-  const [showStructurePivot, setShowStructurePivot] = useState(true)
+  const [showPivotHistory, setShowPivotHistory] = useState(true)
+  const [showCounterTrend, setShowCounterTrend] = useState(true)
+  const [currentOnly, setCurrentOnly] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -47,7 +54,8 @@ export default function StockChartView({ code, name, sector }: Props) {
           status: 'ok',
           code,
           bars: json.ohlcv,
-          structurePivot: json.structurePivot ?? [],
+          structurePivotPhases: json.structurePivotPhases ?? [],
+          counterTrend: json.counterTrend ?? [],
         })
       })
       .catch(err => {
@@ -76,9 +84,16 @@ export default function StockChartView({ code, name, sector }: Props) {
     () => (effectiveState.status === 'ok' ? effectiveState.bars : []),
     [effectiveState],
   )
-  const structurePivot = useMemo(
+  const structurePivotPhases = useMemo(
     () =>
-      effectiveState.status === 'ok' ? effectiveState.structurePivot : [],
+      effectiveState.status === 'ok'
+        ? effectiveState.structurePivotPhases
+        : [],
+    [effectiveState],
+  )
+  const counterTrend = useMemo(
+    () =>
+      effectiveState.status === 'ok' ? effectiveState.counterTrend : [],
     [effectiveState],
   )
 
@@ -94,10 +109,38 @@ export default function StockChartView({ code, name, sector }: Props) {
     [bars, sliceFrom],
   )
 
-  const visibleStructurePivot = useMemo(
+  // Phase records reference dates that may be older than the visible window.
+  // The chart's time axis only contains the visible bars' dates, and series
+  // points (or markers) at out-of-window dates are silently dropped by
+  // lightweight-charts — so we filter phases whose anchors are entirely
+  // before the visible range out, then clip remaining anchor dates inward.
+  const firstVisibleDate = visibleBars[0]?.date ?? null
+  const visiblePhases = useMemo(() => {
+    if (firstVisibleDate == null) return structurePivotPhases
+    return structurePivotPhases
+      .filter(p => p.phase_end_date >= firstVisibleDate)
+      .map(p => ({
+        ...p,
+        // Anchor any out-of-window pivot/start dates to the leftmost visible bar
+        phase_start_date:
+          p.phase_start_date < firstVisibleDate
+            ? firstVisibleDate
+            : p.phase_start_date,
+        prev_pivot_date:
+          p.prev_pivot_date != null && p.prev_pivot_date < firstVisibleDate
+            ? firstVisibleDate
+            : p.prev_pivot_date,
+        curr_pivot_date:
+          p.curr_pivot_date != null && p.curr_pivot_date < firstVisibleDate
+            ? firstVisibleDate
+            : p.curr_pivot_date,
+      }))
+  }, [structurePivotPhases, firstVisibleDate])
+
+  const visibleCounterTrend = useMemo(
     () =>
-      sliceFrom > 0 ? structurePivot.slice(sliceFrom) : structurePivot,
-    [structurePivot, sliceFrom],
+      sliceFrom > 0 ? counterTrend.slice(sliceFrom) : counterTrend,
+    [counterTrend, sliceFrom],
   )
 
   // Cockpit is computed against the FULL history so MAs/ATR are seeded properly
@@ -142,15 +185,40 @@ export default function StockChartView({ code, name, sector }: Props) {
           )}
           <label
             className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none"
-            title="LL-HL setup の HL line / Pivot line / BREAK arrow を表示"
+            title="過去 phase の Pivot / Structure 線 (gray) を表示"
           >
             <input
               type="checkbox"
-              checked={showStructurePivot}
-              onChange={e => setShowStructurePivot(e.target.checked)}
+              checked={showPivotHistory}
+              onChange={e => setShowPivotHistory(e.target.checked)}
+              disabled={currentOnly}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer disabled:opacity-50"
+            />
+            Pivot History
+          </label>
+          <label
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none"
+            title="Counter Trend 連続線 (orange) を表示"
+          >
+            <input
+              type="checkbox"
+              checked={showCounterTrend}
+              onChange={e => setShowCounterTrend(e.target.checked)}
               className="w-3.5 h-3.5 rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
             />
-            Show Structure Pivot
+            Counter Trend
+          </label>
+          <label
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none"
+            title="現在の pending phase 1 つだけ表示"
+          >
+            <input
+              type="checkbox"
+              checked={currentOnly}
+              onChange={e => setCurrentOnly(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
+            />
+            Current Only
           </label>
           <span className="flex items-center gap-1">
             {(['6M', '1Y', '2Y', 'ALL'] as LookbackKey[]).map(k => (
@@ -189,8 +257,11 @@ export default function StockChartView({ code, name, sector }: Props) {
       ) : (
         <PriceChart
           bars={visibleBars}
-          structurePivot={visibleStructurePivot}
-          showStructurePivot={showStructurePivot}
+          structurePivotPhases={visiblePhases}
+          counterTrend={visibleCounterTrend}
+          showPivotHistory={showPivotHistory}
+          showCounterTrend={showCounterTrend}
+          currentOnly={currentOnly}
         />
       )}
 
@@ -212,34 +283,54 @@ export default function StockChartView({ code, name, sector }: Props) {
           <span className="inline-block w-3 h-0.5" style={{ background: '#faa1a4' }} />
           SMA50
         </span>
-        {showStructurePivot && (
-          <>
-            <span className="flex items-center gap-1">
-              <span
-                className="inline-block w-3 h-0.5"
-                style={{
-                  background:
-                    'repeating-linear-gradient(to right, #f44336 0, #f44336 3px, transparent 3px, transparent 6px)',
-                }}
-              />
-              HL (Structure Pivot)
-            </span>
-            <span className="flex items-center gap-1">
-              <span
-                className="inline-block w-3 h-0.5"
-                style={{
-                  background:
-                    'repeating-linear-gradient(to right, #2196f3 0, #2196f3 3px, transparent 3px, transparent 6px)',
-                }}
-              />
-              Pivot Line
-            </span>
-            <span className="flex items-center gap-1">
-              <span style={{ color: '#4caf50' }}>▲</span>
-              HL_BREAK
-            </span>
-          </>
+        <span className="flex items-center gap-1">
+          <span
+            className="inline-block w-3 h-0.5"
+            style={{
+              background:
+                'repeating-linear-gradient(to right, #2196f3 0, #2196f3 3px, transparent 3px, transparent 6px)',
+            }}
+          />
+          Pivot Line (current)
+        </span>
+        <span className="flex items-center gap-1">
+          <span
+            className="inline-block w-3 h-0.5"
+            style={{
+              background:
+                'repeating-linear-gradient(to right, #f44336 0, #f44336 3px, transparent 3px, transparent 6px)',
+            }}
+          />
+          Structure (LL→HL)
+        </span>
+        {showPivotHistory && !currentOnly && (
+          <span className="flex items-center gap-1">
+            <span
+              className="inline-block w-3 h-0.5"
+              style={{
+                background:
+                  'repeating-linear-gradient(to right, #9aa0a6 0, #9aa0a6 1px, transparent 1px, transparent 4px)',
+              }}
+            />
+            History (resolved phases)
+          </span>
         )}
+        {showCounterTrend && (
+          <span className="flex items-center gap-1">
+            <span
+              className="inline-block w-3 h-0.5"
+              style={{
+                background:
+                  'repeating-linear-gradient(to right, #f97316 0, #f97316 3px, transparent 3px, transparent 6px)',
+              }}
+            />
+            Counter Trend
+          </span>
+        )}
+        <span className="flex items-center gap-1">
+          <span style={{ color: '#16a34a' }}>▲</span>
+          HL_BREAK
+        </span>
       </div>
     </div>
   )

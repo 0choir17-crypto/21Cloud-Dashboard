@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import type {
   ChartApiResponse,
+  CounterTrendBar,
   OhlcvBar,
-  StructurePivotBar,
+  StructurePivotPhase,
 } from '@/types/chart'
 
 const CODE_RE = /^[A-Z0-9]{4}$/i
@@ -14,38 +15,44 @@ export interface FetchChartOptions {
 
 const OHLCV_COLUMNS = 'date, open, high, low, close, volume'
 
-const STRUCTURE_PIVOT_COLUMNS = [
+// Per-bar columns we still need for the continuous Counter Trend line and to
+// sniff phase boundaries.
+const PER_BAR_OVERLAY_COLUMNS = [
   'date',
+  'struct_long_phase_start_date',
   'struct_long_curr_pivot',
   'struct_long_prev_pivot',
   'struct_long_break_val',
-  'struct_long_active',
-  'struct_long_just_broke',
+  'struct_long_curr_pivot_date',
+  'struct_long_prev_pivot_date',
   'sp_long_winning_length',
+  'struct_long_just_broke',
+  'struct_long_counter_trend_val',
 ].join(', ')
 
-// One-shot warning so the console isn't spammed for every card on the grid.
-let warnedAboutMissingStructurePivot = false
+// One-shot warnings keep the console quiet when the new schema isn't live yet.
+let warnedAboutMissingOverlay = false
 
 /**
  * Client-side chart fetcher.
  *
  * The project is built with `output: "export"` (static hosting), so server-
  * side API routes can't run. We query Supabase directly from the browser
- * using the existing anon-key client. The return shape mirrors the response
- * shape that a `GET /api/chart/[code]` route would emit, so a future server
- * variant can be swapped in without touching call sites.
+ * using the existing anon-key client.
  *
- * OHLCV and the Structure Pivot overlay are fetched as two separate queries
- * so that a missing / not-yet-populated overlay column set does not break
- * the base chart. If the second query errors, we just return no overlay.
+ * Three independent queries:
+ *   1. Base OHLCV (always works)
+ *   2. Per-bar Structure Pivot overlay (best-effort) — used to derive the
+ *      phase list client-side and to feed the Counter Trend continuous line.
+ *      We could push the GROUP BY to PostgREST, but the per-bar pull also
+ *      gives us counter trend in the same round-trip.
  */
 export async function fetchChart(
   code: string,
   opts: FetchChartOptions = {},
 ): Promise<ChartApiResponse> {
   if (!CODE_RE.test(code)) {
-    throw new Error('invalid code (must be 4-digit numeric)')
+    throw new Error('invalid code (must be 4 alphanumeric)')
   }
 
   const lookback = opts.lookbackDays ?? null
@@ -85,52 +92,134 @@ export async function fetchChart(
     }))
 
   // ---- Structure Pivot overlay (best-effort) ---------------------------
-  let structurePivot: StructurePivotBar[] = []
+  let structurePivotPhases: StructurePivotPhase[] = []
+  let counterTrend: CounterTrendBar[] = []
   try {
-    let spQ = supabase
+    let overlayQ = supabase
       .from('chart_ohlcv_cache')
-      .select(STRUCTURE_PIVOT_COLUMNS)
+      .select(PER_BAR_OVERLAY_COLUMNS)
       .eq('code', code)
 
-    spQ = lookback != null
-      ? spQ.order('date', { ascending: false }).limit(lookback)
-      : spQ.order('date', { ascending: true })
+    overlayQ = lookback != null
+      ? overlayQ.order('date', { ascending: false }).limit(lookback)
+      : overlayQ.order('date', { ascending: true })
 
-    const { data: spData, error: spErr } = await spQ
-    if (spErr) {
-      if (!warnedAboutMissingStructurePivot) {
-        warnedAboutMissingStructurePivot = true
+    const { data: overlayData, error: overlayErr } = await overlayQ
+    if (overlayErr) {
+      if (!warnedAboutMissingOverlay) {
+        warnedAboutMissingOverlay = true
         console.warn(
           '[structure-pivot] overlay columns unavailable in chart_ohlcv_cache:',
-          spErr.message,
-          '— chart will render without the overlay until the backend (21-Cloudl-Database) populates these columns.',
+          overlayErr.message,
+          '— chart will render without overlay until backend (21-Cloudl-Database) ships the new schema.',
         )
       }
     } else {
-      const spRows = (spData ?? []) as unknown as Array<Record<string, unknown>>
-      const spSorted = lookback != null ? [...spRows].reverse() : spRows
-      structurePivot = spSorted
+      const overlayRows =
+        (overlayData ?? []) as unknown as Array<Record<string, unknown>>
+      const overlaySorted = lookback != null ? [...overlayRows].reverse() : overlayRows
+
+      counterTrend = overlaySorted
         .filter(r => r.date)
         .map(r => ({
           date: r.date as string,
-          curr_pivot:
-            r.struct_long_curr_pivot != null ? Number(r.struct_long_curr_pivot) : null,
-          prev_pivot:
-            r.struct_long_prev_pivot != null ? Number(r.struct_long_prev_pivot) : null,
-          break_val:
-            r.struct_long_break_val != null ? Number(r.struct_long_break_val) : null,
-          active: Boolean(r.struct_long_active),
-          just_broke: Boolean(r.struct_long_just_broke),
-          winning_length:
-            r.sp_long_winning_length != null ? Number(r.sp_long_winning_length) : null,
+          value:
+            r.struct_long_counter_trend_val != null
+              ? Number(r.struct_long_counter_trend_val)
+              : null,
         }))
+
+      structurePivotPhases = aggregatePhases(overlaySorted)
     }
   } catch (e) {
-    if (!warnedAboutMissingStructurePivot) {
-      warnedAboutMissingStructurePivot = true
+    if (!warnedAboutMissingOverlay) {
+      warnedAboutMissingOverlay = true
       console.warn('[structure-pivot] overlay fetch failed:', e)
     }
   }
 
-  return { code, ohlcv, structurePivot, cockpit_rs: null, mc_v4: null }
+  return {
+    code,
+    ohlcv,
+    structurePivotPhases,
+    counterTrend,
+    cockpit_rs: null,
+    mc_v4: null,
+  }
+}
+
+/**
+ * Group the per-bar overlay rows by struct_long_phase_start_date — same
+ * shape as the GROUP BY query in the spec, just folded client-side so we
+ * only pay for one PostgREST round-trip.
+ */
+function aggregatePhases(
+  rows: Array<Record<string, unknown>>,
+): StructurePivotPhase[] {
+  const byPhaseStart = new Map<string, Record<string, unknown>[]>()
+  for (const r of rows) {
+    const ps = r.struct_long_phase_start_date
+    if (ps == null) continue
+    const key = ps as string
+    const bucket = byPhaseStart.get(key)
+    if (bucket) bucket.push(r)
+    else byPhaseStart.set(key, [r])
+  }
+
+  const phases: StructurePivotPhase[] = []
+  for (const [phase_start_date, bucket] of byPhaseStart.entries()) {
+    let phase_end_date = phase_start_date
+    let curr_pivot_price: number | null = null
+    let prev_pivot_price: number | null = null
+    let curr_pivot_date: string | null = null
+    let prev_pivot_date: string | null = null
+    let break_val: number | null = null
+    let length: number | null = null
+    let broke_at: string | null = null
+
+    for (const r of bucket) {
+      const d = r.date as string | null
+      if (d != null && d > phase_end_date) phase_end_date = d
+      if (curr_pivot_price == null && r.struct_long_curr_pivot != null) {
+        curr_pivot_price = Number(r.struct_long_curr_pivot)
+      }
+      if (prev_pivot_price == null && r.struct_long_prev_pivot != null) {
+        prev_pivot_price = Number(r.struct_long_prev_pivot)
+      }
+      if (curr_pivot_date == null && r.struct_long_curr_pivot_date != null) {
+        curr_pivot_date = r.struct_long_curr_pivot_date as string
+      }
+      if (prev_pivot_date == null && r.struct_long_prev_pivot_date != null) {
+        prev_pivot_date = r.struct_long_prev_pivot_date as string
+      }
+      if (break_val == null && r.struct_long_break_val != null) {
+        break_val = Number(r.struct_long_break_val)
+      }
+      if (length == null && r.sp_long_winning_length != null) {
+        length = Number(r.sp_long_winning_length)
+      }
+      if (Boolean(r.struct_long_just_broke) && d != null) {
+        broke_at = d
+      }
+    }
+
+    if (curr_pivot_price == null || break_val == null || length == null) continue
+
+    phases.push({
+      phase_start_date,
+      phase_end_date,
+      curr_pivot_price,
+      prev_pivot_price,
+      curr_pivot_date,
+      prev_pivot_date,
+      break_val,
+      length,
+      broke_at,
+    })
+  }
+
+  phases.sort((a, b) =>
+    a.phase_start_date < b.phase_start_date ? -1 : 1,
+  )
+  return phases
 }
