@@ -27,6 +27,13 @@ export type DrawOptions = {
   showCounterTrend?: boolean
   /** Suppress on-chart text (BREAK label, Pivot price label, HL/LL text). */
   compact?: boolean
+  /**
+   * Earliest visible bar date. Phases ending before this are dropped, and
+   * any anchor date inside a phase that pre-dates this is clipped to it
+   * — otherwise lightweight-charts silently drops points with times not
+   * on the candle series' time axis, which mis-positions horizontal lines.
+   */
+  clipBefore?: string
 }
 
 /**
@@ -46,26 +53,49 @@ export function drawStructurePivot(
   const currentOnly = opts.currentOnly ?? false
   const showCounterTrend = opts.showCounterTrend ?? true
   const compact = opts.compact ?? false
+  const clipBefore = opts.clipBefore
 
-  // ---- Phase filter ----------------------------------------------------
-  let visiblePhases: StructurePivotPhase[] = phases ?? []
-
-  if (currentOnly) {
-    // 「現 phase のみ」= まだ broke していない最新 phase 1 つ
-    const pending = visiblePhases.filter(p => p.broke_at == null)
-    visiblePhases = pending.length > 0 ? [pending[pending.length - 1]] : []
-  } else if (!showHistory) {
-    // History を抑制するときは、broke していない phase + 直近 1 broke までに絞る
-    visiblePhases = visiblePhases.filter(p => p.broke_at == null)
-    if (visiblePhases.length === 0 && (phases?.length ?? 0) > 0) {
-      visiblePhases = [phases![phases!.length - 1]]
-    }
+  // ---- Phase filter + window clip --------------------------------------
+  let allPhases: StructurePivotPhase[] = phases ?? []
+  if (clipBefore != null) {
+    allPhases = allPhases
+      .filter(p => p.phase_end_date >= clipBefore)
+      .map(p => ({
+        ...p,
+        phase_start_date:
+          p.phase_start_date < clipBefore ? clipBefore : p.phase_start_date,
+        prev_pivot_date:
+          p.prev_pivot_date != null && p.prev_pivot_date < clipBefore
+            ? clipBefore
+            : p.prev_pivot_date,
+        curr_pivot_date:
+          p.curr_pivot_date != null && p.curr_pivot_date < clipBefore
+            ? clipBefore
+            : p.curr_pivot_date,
+      }))
   }
 
-  // 直近 phase = 「現在 pending な phase（broke==null）」または最新の 1 つ
-  const lastPending = (phases ?? []).slice().reverse().find(p => p.broke_at == null)
+  // "Current" = latest phase whose broke_at is still null. Tracked by
+  // reference equality so clipping (which rewrites dates) doesn't break
+  // identity matching downstream.
+  const lastIdx = allPhases.length - 1
+  const currentRef =
+    lastIdx >= 0 && allPhases[lastIdx].broke_at == null
+      ? allPhases[lastIdx]
+      : null
   const isCurrent = (p: StructurePivotPhase) =>
-    lastPending != null && p.phase_start_date === lastPending.phase_start_date
+    currentRef != null && p === currentRef
+
+  let visiblePhases = allPhases
+
+  if (currentOnly) {
+    visiblePhases = currentRef != null ? [currentRef] : []
+  } else if (!showHistory) {
+    visiblePhases = visiblePhases.filter(p => p.broke_at == null)
+    if (visiblePhases.length === 0 && allPhases.length > 0) {
+      visiblePhases = [allPhases[allPhases.length - 1]]
+    }
+  }
 
   // ---- Per-phase drawing ----------------------------------------------
   const breakMarkers: Array<{

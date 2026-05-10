@@ -160,7 +160,11 @@ export default function MiniChart({
 
     /* Structure Pivot overlay — current phase only on minis (no clutter),
        no Counter Trend (orange line is hard to parse at this size),
-       compact mode strips marker text. */
+       compact mode strips marker text. clipBefore = first visible bar's
+       date so phases that started before the lookback window have their
+       anchor dates pulled inward to the leftmost candle on this chart;
+       otherwise lightweight-charts drops out-of-axis points and the
+       horizontal Pivot line ends up at the wrong y-position. */
     drawStructurePivot(
       chart,
       candleSeries,
@@ -170,6 +174,7 @@ export default function MiniChart({
         currentOnly: true,
         showCounterTrend: false,
         compact: true,
+        clipBefore: bars[0]?.date,
       },
     )
 
