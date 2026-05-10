@@ -10,21 +10,13 @@ import {
   LineSeries,
   createChart,
 } from 'lightweight-charts'
-import type {
-  CounterTrendBar,
-  OhlcvBar,
-  StructurePivotPhase,
-} from '@/types/chart'
+import type { OhlcvBar, StructurePivotPhase } from '@/types/chart'
 import { ema, sma, toSeries } from '@/lib/indicators'
 import { drawStructurePivot } from '@/lib/structurePivotDraw'
 
 interface Props {
   bars: OhlcvBar[]
   structurePivotPhases?: StructurePivotPhase[]
-  counterTrend?: CounterTrendBar[]
-  showPivotHistory?: boolean
-  showCounterTrend?: boolean
-  currentOnly?: boolean
   height?: number
 }
 
@@ -41,10 +33,6 @@ const SMA50_COLOR = '#faa1a4'
 export default function PriceChart({
   bars,
   structurePivotPhases,
-  counterTrend,
-  showPivotHistory = true,
-  showCounterTrend = true,
-  currentOnly = false,
   height = 540,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -183,11 +171,8 @@ export default function PriceChart({
       scaleMargins: { top: 0.78, bottom: 0 },
     })
 
-    /* ---- Structure Pivot overlay (phase-based) */
-    drawStructurePivot(chart, candleSeries, structurePivotPhases, counterTrend, {
-      showHistory: showPivotHistory,
-      showCounterTrend,
-      currentOnly,
+    /* ---- Structure Pivot overlay (current phase Pivot line + price label) */
+    drawStructurePivot(chart, candleSeries, structurePivotPhases, {
       clipBefore: bars[0]?.date,
     })
 
@@ -206,15 +191,7 @@ export default function PriceChart({
       chart.remove()
       chartRef.current = null
     }
-  }, [
-    bars,
-    height,
-    structurePivotPhases,
-    counterTrend,
-    showPivotHistory,
-    showCounterTrend,
-    currentOnly,
-  ])
+  }, [bars, height, structurePivotPhases])
 
   if (bars.length === 0) {
     return (
