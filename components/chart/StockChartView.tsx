@@ -109,34 +109,6 @@ export default function StockChartView({ code, name, sector }: Props) {
     [bars, sliceFrom],
   )
 
-  // Phase records reference dates that may be older than the visible window.
-  // The chart's time axis only contains the visible bars' dates, and series
-  // points (or markers) at out-of-window dates are silently dropped by
-  // lightweight-charts — so we filter phases whose anchors are entirely
-  // before the visible range out, then clip remaining anchor dates inward.
-  const firstVisibleDate = visibleBars[0]?.date ?? null
-  const visiblePhases = useMemo(() => {
-    if (firstVisibleDate == null) return structurePivotPhases
-    return structurePivotPhases
-      .filter(p => p.phase_end_date >= firstVisibleDate)
-      .map(p => ({
-        ...p,
-        // Anchor any out-of-window pivot/start dates to the leftmost visible bar
-        phase_start_date:
-          p.phase_start_date < firstVisibleDate
-            ? firstVisibleDate
-            : p.phase_start_date,
-        prev_pivot_date:
-          p.prev_pivot_date != null && p.prev_pivot_date < firstVisibleDate
-            ? firstVisibleDate
-            : p.prev_pivot_date,
-        curr_pivot_date:
-          p.curr_pivot_date != null && p.curr_pivot_date < firstVisibleDate
-            ? firstVisibleDate
-            : p.curr_pivot_date,
-      }))
-  }, [structurePivotPhases, firstVisibleDate])
-
   const visibleCounterTrend = useMemo(
     () =>
       sliceFrom > 0 ? counterTrend.slice(sliceFrom) : counterTrend,
@@ -257,7 +229,7 @@ export default function StockChartView({ code, name, sector }: Props) {
       ) : (
         <PriceChart
           bars={visibleBars}
-          structurePivotPhases={visiblePhases}
+          structurePivotPhases={structurePivotPhases}
           counterTrend={visibleCounterTrend}
           showPivotHistory={showPivotHistory}
           showCounterTrend={showCounterTrend}

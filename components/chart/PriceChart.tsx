@@ -188,6 +188,7 @@ export default function PriceChart({
       showHistory: showPivotHistory,
       showCounterTrend,
       currentOnly,
+      clipBefore: bars[0]?.date,
     })
 
     chart.timeScale().fitContent()
