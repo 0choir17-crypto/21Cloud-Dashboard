@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { OhlcvBar } from '@/types/chart'
+import type { OhlcvBar, StructurePivotBar } from '@/types/chart'
 import { ema, sma } from '@/lib/indicators'
 import MiniChart from './MiniChart'
 
@@ -21,6 +21,7 @@ interface Props {
   name?: string | null
   sector?: string | null
   bars: OhlcvBar[]
+  structurePivot?: StructurePivotBar[]
   overrides?: CardOverrides
   selected?: boolean
   onSelect?: (code: string) => void
@@ -146,6 +147,7 @@ export default function StockCard({
   name,
   sector,
   bars,
+  structurePivot,
   overrides,
   selected,
   onSelect,
@@ -238,7 +240,7 @@ export default function StockCard({
       </div>
 
       {/* Mini chart */}
-      <MiniChart bars={bars} height={180} />
+      <MiniChart bars={bars} structurePivot={structurePivot} height={180} />
     </div>
   )
 }

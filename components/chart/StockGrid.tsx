@@ -1,9 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { OhlcvBar } from '@/types/chart'
+import type { OhlcvBar, StructurePivotBar } from '@/types/chart'
 import { fetchChart } from '@/lib/chartFetch'
 import StockCard, { CardOverrides } from './StockCard'
+
+type CacheEntry = {
+  bars: OhlcvBar[]
+  structurePivot: StructurePivotBar[]
+}
 
 export interface GridEntry {
   code: string
@@ -22,7 +27,7 @@ interface Props {
   onSelect?: (code: string) => void
 }
 
-type Cache = Map<string, OhlcvBar[]>
+type Cache = Map<string, CacheEntry>
 
 export default function StockGrid({
   entries,
@@ -57,15 +62,25 @@ export default function StockGrid({
     Promise.all(
       missing.map(code =>
         fetchChart(code, { lookbackDays })
-          .then(res => ({ code, bars: res.ohlcv }))
-          .catch(() => ({ code, bars: [] as OhlcvBar[] })),
+          .then(res => ({
+            code,
+            bars: res.ohlcv,
+            structurePivot: res.structurePivot ?? [],
+          }))
+          .catch(() => ({
+            code,
+            bars: [] as OhlcvBar[],
+            structurePivot: [] as StructurePivotBar[],
+          })),
       ),
     ).then(results => {
       results.forEach(r => inflightRef.current.delete(r.code))
       if (cancelled) return
       setCache(prev => {
         const next = new Map(prev)
-        for (const r of results) next.set(r.code, r.bars)
+        for (const r of results) {
+          next.set(r.code, { bars: r.bars, structurePivot: r.structurePivot })
+        }
         return next
       })
     })
@@ -90,8 +105,8 @@ export default function StockGrid({
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {visible.map(entry => {
-          const bars = cache.get(entry.code)
-          if (bars == null) {
+          const cached = cache.get(entry.code)
+          if (cached == null) {
             return (
               <div
                 key={entry.code}
@@ -118,7 +133,8 @@ export default function StockGrid({
               code={entry.code}
               name={entry.name ?? undefined}
               sector={entry.sector ?? undefined}
-              bars={bars}
+              bars={cached.bars}
+              structurePivot={cached.structurePivot}
               overrides={entry.overrides}
               selected={selectedCode === entry.code}
               onSelect={onSelect}
