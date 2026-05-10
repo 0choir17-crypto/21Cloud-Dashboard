@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { OhlcvBar } from '@/types/chart'
+import type { OhlcvBar, StructurePivotBar } from '@/types/chart'
 import { computeCockpit } from '@/lib/cockpit'
 import { fetchChart } from '@/lib/chartFetch'
 import PriceChart from './PriceChart'
@@ -24,12 +24,18 @@ interface Props {
 
 type FetchState =
   | { status: 'loading'; code: string }
-  | { status: 'ok'; code: string; bars: OhlcvBar[] }
+  | {
+      status: 'ok'
+      code: string
+      bars: OhlcvBar[]
+      structurePivot: StructurePivotBar[]
+    }
   | { status: 'error'; code: string; error: string }
 
 export default function StockChartView({ code, name, sector }: Props) {
   const [state, setState] = useState<FetchState>({ status: 'loading', code })
   const [lookback, setLookback] = useState<LookbackKey>('1Y')
+  const [showStructurePivot, setShowStructurePivot] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -37,7 +43,12 @@ export default function StockChartView({ code, name, sector }: Props) {
     fetchChart(code)
       .then(json => {
         if (cancelled) return
-        setState({ status: 'ok', code, bars: json.ohlcv })
+        setState({
+          status: 'ok',
+          code,
+          bars: json.ohlcv,
+          structurePivot: json.structurePivot ?? [],
+        })
       })
       .catch(err => {
         if (cancelled) return
@@ -65,13 +76,29 @@ export default function StockChartView({ code, name, sector }: Props) {
     () => (effectiveState.status === 'ok' ? effectiveState.bars : []),
     [effectiveState],
   )
+  const structurePivot = useMemo(
+    () =>
+      effectiveState.status === 'ok' ? effectiveState.structurePivot : [],
+    [effectiveState],
+  )
 
-  const visibleBars = useMemo(() => {
-    if (bars.length === 0) return bars
+  const sliceFrom = useMemo(() => {
+    if (bars.length === 0) return 0
     const days = LOOKBACK_DAYS[lookback]
-    if (days == null) return bars
-    return bars.slice(Math.max(0, bars.length - days))
+    if (days == null) return 0
+    return Math.max(0, bars.length - days)
   }, [bars, lookback])
+
+  const visibleBars = useMemo(
+    () => (sliceFrom > 0 ? bars.slice(sliceFrom) : bars),
+    [bars, sliceFrom],
+  )
+
+  const visibleStructurePivot = useMemo(
+    () =>
+      sliceFrom > 0 ? structurePivot.slice(sliceFrom) : structurePivot,
+    [structurePivot, sliceFrom],
+  )
 
   // Cockpit is computed against the FULL history so MAs/ATR are seeded properly
   const cockpit = useMemo(() => computeCockpit(bars), [bars])
@@ -113,6 +140,18 @@ export default function StockChartView({ code, name, sector }: Props) {
               {dailyPct.toFixed(2)}%
             </span>
           )}
+          <label
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] cursor-pointer select-none"
+            title="LL-HL setup の HL line / Pivot line / BREAK arrow を表示"
+          >
+            <input
+              type="checkbox"
+              checked={showStructurePivot}
+              onChange={e => setShowStructurePivot(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
+            />
+            Show Structure Pivot
+          </label>
           <span className="flex items-center gap-1">
             {(['6M', '1Y', '2Y', 'ALL'] as LookbackKey[]).map(k => (
               <button
@@ -148,7 +187,11 @@ export default function StockChartView({ code, name, sector }: Props) {
           {code} の OHLCV データがありません
         </div>
       ) : (
-        <PriceChart bars={visibleBars} />
+        <PriceChart
+          bars={visibleBars}
+          structurePivot={visibleStructurePivot}
+          showStructurePivot={showStructurePivot}
+        />
       )}
 
       {/* Legend */}
@@ -169,6 +212,34 @@ export default function StockChartView({ code, name, sector }: Props) {
           <span className="inline-block w-3 h-0.5" style={{ background: '#faa1a4' }} />
           SMA50
         </span>
+        {showStructurePivot && (
+          <>
+            <span className="flex items-center gap-1">
+              <span
+                className="inline-block w-3 h-0.5"
+                style={{
+                  background:
+                    'repeating-linear-gradient(to right, #f44336 0, #f44336 3px, transparent 3px, transparent 6px)',
+                }}
+              />
+              HL (Structure Pivot)
+            </span>
+            <span className="flex items-center gap-1">
+              <span
+                className="inline-block w-3 h-0.5"
+                style={{
+                  background:
+                    'repeating-linear-gradient(to right, #2196f3 0, #2196f3 3px, transparent 3px, transparent 6px)',
+                }}
+              />
+              Pivot Line
+            </span>
+            <span className="flex items-center gap-1">
+              <span style={{ color: '#4caf50' }}>▲</span>
+              HL_BREAK
+            </span>
+          </>
+        )}
       </div>
     </div>
   )
