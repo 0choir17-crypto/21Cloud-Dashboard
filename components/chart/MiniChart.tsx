@@ -8,16 +8,20 @@ import {
   HistogramSeries,
   IChartApi,
   LineSeries,
-  LineStyle,
   createChart,
-  createSeriesMarkers,
 } from 'lightweight-charts'
-import type { OhlcvBar, StructurePivotBar } from '@/types/chart'
+import type {
+  CounterTrendBar,
+  OhlcvBar,
+  StructurePivotPhase,
+} from '@/types/chart'
 import { ema, sma, toSeries } from '@/lib/indicators'
+import { drawStructurePivot } from '@/lib/structurePivotDraw'
 
 interface Props {
   bars: OhlcvBar[]
-  structurePivot?: StructurePivotBar[]
+  structurePivotPhases?: StructurePivotPhase[]
+  counterTrend?: CounterTrendBar[]
   height?: number
 }
 
@@ -29,11 +33,13 @@ const VOL_DOWN = 'rgba(220, 38, 38, 0.45)'
 const CLOUD_PURPLE = 'rgba(139, 92, 246, 0.18)'
 const EMA21_COLOR = '#9c9c9c'
 const SMA50_COLOR = '#faa1a4'
-const SP_HL_COLOR = '#f44336'
-const SP_PIVOT_COLOR = '#2196f3'
-const SP_BREAK_COLOR = '#4caf50'
 
-export default function MiniChart({ bars, structurePivot, height = 180 }: Props) {
+export default function MiniChart({
+  bars,
+  structurePivotPhases,
+  counterTrend,
+  height = 180,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
 
@@ -152,52 +158,20 @@ export default function MiniChart({ bars, structurePivot, height = 180 }: Props)
       scaleMargins: { top: 0.78, bottom: 0 },
     })
 
-    /* Structure Pivot overlay (no marker label — too small for "BREAK" text) */
-    if (structurePivot && structurePivot.length > 0) {
-      const hlSeries = chart.addSeries(LineSeries, {
-        color: SP_HL_COLOR,
-        lineWidth: 1,
-        lineStyle: LineStyle.Dashed,
-        priceLineVisible: false,
-        lastValueVisible: false,
-        crosshairMarkerVisible: false,
-      })
-      hlSeries.setData(
-        structurePivot.map(sp =>
-          sp.active && sp.curr_pivot != null
-            ? { time: sp.date, value: sp.curr_pivot }
-            : { time: sp.date },
-        ),
-      )
-
-      const pivotSeries = chart.addSeries(LineSeries, {
-        color: SP_PIVOT_COLOR,
-        lineWidth: 1,
-        lineStyle: LineStyle.Dashed,
-        priceLineVisible: false,
-        lastValueVisible: false,
-        crosshairMarkerVisible: false,
-      })
-      pivotSeries.setData(
-        structurePivot.map(sp =>
-          sp.active && sp.break_val != null
-            ? { time: sp.date, value: sp.break_val }
-            : { time: sp.date },
-        ),
-      )
-
-      const breakMarkers = structurePivot
-        .filter(sp => sp.just_broke)
-        .map(sp => ({
-          time: sp.date,
-          position: 'belowBar' as const,
-          color: SP_BREAK_COLOR,
-          shape: 'arrowUp' as const,
-        }))
-      if (breakMarkers.length > 0) {
-        createSeriesMarkers(candleSeries, breakMarkers)
-      }
-    }
+    /* Structure Pivot overlay — current phase only on minis (no clutter),
+       no Counter Trend (orange line is hard to parse at this size),
+       compact mode strips marker text. */
+    drawStructurePivot(
+      chart,
+      candleSeries,
+      structurePivotPhases,
+      counterTrend,
+      {
+        currentOnly: true,
+        showCounterTrend: false,
+        compact: true,
+      },
+    )
 
     chart.timeScale().fitContent()
     chartRef.current = chart
@@ -214,7 +188,7 @@ export default function MiniChart({ bars, structurePivot, height = 180 }: Props)
       chart.remove()
       chartRef.current = null
     }
-  }, [bars, height, structurePivot])
+  }, [bars, height, structurePivotPhases, counterTrend])
 
   if (bars.length === 0) {
     return (
