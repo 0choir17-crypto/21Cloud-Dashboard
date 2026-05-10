@@ -154,6 +154,22 @@ export default function MiniChart({ bars, structurePivot, height = 180 }: Props)
 
     /* Structure Pivot overlay (no marker label — too small for "BREAK" text) */
     if (structurePivot && structurePivot.length > 0) {
+      // Same phase-boundary logic as PriceChart: insert whitespace at value
+      // transitions inside an active block so each constant-value phase
+      // renders as its own clean horizontal segment.
+      const buildPhaseData = (pick: (sp: StructurePivotBar) => number | null) =>
+        structurePivot.map((sp, i) => {
+          if (!sp.active) return { time: sp.date }
+          const v = pick(sp)
+          if (v == null) return { time: sp.date }
+          const prev = structurePivot[i - 1]
+          if (prev && prev.active) {
+            const pv = pick(prev)
+            if (pv != null && pv !== v) return { time: sp.date }
+          }
+          return { time: sp.date, value: v }
+        })
+
       const hlSeries = chart.addSeries(LineSeries, {
         color: SP_HL_COLOR,
         lineWidth: 1,
@@ -162,13 +178,7 @@ export default function MiniChart({ bars, structurePivot, height = 180 }: Props)
         lastValueVisible: false,
         crosshairMarkerVisible: false,
       })
-      hlSeries.setData(
-        structurePivot.map(sp =>
-          sp.active && sp.curr_pivot != null
-            ? { time: sp.date, value: sp.curr_pivot }
-            : { time: sp.date },
-        ),
-      )
+      hlSeries.setData(buildPhaseData(sp => sp.curr_pivot))
 
       const pivotSeries = chart.addSeries(LineSeries, {
         color: SP_PIVOT_COLOR,
@@ -178,13 +188,7 @@ export default function MiniChart({ bars, structurePivot, height = 180 }: Props)
         lastValueVisible: false,
         crosshairMarkerVisible: false,
       })
-      pivotSeries.setData(
-        structurePivot.map(sp =>
-          sp.active && sp.break_val != null
-            ? { time: sp.date, value: sp.break_val }
-            : { time: sp.date },
-        ),
-      )
+      pivotSeries.setData(buildPhaseData(sp => sp.break_val))
 
       const breakMarkers = structurePivot
         .filter(sp => sp.just_broke)

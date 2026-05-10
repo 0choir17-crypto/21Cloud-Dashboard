@@ -179,42 +179,44 @@ export default function PriceChart({
 
     /* ---- Structure Pivot overlay (LL-HL setup) */
     if (showStructurePivot && structurePivot && structurePivot.length > 0) {
-      // HL line (red dashed) — drawn only while struct_long_active is true.
-      // Inactive bars use whitespace points so the line breaks across regimes.
+      // Build per-phase line data. A "phase" is a contiguous run of bars
+      // where struct_long_active=true AND the underlying value is constant
+      // (i.e. the same HL / break_val). Boundaries get whitespace points so
+      // the dashed line draws as discrete horizontal segments instead of
+      // jumping vertically when a new HL is confirmed mid-setup.
+      const buildPhaseData = (pick: (sp: StructurePivotBar) => number | null) =>
+        structurePivot.map((sp, i) => {
+          if (!sp.active) return { time: sp.date }
+          const v = pick(sp)
+          if (v == null) return { time: sp.date }
+          const prev = structurePivot[i - 1]
+          // Drop the bar at the transition so segments don't connect
+          if (prev && prev.active) {
+            const pv = pick(prev)
+            if (pv != null && pv !== v) return { time: sp.date }
+          }
+          return { time: sp.date, value: v }
+        })
+
       const hlSeries = chart.addSeries(LineSeries, {
         color: SP_HL_COLOR,
-        lineWidth: 1,
+        lineWidth: 2,
         lineStyle: LineStyle.Dashed,
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
-        title: 'HL',
       })
-      hlSeries.setData(
-        structurePivot.map(sp =>
-          sp.active && sp.curr_pivot != null
-            ? { time: sp.date, value: sp.curr_pivot }
-            : { time: sp.date },
-        ),
-      )
+      hlSeries.setData(buildPhaseData(sp => sp.curr_pivot))
 
-      // Pivot break line (blue dashed)
       const pivotSeries = chart.addSeries(LineSeries, {
         color: SP_PIVOT_COLOR,
-        lineWidth: 1,
+        lineWidth: 2,
         lineStyle: LineStyle.Dashed,
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
-        title: 'Pivot',
       })
-      pivotSeries.setData(
-        structurePivot.map(sp =>
-          sp.active && sp.break_val != null
-            ? { time: sp.date, value: sp.break_val }
-            : { time: sp.date },
-        ),
-      )
+      pivotSeries.setData(buildPhaseData(sp => sp.break_val))
 
       // BREAK markers — green up-arrow under bars where struct_long_just_broke=true
       const breakMarkers = structurePivot

@@ -5,7 +5,7 @@ import type {
   StructurePivotBar,
 } from '@/types/chart'
 
-const CODE_RE = /^\d{4}$/
+const CODE_RE = /^[A-Z0-9]{4}$/i
 
 export interface FetchChartOptions {
   /** Limit to the most recent N trading days (server-side via DB ORDER + LIMIT, then re-sorted ASC). Omit/null = full history. */
