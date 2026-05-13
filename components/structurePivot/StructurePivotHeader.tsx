@@ -1,4 +1,5 @@
 import type { StructurePivotSummary } from '@/types/structurePivot'
+import RegimeBadge from './RegimeBadge'
 
 type Props = {
   summary: StructurePivotSummary
@@ -61,16 +62,20 @@ export default function StructurePivotHeader({ summary, regime, mcV4 }: Props) {
       >
         <p className="text-xs text-gray-500">Market</p>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-          <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono font-semibold"
-            style={{
-              backgroundColor: '#f3f4f6',
-              color: '#374151',
-              border: '1px solid #d1d5db',
-            }}
-          >
-            regime: {regime ?? '—'}
-          </span>
+          {regime ? (
+            <RegimeBadge regime={regime} size="md" />
+          ) : (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono font-semibold"
+              style={{
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: '1px solid #d1d5db',
+              }}
+            >
+              regime: —
+            </span>
+          )}
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono font-semibold"
             style={{
@@ -83,7 +88,7 @@ export default function StructurePivotHeader({ summary, regime, mcV4 }: Props) {
           </span>
         </div>
         <p className="mt-2 text-[11px] leading-snug text-gray-500">
-          mc_v4 ∈ [70, 85) のとき S tier (高純度) が出現します
+          regime は features.market_regime_v4 由来 (Phase 4)。mc_v4 ∈ [70, 85) で S tier 出現。
         </p>
       </div>
     </div>

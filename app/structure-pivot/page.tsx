@@ -24,6 +24,7 @@ const INITIAL_FILTERS: StructurePivotFilters = {
   tier: 'all',
   vcpOnly: false,
   watchlistOnly: false,
+  institutionalOnly: false,
 }
 
 export default function StructurePivotPage() {
@@ -80,6 +81,7 @@ export default function StructurePivotPage() {
         return false
       if (filters.vcpOnly && !r.vcp_within_21d) return false
       if (filters.watchlistOnly && !r.in_watchlist) return false
+      if (filters.institutionalOnly && !r.jq_institutional_pass) return false
       return true
     })
   }, [response.rows, filters])
@@ -131,6 +133,11 @@ export default function StructurePivotPage() {
         },
       })),
     [sortedForCards],
+  )
+
+  const institutionalCount = useMemo(
+    () => response.rows.filter(r => r.jq_institutional_pass).length,
+    [response.rows],
   )
 
   const tierCounts: Record<TierFilter, number> = useMemo(() => {
@@ -270,10 +277,25 @@ export default function StructurePivotPage() {
             <ViewToggle mode={viewMode} onChange={setViewMode} />
           </div>
 
-          <p className="mb-2 text-xs text-gray-500">
-            Showing {filtered.length} of {response.rows.length} rows
-            {filtered.length < response.rows.length && ' (filtered)'}
-          </p>
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <span>
+              Showing {filtered.length} of {response.rows.length} rows
+              {filtered.length < response.rows.length && ' (filtered)'}
+            </span>
+            {institutionalCount > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono font-semibold"
+                style={{
+                  backgroundColor: '#ede9fe',
+                  color: '#5b21b6',
+                  border: '1px solid #ddd6fe',
+                }}
+                title="jq_institutional_pass = true (Phase 4 Screen B)"
+              >
+                🏛️ Institutional = {institutionalCount}
+              </span>
+            )}
+          </div>
 
           {viewMode === 'cards' ? (
             <StockGrid

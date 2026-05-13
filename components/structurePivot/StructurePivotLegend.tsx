@@ -140,6 +140,106 @@ export default function StructurePivotLegend() {
               </li>
             </ul>
           </div>
+
+          <div>
+            <p className="mb-1.5 font-semibold text-[var(--text-primary)]">
+              🏛️ Institutional (Phase 4 Screen B)
+            </p>
+            <ul className="space-y-1 text-[var(--text-secondary)]">
+              <li>
+                section_buyweeks ≥ 3 + sector_rs ≥ 70 + EPS/Rev ≥ 0 + 決算 5 日以上先
+              </li>
+              <li>
+                <span
+                  className="inline-block px-1.5 rounded mr-1 font-mono font-semibold"
+                  style={{
+                    backgroundColor: '#ede9fe',
+                    color: '#5b21b6',
+                    border: '1px solid #ddd6fe',
+                  }}
+                >
+                  🏛️ pass
+                </span>
+                Phase 3.5 検証: PF 2.58 / 勝率 71% / 年 952 ヒット
+              </li>
+              <li className="text-[10px] text-gray-400">
+                セル hover で各条件の pass/fail を表示
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="mb-1.5 font-semibold text-[var(--text-primary)]">
+              📊 Regime (mc_v4 由来)
+            </p>
+            <ul className="space-y-1 text-[var(--text-secondary)]">
+              <li>
+                <span
+                  className="inline-block px-1.5 rounded mr-1 font-mono font-semibold"
+                  style={{
+                    backgroundColor: '#fee2e2',
+                    color: '#991b1b',
+                    border: '1px solid #fecaca',
+                  }}
+                >
+                  🔻 V.Bear
+                </span>
+                mc_v4 &lt; 20: PF 1.02（機能不全）
+              </li>
+              <li>
+                <span
+                  className="inline-block px-1.5 rounded mr-1 font-mono font-semibold"
+                  style={{
+                    backgroundColor: '#ffedd5',
+                    color: '#9a3412',
+                    border: '1px solid #fed7aa',
+                  }}
+                >
+                  🟠 Bear
+                </span>
+                20–40: PF 2.43
+              </li>
+              <li>
+                <span
+                  className="inline-block px-1.5 rounded mr-1 font-mono font-semibold"
+                  style={{
+                    backgroundColor: '#fef9c3',
+                    color: '#854d0e',
+                    border: '1px solid #fde68a',
+                  }}
+                >
+                  🟡 Neutral
+                </span>
+                40–60: PF 1.73
+              </li>
+              <li>
+                <span
+                  className="inline-block px-1.5 rounded mr-1 font-mono font-semibold"
+                  style={{
+                    backgroundColor: '#dcfce7',
+                    color: '#166534',
+                    border: '1px solid #86efac',
+                  }}
+                >
+                  🟢 Bull
+                </span>
+                60–80: PF 3.21
+              </li>
+              <li>
+                <span
+                  className="inline-block px-1.5 rounded mr-1 font-mono font-semibold"
+                  style={{
+                    backgroundColor: '#a7f3d0',
+                    color: '#064e3b',
+                    border: '1px solid #6ee7b7',
+                  }}
+                >
+                  💚 V.Bull
+                </span>
+                80+: PF 3.30（最強）
+              </li>
+            </ul>
+          </div>
         </div>
       )}
     </div>

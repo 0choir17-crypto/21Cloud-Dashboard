@@ -23,7 +23,8 @@ const COLUMNS = `
   daily_signals_screens, daily_signals_last_hit, daily_signals_days_since,
   in_watchlist,
   close, volume, rvol, adr_pct, cockpit_rs, vcs_score, mc_v4, regime,
-  is_premium, is_standard, quality_tier
+  is_premium, is_standard, quality_tier,
+  jq_institutional_pass, jq_institutional_reason
 `
 
 const DEFAULT_LIMIT = 200
@@ -95,6 +96,9 @@ export async function fetchStructurePivot(
   }
   if (opts.signal && opts.signal !== 'all') {
     query = query.eq('signal_type', opts.signal)
+  }
+  if (opts.institutionalOnly) {
+    query = query.eq('jq_institutional_pass', true)
   }
 
   // Ordering: tier S → A → B, signal HL_BREAK → SETUP_LONG, longer base first.
