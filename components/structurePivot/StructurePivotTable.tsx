@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import type { StructurePivotRow } from '@/types/structurePivot'
 import RegimeBadge from './RegimeBadge'
 import InstitutionalReasonTooltip from './InstitutionalReasonTooltip'
+import WatchlistModal from '@/components/watchlist/WatchlistModal'
+import { WatchlistItem } from '@/types/portfolio'
 
 type SortKey =
   | 'quality_tier'
@@ -311,6 +313,19 @@ function SortTh({
   )
 }
 
+function pivotInitialFromRow(row: StructurePivotRow): Partial<WatchlistItem> {
+  return {
+    ticker: row.code,
+    company_name: row.name ?? undefined,
+    screen_tag: row.signal_type === 'HL_BREAK' ? 'Pivot HL_BREAK' : 'Pivot SETUP',
+    rs_composite: row.cockpit_rs ?? undefined,
+    rvol: row.rvol ?? undefined,
+    adr_pct: row.adr_pct ?? undefined,
+    sector_name: row.sector ?? undefined,
+    signal_price: row.close ?? undefined,
+  }
+}
+
 export default function StructurePivotTable({
   rows,
   onSelect,
@@ -318,6 +333,7 @@ export default function StructurePivotTable({
 }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('quality_tier')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [watchTarget, setWatchTarget] = useState<Partial<WatchlistItem> | null>(null)
 
   const handleSort = (k: SortKey) => {
     if (sortKey === k) {
@@ -556,13 +572,25 @@ export default function StructurePivotTable({
                 <td className="px-2 py-2.5 whitespace-nowrap">
                   <ScreensCell raw={r.daily_signals_screens} />
                 </td>
-                <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                <td
+                  className="px-2 py-2.5 text-center whitespace-nowrap"
+                  onClick={e => e.stopPropagation()}
+                >
                   {r.in_watchlist ? (
-                    <span title="Watchlist 在席" className="text-amber-500">
+                    <button
+                      onClick={() => setWatchTarget(pivotInitialFromRow(r))}
+                      title="Watchlist 在席（クリックで再登録/編集）"
+                      className="text-amber-500 hover:text-amber-600"
+                    >
                       ⭐
-                    </span>
+                    </button>
                   ) : (
-                    <span className="text-gray-300">—</span>
+                    <button
+                      onClick={() => setWatchTarget(pivotInitialFromRow(r))}
+                      className="text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
+                    >
+                      + Watch
+                    </button>
                   )}
                 </td>
                 <td
@@ -576,6 +604,13 @@ export default function StructurePivotTable({
           })}
         </tbody>
       </table>
+
+      <WatchlistModal
+        open={watchTarget !== null}
+        onClose={() => setWatchTarget(null)}
+        onSaved={() => setWatchTarget(null)}
+        initial={watchTarget ?? undefined}
+      />
     </div>
   )
 }

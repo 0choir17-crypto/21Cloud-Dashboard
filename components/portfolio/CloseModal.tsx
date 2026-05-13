@@ -16,10 +16,13 @@ const today = () => new Date().toISOString().slice(0, 10)
 
 const EXIT_REASONS = ['利確', '損切', 'トレール損切', '目標達成', 'その他']
 
+const SHARE_LOT = 100
+
 export default function CloseModal({ open, onClose, onSaved, position }: Props) {
   const [exitPrice, setExitPrice] = useState('')
   const [exitDate, setExitDate] = useState(today())
   const [exitReason, setExitReason] = useState('利確')
+  const [sellShares, setSellShares] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -28,14 +31,20 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
       setExitPrice('')
       setExitDate(today())
       setExitReason('利確')
+      setSellShares(position ? String(position.shares) : '')
       setError('')
     }
-  }, [open])
+  }, [open, position])
 
   if (!position) return null
 
   const ep = parseFloat(exitPrice)
-  const realizedPnl = !isNaN(ep) ? (ep - position.entry_price) * position.shares : null
+  const parsedSellShares = parseInt(sellShares, 10)
+  const effectiveSellShares = Number.isFinite(parsedSellShares) && parsedSellShares > 0
+    ? parsedSellShares
+    : position.shares
+  const isPartial = effectiveSellShares < position.shares
+  const realizedPnl = !isNaN(ep) ? (ep - position.entry_price) * effectiveSellShares : null
   const rMultiple =
     !isNaN(ep) && position.stop_price != null && position.entry_price !== position.stop_price
       ? (ep - position.entry_price) / (position.entry_price - position.stop_price)
@@ -46,36 +55,110 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
     if (!exitDate) { setError('売却日は必須です'); return }
     if (!position) return
 
+    // 売却株数 validation: 100株単位、1株以上、保有株以下
+    const parsed = parseInt(sellShares, 10)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setError('売却株数は1株以上で入力してください'); return
+    }
+    if (parsed > position.shares) {
+      setError(`売却株数は保有株数 ${position.shares} 以下にしてください`); return
+    }
+    if (parsed % SHARE_LOT !== 0) {
+      setError(`売却株数は ${SHARE_LOT} 株単位で入力してください`); return
+    }
+
     setSaving(true)
     setError('')
 
     const ep2 = parseFloat(exitPrice)
-    const pnl = (ep2 - position.entry_price) * position.shares
+    const closeShares = parsed
+    const remainingShares = position.shares - closeShares
+    const isPartialClose = remainingShares > 0
+    const pnl = (ep2 - position.entry_price) * closeShares
     const rMult =
       position.stop_price != null && position.entry_price !== position.stop_price
         ? (ep2 - position.entry_price) / (position.entry_price - position.stop_price)
         : null
-
-    // trades テーブルを直接 update
     const pnlPct = position.entry_price > 0
       ? ((ep2 - position.entry_price) / position.entry_price) * 100
       : null
 
-    const { error: updateErr } = await supabase
-      .from('trades')
-      .update({
+    if (isPartialClose) {
+      // Partial close: insert a new closed trade record for the sold portion
+      // and reduce the shares on the original (still-open) position.
+      const closedCostBasis = position.cost_basis != null
+        ? position.cost_basis * (closeShares / position.shares)
+        : null
+      const remainingCostBasis = position.cost_basis != null
+        ? position.cost_basis * (remainingShares / position.shares)
+        : position.cost_basis
+
+      const closedRecord = {
+        ticker: position.ticker,
+        company_name: position.company_name,
+        screen_name: position.screen_name,
+        entry_date: position.entry_date,
+        entry_price: position.entry_price,
+        shares: closeShares,
         exit_date: exitDate,
         exit_price: ep2,
         pnl: pnl,
         pnl_pct: pnlPct,
-        r_multiple: rMult,
-        exit_reason: exitReason,
         result: pnl >= 0 ? 'WIN' : 'LOSS',
+        mc_score: position.mc_score,
+        mc_regime: position.mc_regime,
+        mc_score_version: position.mc_score_version ?? 'v4',
+        memo: position.memo,
         status: 'closed',
+        sector: position.sector,
+        stop_price: position.stop_price,
+        stop_21l: position.stop_21l,
+        cost_basis: closedCostBasis,
+        init_risk_pct: position.init_risk_pct,
+        target_r: position.target_r,
+        exit_reason: exitReason,
+        r_multiple: rMult,
+        signal_price: position.signal_price,
+        rs_at_entry: position.rs_at_entry,
+        rvol_at_entry: position.rvol_at_entry,
+        adr_at_entry: position.adr_at_entry,
+        dist_ema21_at_entry: position.dist_ema21_at_entry,
+        stop_pct_at_entry: position.stop_pct_at_entry,
+        mc_met_at_entry: position.mc_met_at_entry,
+        mc_condition_at_entry: position.mc_condition_at_entry,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', position.id)
-    if (updateErr) { setSaving(false); setError(updateErr.message); return }
+      }
+
+      const { error: insertErr } = await supabase.from('trades').insert(closedRecord)
+      if (insertErr) { setSaving(false); setError(insertErr.message); return }
+
+      const { error: updateErr } = await supabase
+        .from('trades')
+        .update({
+          shares: remainingShares,
+          cost_basis: remainingCostBasis,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', position.id)
+      if (updateErr) { setSaving(false); setError(updateErr.message); return }
+    } else {
+      // Full close: update existing trade in place
+      const { error: updateErr } = await supabase
+        .from('trades')
+        .update({
+          exit_date: exitDate,
+          exit_price: ep2,
+          pnl: pnl,
+          pnl_pct: pnlPct,
+          r_multiple: rMult,
+          exit_reason: exitReason,
+          result: pnl >= 0 ? 'WIN' : 'LOSS',
+          status: 'closed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', position.id)
+      if (updateErr) { setSaving(false); setError(updateErr.message); return }
+    }
 
     // 3. Update consec_losses in risk_settings
     const { data: riskData } = await supabase
@@ -130,6 +213,33 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
+          </div>
+
+          {/* Sell Shares (100株単位、部分売却対応) */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              売却株数 <span className="text-red-500">*</span>
+              <span className="ml-1 text-[10px] text-gray-400">（{SHARE_LOT}株単位）</span>
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={sellShares}
+              onChange={e => setSellShares(e.target.value)}
+              min={SHARE_LOT}
+              max={position.shares}
+              step={SHARE_LOT}
+              placeholder={String(position.shares)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="mt-1 text-[10px] text-gray-400">
+              保有: {position.shares.toLocaleString()} sh
+              {isPartial && effectiveSellShares > 0 && (
+                <span className="ml-2 text-orange-600 font-semibold">
+                  部分売却 → 残 {(position.shares - effectiveSellShares).toLocaleString()} sh
+                </span>
+              )}
+            </p>
           </div>
 
           {/* Exit Date */}
@@ -196,7 +306,11 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
             disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors min-h-[44px] disabled:opacity-50"
           >
-            {saving ? 'Processing...' : 'Confirm Close'}
+            {saving
+              ? 'Processing...'
+              : isPartial
+                ? `Confirm Partial Close (${effectiveSellShares.toLocaleString()} sh)`
+                : 'Confirm Close'}
           </button>
         </div>
       </div>

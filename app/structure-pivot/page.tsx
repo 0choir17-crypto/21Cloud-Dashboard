@@ -18,6 +18,8 @@ import StructurePivotLegend from '@/components/structurePivot/StructurePivotLege
 import StockChartView from '@/components/chart/StockChartView'
 import StockGrid, { type GridEntry } from '@/components/chart/StockGrid'
 import ViewToggle, { type ViewMode } from '@/components/chart/ViewToggle'
+import WatchlistModal from '@/components/watchlist/WatchlistModal'
+import { WatchlistItem } from '@/types/portfolio'
 
 const INITIAL_FILTERS: StructurePivotFilters = {
   signal: 'all',
@@ -43,6 +45,7 @@ export default function StructurePivotPage() {
   const [filters, setFilters] = useState<StructurePivotFilters>(INITIAL_FILTERS)
   const [viewMode, setViewMode] = useState<ViewMode>('cards')
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const [watchTarget, setWatchTarget] = useState<Partial<WatchlistItem> | null>(null)
 
   const detailRef = useRef<HTMLDivElement | null>(null)
 
@@ -180,6 +183,24 @@ export default function StructurePivotPage() {
     setSelectedCode(prev => (prev === code ? null : code))
   }
 
+  const handleWatch = (code: string) => {
+    const r = response.rows.find(x => x.code === code)
+    if (!r) {
+      setWatchTarget({ ticker: code })
+      return
+    }
+    setWatchTarget({
+      ticker: r.code,
+      company_name: r.name ?? undefined,
+      screen_tag: r.signal_type === 'HL_BREAK' ? 'Pivot HL_BREAK' : 'Pivot SETUP',
+      rs_composite: r.cockpit_rs ?? undefined,
+      rvol: r.rvol ?? undefined,
+      adr_pct: r.adr_pct ?? undefined,
+      sector_name: r.sector ?? undefined,
+      signal_price: r.close ?? undefined,
+    })
+  }
+
   return (
     <main
       className="min-h-screen p-6"
@@ -302,6 +323,7 @@ export default function StructurePivotPage() {
               entries={gridEntries}
               selectedCode={selectedCode}
               onSelect={handleSelect}
+              onWatch={handleWatch}
             />
           ) : (
             <StructurePivotTable
@@ -395,6 +417,13 @@ export default function StructurePivotPage() {
           )}
         </>
       )}
+
+      <WatchlistModal
+        open={watchTarget !== null}
+        onClose={() => setWatchTarget(null)}
+        onSaved={() => setWatchTarget(null)}
+        initial={watchTarget ?? undefined}
+      />
     </main>
   )
 }

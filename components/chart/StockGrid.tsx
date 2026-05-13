@@ -25,6 +25,8 @@ interface Props {
   lookbackDays?: number | null
   selectedCode?: string | null
   onSelect?: (code: string) => void
+  /** When provided, each card renders a "+ Watch" button that calls this with the card's code. */
+  onWatch?: (code: string) => void
 }
 
 type Cache = Map<string, CacheEntry>
@@ -35,6 +37,7 @@ export default function StockGrid({
   lookbackDays = 126,
   selectedCode,
   onSelect,
+  onWatch,
 }: Props) {
   const [shown, setShown] = useState(pageSize)
   const [prevEntries, setPrevEntries] = useState(entries)
@@ -141,6 +144,7 @@ export default function StockGrid({
               overrides={entry.overrides}
               selected={selectedCode === entry.code}
               onSelect={onSelect}
+              onWatch={onWatch}
             />
           )
         })}

@@ -25,6 +25,8 @@ interface Props {
   overrides?: CardOverrides
   selected?: boolean
   onSelect?: (code: string) => void
+  /** When provided, renders a "+ Watch" button in the card header. */
+  onWatch?: (code: string) => void
 }
 
 const TRADINGVIEW_URL = (code: string) =>
@@ -151,11 +153,16 @@ export default function StockCard({
   overrides,
   selected,
   onSelect,
+  onWatch,
 }: Props) {
   const m = useMemo(() => deriveCompactMetrics(bars, overrides), [bars, overrides])
   const rs = overrides?.rs ?? null
 
   const stopClick = (e: React.MouseEvent) => e.stopPropagation()
+  const handleWatch = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onWatch?.(code)
+  }
 
   return (
     <div
@@ -209,6 +216,15 @@ export default function StockCard({
             >
               {fmtSignedPct(m.dailyPct, 2)}
             </span>
+          )}
+          {onWatch && (
+            <button
+              onClick={handleWatch}
+              title="Watchlist に追加"
+              className="ml-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 leading-none"
+            >
+              + Watch
+            </button>
           )}
         </div>
       </div>
