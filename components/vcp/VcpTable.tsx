@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react'
 import { DailyVcpScreen } from '@/types/vcp'
 import Tooltip from '@/components/shared/Tooltip'
+import WatchlistModal from '@/components/watchlist/WatchlistModal'
+import { WatchlistItem } from '@/types/portfolio'
 
 type SortKey = keyof DailyVcpScreen
 type SortDir = 'asc' | 'desc'
@@ -183,9 +185,23 @@ function SortTh({
   )
 }
 
+function vcpInitialFromRow(row: DailyVcpScreen): Partial<WatchlistItem> {
+  return {
+    ticker: row.code,
+    company_name: row.name ?? undefined,
+    screen_tag: 'VCP',
+    rs_composite: row.cockpit_rs ?? undefined,
+    rvol: row.rvol ?? undefined,
+    adr_pct: row.adr_pct ?? undefined,
+    sector_name: row.sector ?? undefined,
+    signal_price: row.close ?? undefined,
+  }
+}
+
 export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
   const [sortKey, setSortKey] = useState<SortKey>('vcs_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [watchTarget, setWatchTarget] = useState<Partial<WatchlistItem> | null>(null)
 
   const handleSort = (k: SortKey) => {
     if (sortKey === k) {
@@ -236,6 +252,9 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
               <SortTh label="200sma%" sortKey="dist_sma200" tooltip={COLUMN_TOOLTIPS.dist_sma200} {...sp} />
               <SortTh label="Stage2" sortKey="ma_stack" tooltip={COLUMN_TOOLTIPS.ma_stack} {...sp} />
               <SortTh label="52wH%" sortKey="high_52w_pct" tooltip={COLUMN_TOOLTIPS.high_52w_pct} {...sp} />
+              <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                WL
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -324,6 +343,14 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
                 <td className="px-2 py-2.5 text-right whitespace-nowrap">
                   <High52wCell v={row.high_52w_pct} />
                 </td>
+                <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                  <button
+                    onClick={() => setWatchTarget(vcpInitialFromRow(row))}
+                    className="text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
+                  >
+                    + Watch
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -347,6 +374,9 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
               <SortTh label="VCS" sortKey="vcs_score" tooltip={COLUMN_TOOLTIPS.vcs_score} {...sp} />
               <SortTh label="Tight(day)" sortKey="vcs_days_tight" tooltip={COLUMN_TOOLTIPS.vcs_days_tight} {...sp} />
               <SortTh label="Pivot%" sortKey="pct_from_20d_high" tooltip={COLUMN_TOOLTIPS.pct_from_20d_high} {...sp} />
+              <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase text-gray-500">
+                WL
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -384,6 +414,14 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
                 <td className="px-2 py-2.5 text-right whitespace-nowrap">
                   <PivotCell v={row.pct_from_20d_high} />
                 </td>
+                <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                  <button
+                    onClick={() => setWatchTarget(vcpInitialFromRow(row))}
+                    className="text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
+                  >
+                    + Watch
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -396,6 +434,12 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
         )}
       </div>
 
+      <WatchlistModal
+        open={watchTarget !== null}
+        onClose={() => setWatchTarget(null)}
+        onSaved={() => setWatchTarget(null)}
+        initial={watchTarget ?? undefined}
+      />
     </>
   )
 }
