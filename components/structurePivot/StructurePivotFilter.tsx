@@ -11,6 +11,7 @@ export type StructurePivotFilters = {
   tier: TierFilter
   vcpOnly: boolean
   watchlistOnly: boolean
+  institutionalOnly: boolean
 }
 
 type Props = {
@@ -66,6 +67,12 @@ export default function StructurePivotFilter({
         value={filters.watchlistOnly}
         onChange={v => onChange({ ...filters, watchlistOnly: v })}
         title="in_watchlist = true"
+      />
+      <Toggle
+        label="🏛️ Institutional only"
+        value={filters.institutionalOnly}
+        onChange={v => onChange({ ...filters, institutionalOnly: v })}
+        title="jq_institutional_pass = true (Phase 4 Screen B)"
       />
     </div>
   )

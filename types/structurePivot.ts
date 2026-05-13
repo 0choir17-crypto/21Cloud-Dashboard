@@ -43,6 +43,34 @@ export type StructurePivotRow = {
   is_premium: boolean | null
   is_standard: boolean | null
   quality_tier: StructurePivotTier
+
+  // Phase 4 v1.4 — Screen B (Institutional accumulation)
+  jq_institutional_pass: boolean | null
+  jq_institutional_reason: StructurePivotReason | null
+}
+
+export type StructurePivotReasonOp =
+  | '>='
+  | '>'
+  | '<='
+  | '<'
+  | 'in'
+  | 'not_in_[0,thr-1]'
+
+export type StructurePivotReasonItem = {
+  passed: boolean
+  value: number | string | null
+  threshold: number | string | (number | string)[]
+  op: StructurePivotReasonOp
+}
+
+export type StructurePivotReason = {
+  eps_growth_yoy?: StructurePivotReasonItem
+  revenue_growth_yoy?: StructurePivotReasonItem
+  section_ft_buyweeks_4w?: StructurePivotReasonItem
+  sector_rs_21d?: StructurePivotReasonItem
+  sector_momentum?: StructurePivotReasonItem
+  disc_guard?: StructurePivotReasonItem
 }
 
 export type StructurePivotSummary = {
@@ -61,5 +89,6 @@ export type StructurePivotQuery = {
   date?: string
   tier?: StructurePivotTier | 'all'
   signal?: StructurePivotSignalType | 'all'
+  institutionalOnly?: boolean
   limit?: number
 }

@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import type { StructurePivotRow } from '@/types/structurePivot'
+import RegimeBadge from './RegimeBadge'
+import InstitutionalReasonTooltip from './InstitutionalReasonTooltip'
 
 type SortKey =
   | 'quality_tier'
@@ -210,6 +212,44 @@ function VcsCell({ v }: { v: number | null }) {
   )
 }
 
+function InstitutionalCell({ row }: { row: StructurePivotRow }) {
+  if (row.jq_institutional_pass == null) {
+    return <span className="text-gray-300 text-xs">—</span>
+  }
+  const pass = row.jq_institutional_pass
+  return (
+    <span className="relative inline-block group/inst">
+      <span
+        className="inline-flex items-center px-1.5 py-0.5 rounded font-mono text-[10px] font-bold cursor-help"
+        style={
+          pass
+            ? {
+                backgroundColor: '#ede9fe',
+                color: '#5b21b6',
+                border: '1px solid #ddd6fe',
+              }
+            : {
+                backgroundColor: '#f9fafb',
+                color: '#9ca3af',
+                border: '1px solid #e5e7eb',
+              }
+        }
+        title={pass ? 'Institutional pass' : 'Institutional fail'}
+      >
+        {pass ? '🏛️' : '·'}
+      </span>
+      {row.jq_institutional_reason && (
+        <span className="absolute z-20 hidden group-hover/inst:block right-0 top-full mt-1 whitespace-normal">
+          <InstitutionalReasonTooltip
+            reason={row.jq_institutional_reason}
+            pass={pass}
+          />
+        </span>
+      )}
+    </span>
+  )
+}
+
 function ScreensCell({ raw }: { raw: string | null }) {
   if (!raw) return <span className="text-gray-400 text-xs">—</span>
   const screens = raw.split('|').map(s => s.trim()).filter(Boolean)
@@ -361,6 +401,9 @@ export default function StructurePivotTable({
               align="center"
               title="Quality tier (S/A/B)"
             />
+            <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+              Regime
+            </th>
             <SortTh
               label="VCP"
               sortKey="vcp_days_since"
@@ -411,6 +454,12 @@ export default function StructurePivotTable({
             </th>
             <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
               WL
+            </th>
+            <th
+              className="px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap"
+              title="Phase 4 Screen B (Institutional accumulation)"
+            >
+              Inst
             </th>
           </tr>
         </thead>
@@ -471,6 +520,13 @@ export default function StructurePivotTable({
                   <TierBadge tier={r.quality_tier} />
                 </td>
                 <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                  {r.regime ? (
+                    <RegimeBadge regime={r.regime} />
+                  ) : (
+                    <span className="text-gray-300 text-xs">—</span>
+                  )}
+                </td>
+                <td className="px-2 py-2.5 text-center whitespace-nowrap">
                   <VcpCell days={r.vcp_days_since} />
                 </td>
                 <td className="px-2 py-2.5 text-right whitespace-nowrap">
@@ -508,6 +564,12 @@ export default function StructurePivotTable({
                   ) : (
                     <span className="text-gray-300">—</span>
                   )}
+                </td>
+                <td
+                  className="px-2 py-2.5 text-center whitespace-nowrap"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <InstitutionalCell row={r} />
                 </td>
               </tr>
             )
