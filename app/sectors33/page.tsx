@@ -2,19 +2,38 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { fetchLatestSectorSelection } from '@/lib/sectorSelectionFetch'
+import {
+  fetchSectorSelectionHistory,
+  type SectorHistoryResponse,
+} from '@/lib/sectorSelectionHistoryFetch'
 import { SectorSelectionRow } from '@/types/sectorSelection'
 import SectorSelectionTable from '@/components/sectors33/SectorSelectionTable'
+import SectorRRG33 from '@/components/sectors33/SectorRRG33'
+import SectorHeatmap33 from '@/components/sectors33/SectorHeatmap33'
+import SectorSparklineGrid33 from '@/components/sectors33/SectorSparklineGrid33'
+
+type View = 'rrg' | 'heatmap' | 'sparkline'
 
 export default function SectorSelectionPage() {
   const [rows, setRows] = useState<SectorSelectionRow[]>([])
   const [latestDate, setLatestDate] = useState<string | null>(null)
+  const [history, setHistory] = useState<SectorHistoryResponse>({
+    dates: [],
+    bySector: {},
+    sectorsRanked: [],
+  })
+  const [view, setView] = useState<View>('rrg')
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const { latestDate, rows } = await fetchLatestSectorSelection()
-    setRows(rows)
-    setLatestDate(latestDate)
+    const [latest, hist] = await Promise.all([
+      fetchLatestSectorSelection(),
+      fetchSectorSelectionHistory(21),
+    ])
+    setRows(latest.rows)
+    setLatestDate(latest.latestDate)
+    setHistory(hist)
     setLoading(false)
   }, [])
 
@@ -83,7 +102,61 @@ export default function SectorSelectionPage() {
           <p className="text-sm">Supabase の sector_selection_s33 テーブルにデータを挿入してください。</p>
         </div>
       ) : !loading && (
-        <SectorSelectionTable rows={rows} />
+        <>
+          <SectorSelectionTable rows={rows} />
+
+          {/* ── 21営業日推移ビジュアル ─────────────────────────────────── */}
+          <section className="mt-8">
+            <div className="flex flex-wrap items-end justify-between mb-3 gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-[var(--text-primary)]">
+                  21営業日の推移
+                </h2>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  どのセクターが強いか・どう動いているかを 3 つの視点で比較
+                  {history.dates.length > 0 && (
+                    <span className="ml-2 text-gray-400 font-mono">
+                      ({history.dates[0]} → {history.dates[history.dates.length - 1]})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden text-xs">
+                {(
+                  [
+                    { v: 'rrg' as const, label: 'RRG' },
+                    { v: 'heatmap' as const, label: 'Heatmap' },
+                    { v: 'sparkline' as const, label: 'Sparklines' },
+                  ]
+                ).map((opt, i) => (
+                  <button
+                    key={opt.v}
+                    onClick={() => setView(opt.v)}
+                    className={`px-3 py-1.5 font-medium ${
+                      view === opt.v
+                        ? 'bg-[var(--accent)] text-white'
+                        : 'bg-white text-[var(--text-secondary)] hover:bg-gray-50'
+                    } ${i > 0 ? 'border-l border-[var(--border)]' : ''}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {history.dates.length === 0 ? (
+              <div className="bg-white rounded-xl border border-[#e8eaed] shadow-sm p-8 text-center text-gray-400 text-sm">
+                履歴データを読み込めませんでした
+              </div>
+            ) : view === 'rrg' ? (
+              <SectorRRG33 history={history} />
+            ) : view === 'heatmap' ? (
+              <SectorHeatmap33 history={history} />
+            ) : (
+              <SectorSparklineGrid33 history={history} />
+            )}
+          </section>
+        </>
       )}
     </main>
   )
