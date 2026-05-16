@@ -60,6 +60,7 @@ export default function NavBar() {
       <span className="text-gray-300 select-none flex-shrink-0">|</span>
       <Link href="/" className={linkClass('/')}>Market</Link>
       <Link href="/sectors" className={linkClass('/sectors')}>Sectors</Link>
+      <Link href="/sectors33" className={linkClass('/sectors33')}>Sectors-33</Link>
       <Link href="/vcp" className={linkClass('/vcp')}>VCP</Link>
       <Link href="/structure-pivot" className={linkClass('/structure-pivot')}>Pivot</Link>
       <Link href="/signals" className={linkClass('/signals')}>Signals</Link>
