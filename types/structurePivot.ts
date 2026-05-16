@@ -9,7 +9,7 @@ export type StructurePivotRow = {
   date: string
   code: string
   name: string | null
-  sector: string | null
+  sector_s33: string | null
 
   // Pivot 主軸
   signal_type: StructurePivotSignalType

@@ -22,7 +22,7 @@ export interface Trade {
   updated_at: string
 
   // Portfolio統合用
-  sector: string | null
+  sector_s33: string | null
   stop_price: number | null
   stop_21l: number | null
   cost_basis: number | null

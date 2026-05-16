@@ -8,7 +8,7 @@ import SignalsHeader from '@/components/signals/SignalsHeader'
 import SignalsFilter from '@/components/signals/SignalsFilter'
 
 const COLUMNS = `
-  date, code, company_name, screen_name, sector_name,
+  date, code, company_name, screen_name, sector_s33,
   price_chg_1d, price_chg_5d, rs_composite, rvol, adr_pct,
   dist_ema21_r, dist_10wma_r, dist_50sma_r,
   high_52w_pct, stop_pct, hit_count,

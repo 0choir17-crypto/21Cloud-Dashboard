@@ -110,7 +110,7 @@ export default function CloseModal({ open, onClose, onSaved, position }: Props) 
         mc_score_version: position.mc_score_version ?? 'v4',
         memo: position.memo,
         status: 'closed',
-        sector: position.sector,
+        sector_s33: position.sector_s33,
         stop_price: position.stop_price,
         stop_21l: position.stop_21l,
         cost_basis: closedCostBasis,

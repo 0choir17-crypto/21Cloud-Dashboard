@@ -129,7 +129,7 @@ export default function TradesTab({ positions, onRefresh }: Props) {
                       <a href={`https://shikiho.toyokeizai.net/stocks/${pos.ticker}`} target="_blank" rel="noreferrer" className="hover:underline">{pos.company_name}</a>
                     ) : '—'}
                   </td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600">{pos.sector ?? '—'}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600">{pos.sector_s33 ?? '—'}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono text-gray-600">{pos.entry_date}</td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">¥{fmt(pos.entry_price)}</td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(pos.shares)}</td>

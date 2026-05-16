@@ -129,7 +129,7 @@ export default function StructurePivotPage() {
       sortedForCards.map(r => ({
         code: r.code,
         name: r.name,
-        sector: r.sector,
+        sector: r.sector_s33,
         overrides: {
           rs: r.cockpit_rs ?? null,
           adrPct: r.adr_pct ?? null,
@@ -196,7 +196,7 @@ export default function StructurePivotPage() {
       rs_composite: r.cockpit_rs ?? undefined,
       rvol: r.rvol ?? undefined,
       adr_pct: r.adr_pct ?? undefined,
-      sector_name: r.sector ?? undefined,
+      sector_s33: r.sector_s33 ?? undefined,
       signal_price: r.close ?? undefined,
     })
   }
@@ -411,7 +411,7 @@ export default function StructurePivotPage() {
               <StockChartView
                 code={selectedCode}
                 name={selectedRow.name ?? null}
-                sector={selectedRow.sector ?? null}
+                sector={selectedRow.sector_s33 ?? null}
               />
             </div>
           )}

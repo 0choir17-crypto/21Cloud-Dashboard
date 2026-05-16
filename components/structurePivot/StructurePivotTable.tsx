@@ -19,7 +19,7 @@ type SortKey =
   | 'adr_pct'
   | 'cockpit_rs'
   | 'vcs_score'
-  | 'sector'
+  | 'sector_s33'
   | 'code'
 
 type SortDir = 'asc' | 'desc'
@@ -321,7 +321,7 @@ function pivotInitialFromRow(row: StructurePivotRow): Partial<WatchlistItem> {
     rs_composite: row.cockpit_rs ?? undefined,
     rvol: row.rvol ?? undefined,
     adr_pct: row.adr_pct ?? undefined,
-    sector_name: row.sector ?? undefined,
+    sector_s33: row.sector_s33 ?? undefined,
     signal_price: row.close ?? undefined,
   }
 }
@@ -364,7 +364,7 @@ export default function StructurePivotTable({
         if (av !== bv) return (av - bv) * dir
         return (b.days_in_setup ?? 0) - (a.days_in_setup ?? 0)
       }
-      if (sortKey === 'sector' || sortKey === 'code') {
+      if (sortKey === 'sector_s33' || sortKey === 'code') {
         const av = (a[sortKey] as string | null) ?? ''
         const bv = (b[sortKey] as string | null) ?? ''
         return av.localeCompare(bv, 'ja') * dir
@@ -402,7 +402,7 @@ export default function StructurePivotTable({
             <th className="px-2 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
               Name
             </th>
-            <SortTh label="Sector" sortKey="sector" {...sp} align="left" />
+            <SortTh label="Sector" sortKey="sector_s33" {...sp} align="left" />
             <SortTh
               label="Signal"
               sortKey="signal_type"
@@ -524,9 +524,9 @@ export default function StructurePivotTable({
                 <td className="px-2 py-2.5 whitespace-nowrap">
                   <span
                     className="block text-xs text-gray-500 max-w-[100px] truncate"
-                    title={r.sector ?? ''}
+                    title={r.sector_s33 ?? ''}
                   >
-                    {r.sector ?? '—'}
+                    {r.sector_s33 ?? '—'}
                   </span>
                 </td>
                 <td className="px-2 py-2.5 text-center whitespace-nowrap">

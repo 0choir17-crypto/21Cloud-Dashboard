@@ -108,7 +108,7 @@ export default function PlansTab({ plans, riskSettings, onRefresh }: Props) {
                   <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-700">
                     {plan.company_name ?? '—'}
                   </td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600">{plan.sector ?? '—'}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600">{plan.sector_s33 ?? '—'}</td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">¥{fmt(ep)}</td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{sp != null ? `¥${fmt(sp)}` : '—'}</td>
                   <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{plan.stop_21l != null ? `¥${fmt(plan.stop_21l)}` : '—'}</td>

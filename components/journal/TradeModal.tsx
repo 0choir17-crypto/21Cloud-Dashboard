@@ -14,7 +14,7 @@ type Props = {
     company_name?: string
     screen_name?: string
     // シグナルスナップショット
-    sector?: string
+    sector_s33?: string
     signal_price?: number
     rs_at_entry?: number
     rvol_at_entry?: number
@@ -132,7 +132,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
       memo: memo.trim() || null,
       status: 'open',
       // シグナルスナップショット（Signalsページから渡された場合のみ値が入る）
-      sector: initial?.sector ?? null,
+      sector_s33: initial?.sector_s33 ?? null,
       signal_price: initial?.signal_price ?? null,
       rs_at_entry: initial?.rs_at_entry ?? null,
       rvol_at_entry: initial?.rvol_at_entry ?? null,
@@ -263,7 +263,7 @@ export default function TradeModal({ open, onClose, onSaved, initial }: Props) {
               <span className="text-gray-500">ADR%: <strong className="text-gray-800">{initial.adr_at_entry?.toFixed(1)}</strong></span>
               <span className="text-gray-500">EMA21(R): <strong className="text-gray-800">{initial.dist_ema21_at_entry?.toFixed(2)}</strong></span>
               <span className="text-gray-500">Stop%: <strong className="text-gray-800">{initial.stop_pct_at_entry?.toFixed(1)}</strong></span>
-              {initial.sector && <span className="text-gray-500">Sector: <strong className="text-gray-800">{initial.sector}</strong></span>}
+              {initial.sector_s33 && <span className="text-gray-500">Sector: <strong className="text-gray-800">{initial.sector_s33}</strong></span>}
               {initial.signal_price != null && <span className="text-gray-500">Price: <strong className="text-gray-800">&yen;{initial.signal_price.toLocaleString()}</strong></span>}
               {initial.mc_condition_at_entry && (
                 <span className="text-gray-500">MC: <strong className={initial.mc_met_at_entry ? 'text-emerald-600' : 'text-gray-400'}>{initial.mc_condition_at_entry} {initial.mc_met_at_entry ? '\u2705' : '\u274c'}</strong></span>

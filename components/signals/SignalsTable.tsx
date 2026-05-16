@@ -33,7 +33,7 @@ type EntryTarget = {
   company_name?: string
   screen_name?: string
   // シグナルスナップショット
-  sector?: string
+  sector_s33?: string
   signal_price?: number
   rs_at_entry?: number
   rvol_at_entry?: number
@@ -195,9 +195,9 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
 
   const sorted = [...signals].sort((a, b) => {
     // 文字列ソート（セクター）
-    if (sortKey === 'sector_name') {
-      const av = a.sector_name ?? ''
-      const bv = b.sector_name ?? ''
+    if (sortKey === 'sector_s33') {
+      const av = a.sector_s33 ?? ''
+      const bv = b.sector_s33 ?? ''
       return sortDir === 'asc'
         ? av.localeCompare(bv, 'ja')
         : bv.localeCompare(av, 'ja')
@@ -225,7 +225,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
         <thead>
           <tr className="bg-gray-50 border-b border-[#e8eaed]">
             <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">Name</th>
-            <SortTh label="Sector"    sortKey="sector_name"  {...sp} align="left" />
+            <SortTh label="Sector"    sortKey="sector_s33"   {...sp} align="left" />
             <SortTh label="RS"        sortKey="rs_composite" tooltip={COLUMN_TOOLTIPS.rs_composite} {...sp} />
             <SortTh label="1D%"       sortKey="price_chg_1d" tooltip={COLUMN_TOOLTIPS.price_chg_1d} {...sp} />
             <SortTh label="5D%"       sortKey="price_chg_5d" tooltip={COLUMN_TOOLTIPS.price_chg_5d} {...sp} />
@@ -275,7 +275,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                 </td>
                 {/* セクター */}
                 <td className="px-3 py-2.5 whitespace-nowrap">
-                  <span className="text-xs text-gray-500 block max-w-[120px] truncate">{sig.sector_name ?? '—'}</span>
+                  <span className="text-xs text-gray-500 block max-w-[120px] truncate">{sig.sector_s33 ?? '—'}</span>
                 </td>
                 {/* RS */}
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{fmt(sig.rs_composite, 1)}</td>
@@ -322,7 +322,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                       stop_pct: sig.stop_pct ?? undefined,
                       mc_met: sig.mc_met ?? undefined,
                       mc_condition: sig.mc_condition ?? undefined,
-                      sector_name: sig.sector_name ?? undefined,
+                      sector_s33: sig.sector_s33 ?? undefined,
                       signal_price: sig.close ?? undefined,
                     } as Partial<WatchlistItem>)}
                     className="text-[10px] font-medium text-indigo-500 hover:text-indigo-700 hover:underline leading-none"
@@ -340,7 +340,7 @@ export default function SignalsTable({ signals, marketRegime, scorecardRegime }:
                         ticker: sig.code,
                         company_name: sig.company_name ?? undefined,
                         screen_name: sig.screen_name ?? undefined,
-                        sector: sig.sector_name ?? undefined,
+                        sector_s33: sig.sector_s33 ?? undefined,
                         signal_price: sig.close ?? undefined,
                         rs_at_entry: sig.rs_composite ?? undefined,
                         rvol_at_entry: sig.rvol ?? undefined,

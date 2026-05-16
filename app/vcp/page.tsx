@@ -18,7 +18,7 @@ import WatchlistModal from '@/components/watchlist/WatchlistModal'
 import { WatchlistItem } from '@/types/portfolio'
 
 const COLUMNS = `
-  date, code, name, sector,
+  date, code, name, sector_s33,
   close, vcs_score, vcs_days_tight, cockpit_rs, adr_pct, turnover_50d_oku,
   dist_sma50, dist_sma200, ma_stack,
   daily_pct, weekly_pct, monthly_pct, volume, rvol, pct_from_20d_high, high_52w_pct,
@@ -111,7 +111,7 @@ export default function VcpPage() {
       filtered.map(r => ({
         code: r.code,
         name: r.name,
-        sector: r.sector,
+        sector: r.sector_s33,
         overrides: {
           rs: r.cockpit_rs ?? null,
           adrPct: r.adr_pct ?? null,
@@ -151,7 +151,7 @@ export default function VcpPage() {
       rs_composite: r.cockpit_rs ?? undefined,
       rvol: r.rvol ?? undefined,
       adr_pct: r.adr_pct ?? undefined,
-      sector_name: r.sector ?? undefined,
+      sector_s33: r.sector_s33 ?? undefined,
       signal_price: r.close ?? undefined,
     })
   }
@@ -276,7 +276,7 @@ export default function VcpPage() {
               <StockChartView
                 code={selectedCode}
                 name={selectedRow?.name ?? null}
-                sector={selectedRow?.sector ?? null}
+                sector={selectedRow?.sector_s33 ?? null}
               />
             </div>
           )}
