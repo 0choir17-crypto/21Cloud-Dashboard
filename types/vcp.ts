@@ -11,7 +11,7 @@ export type DailyVcpScreen = {
   code: string
 
   name: string | null
-  sector: string | null
+  sector_s33: string | null
 
   // Tier 1
   close: number | null

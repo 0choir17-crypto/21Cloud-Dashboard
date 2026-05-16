@@ -16,7 +16,7 @@ export type WatchlistItem = {
   stop_pct: number | null
   mc_met: boolean | null
   mc_condition: string | null
-  sector_name: string | null
+  sector_s33: string | null
   signal_price: number | null
   created_at: string
   updated_at: string

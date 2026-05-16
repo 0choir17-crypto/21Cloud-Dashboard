@@ -65,7 +65,7 @@ function SignalSnapshotLine({ t }: { t: Trade }) {
       <span>ADR: <strong className="text-gray-600">{t.adr_at_entry?.toFixed(2)}%</strong></span>
       <span>EMA21: <strong className="text-gray-600">{t.dist_ema21_at_entry?.toFixed(2)}R</strong></span>
       {t.stop_pct_at_entry != null && <span>Stop: <strong className="text-gray-600">{t.stop_pct_at_entry.toFixed(2)}%</strong></span>}
-      {t.sector && <span>Sector: <strong className="text-gray-600">{t.sector}</strong></span>}
+      {t.sector_s33 && <span>Sector: <strong className="text-gray-600">{t.sector_s33}</strong></span>}
       {t.signal_price != null && <span>Price: <strong className="text-gray-600">&yen;{t.signal_price.toLocaleString()}</strong></span>}
       {t.mc_condition_at_entry && (
         <span>MC: <strong className={t.mc_met_at_entry ? 'text-emerald-600' : 'text-gray-400'}>{t.mc_condition_at_entry} {t.mc_met_at_entry ? '\u2705' : '\u274c'}</strong></span>

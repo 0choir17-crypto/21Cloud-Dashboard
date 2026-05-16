@@ -66,7 +66,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
       stop_pct: initial?.stop_pct ?? null,
       mc_met: initial?.mc_met ?? null,
       mc_condition: initial?.mc_condition ?? null,
-      sector_name: initial?.sector_name ?? null,
+      sector_s33: initial?.sector_s33 ?? null,
       signal_price: initial?.signal_price ?? null,
     }
 
@@ -97,7 +97,7 @@ export default function WatchlistModal({ open, onClose, onSaved, initial }: Prop
               <span className="text-gray-500">ADR%: <strong className="text-gray-800">{initial.adr_pct?.toFixed(1)}</strong></span>
               <span className="text-gray-500">EMA21(R): <strong className="text-gray-800">{initial.dist_ema21_r?.toFixed(2)}</strong></span>
               <span className="text-gray-500">Stop%: <strong className="text-gray-800">{initial.stop_pct?.toFixed(1)}</strong></span>
-              {initial.sector_name && <span className="text-gray-500">Sector: <strong className="text-gray-800">{initial.sector_name}</strong></span>}
+              {initial.sector_s33 && <span className="text-gray-500">Sector: <strong className="text-gray-800">{initial.sector_s33}</strong></span>}
               {initial.signal_price != null && <span className="text-gray-500">Price: <strong className="text-gray-800">&yen;{initial.signal_price.toLocaleString()}</strong></span>}
               {initial.mc_condition && (
                 <span className="text-gray-500">MC: <strong className={initial.mc_met ? 'text-emerald-600' : 'text-gray-400'}>{initial.mc_condition} {initial.mc_met ? '\u2705' : '\u274c'}</strong></span>

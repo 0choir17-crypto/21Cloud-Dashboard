@@ -74,7 +74,7 @@ export default function WatchlistPage() {
         .map(it => ({
           code: it.ticker,
           name: it.company_name,
-          sector: it.sector_name,
+          sector: it.sector_s33,
           overrides: {
             rs: it.rs_composite ?? null,
             adrPct: it.adr_pct ?? null,
@@ -114,7 +114,7 @@ export default function WatchlistPage() {
     target_r: promoteItem.target_r,
     memo: promoteItem.memo,
     // シグナルスナップショット引き継ぎ
-    sector: promoteItem.sector_name,
+    sector_s33: promoteItem.sector_s33,
     signal_price: promoteItem.signal_price,
     rs_at_entry: promoteItem.rs_composite,
     rvol_at_entry: promoteItem.rvol,
@@ -179,7 +179,7 @@ export default function WatchlistPage() {
           <StockChartView
             code={selectedCode}
             name={selectedItem?.company_name ?? null}
-            sector={selectedItem?.sector_name ?? null}
+            sector={selectedItem?.sector_s33 ?? null}
           />
         </section>
       )}
@@ -255,7 +255,7 @@ export default function WatchlistPage() {
                 </td>
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{item.adr_pct != null ? item.adr_pct.toFixed(1) : '—'}</td>
                 <td className="px-3 py-2.5 text-right font-mono text-xs whitespace-nowrap">{item.dist_ema21_r != null ? item.dist_ema21_r.toFixed(2) : '—'}</td>
-                <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{item.sector_name ?? '—'}</td>
+                <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{item.sector_s33 ?? '—'}</td>
                 <td className="px-3 py-2.5 text-xs text-gray-500 max-w-[160px]">
                   <span className="block truncate">{item.memo ?? '—'}</span>
                 </td>
@@ -330,7 +330,7 @@ export default function WatchlistPage() {
               <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
                 <div><span className="text-gray-400 block">RS</span>{item.rs_composite.toFixed(1)}</div>
                 <div><span className="text-gray-400 block">RVOL</span><span className={item.rvol != null && item.rvol >= 2 ? 'font-bold text-emerald-600' : ''}>{item.rvol?.toFixed(2) ?? '—'}</span></div>
-                <div><span className="text-gray-400 block">Sector</span>{item.sector_name ?? '—'}</div>
+                <div><span className="text-gray-400 block">Sector</span>{item.sector_s33 ?? '—'}</div>
               </div>
             )}
             {item.memo && <p className="text-xs text-gray-500 mb-3 truncate">{item.memo}</p>}

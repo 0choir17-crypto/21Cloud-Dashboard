@@ -76,7 +76,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
     if (open) {
       setTicker(initial?.ticker ?? '')
       setCompanyName(initial?.company_name ?? '')
-      setSector(initial?.sector ?? '')
+      setSector(initial?.sector_s33 ?? '')
       setEntryDate(initial?.entry_date ?? today())
       setEntryPrice(initial?.entry_price != null ? String(initial.entry_price) : '')
       setShares(initial?.shares != null ? String(initial.shares) : '')
@@ -117,7 +117,7 @@ export default function PositionModal({ open, onClose, onSaved, initial, default
     const record = {
       ticker: ticker.trim().toUpperCase(),
       company_name: companyName.trim() || null,
-      sector: sector.trim() || null,
+      sector_s33: sector.trim() || null,
       entry_date: entryDate || today(),
       entry_price: ep2,
       shares: shares !== '' ? parseInt(shares) : 1,

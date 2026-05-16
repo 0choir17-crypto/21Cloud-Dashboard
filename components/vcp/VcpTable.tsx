@@ -193,7 +193,7 @@ function vcpInitialFromRow(row: DailyVcpScreen): Partial<WatchlistItem> {
     rs_composite: row.cockpit_rs ?? undefined,
     rvol: row.rvol ?? undefined,
     adr_pct: row.adr_pct ?? undefined,
-    sector_name: row.sector ?? undefined,
+    sector_s33: row.sector_s33 ?? undefined,
     signal_price: row.close ?? undefined,
   }
 }
@@ -241,7 +241,7 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
               <th className="px-2 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
                 Name
               </th>
-              <SortTh label="Sector" sortKey="sector" {...sp} align="left" />
+              <SortTh label="Sector" sortKey="sector_s33" {...sp} align="left" />
               <SortTh label="VCS" sortKey="vcs_score" tooltip={COLUMN_TOOLTIPS.vcs_score} {...sp} />
               <SortTh label="Tight(day)" sortKey="vcs_days_tight" tooltip={COLUMN_TOOLTIPS.vcs_days_tight} {...sp} />
               <SortTh label="RS" sortKey="cockpit_rs" tooltip={COLUMN_TOOLTIPS.cockpit_rs} {...sp} />
@@ -289,9 +289,9 @@ export default function VcpTable({ rows }: { rows: DailyVcpScreen[] }) {
                 <td className="px-2 py-2.5 whitespace-nowrap">
                   <span
                     className="text-xs text-gray-500 block max-w-[100px] truncate"
-                    title={row.sector ?? ''}
+                    title={row.sector_s33 ?? ''}
                   >
-                    {row.sector ?? '—'}
+                    {row.sector_s33 ?? '—'}
                   </span>
                 </td>
                 <td className="px-2 py-2.5 text-right whitespace-nowrap">

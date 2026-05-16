@@ -3,7 +3,7 @@ export type DailySignal = {
   code: string
   company_name: string | null
   screen_name: string
-  sector_name: string | null
+  sector_s33: string | null
   close: number | null
   price_chg_1d: number | null
   price_chg_5d: number | null

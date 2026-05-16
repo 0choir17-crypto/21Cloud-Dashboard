@@ -17,7 +17,7 @@ import type {
 const TABLE = 'daily_structure_pivot_screen'
 
 const COLUMNS = `
-  date, code, name, sector,
+  date, code, name, sector_s33,
   signal_type, pivot_price, pivot_curr, break_dist_pct, days_in_setup,
   vcp_days_since, vcp_hit_date, vcp_within_21d,
   daily_signals_screens, daily_signals_last_hit, daily_signals_days_since,
